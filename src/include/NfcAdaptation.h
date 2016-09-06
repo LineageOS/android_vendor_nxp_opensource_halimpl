@@ -41,8 +41,16 @@ typedef unsigned long   UINT32;
 #endif
 #include "nfc_target.h"
 #include "nfc_hal_api.h"
-#include <hardware/nfc.h>
 
+#include <utils/RefBase.h>
+
+namespace android {
+namespace hardware {
+namespace nfc {
+namespace V1_0 {
+    struct INfc;
+    struct INfcClientCallback;
+} } } }
 
 class ThreadMutex
 {
@@ -102,6 +110,8 @@ private:
     ThreadCondVar    mCondVar;
     tHAL_NFC_ENTRY   mHalEntryFuncs; // function pointers for HAL entry points
     static nfc_nci_device_t* mHalDeviceContext;
+    static android::sp<android::hardware::nfc::V1_0::INfc> mHal;
+    static android::hardware::nfc::V1_0::INfcClientCallback* mCallback;
     static tHAL_NFC_CBACK* mHalCallback;
     static tHAL_NFC_DATA_CBACK* mHalDataCallback;
     static ThreadCondVar mHalOpenCompletedEvent;
@@ -122,7 +132,7 @@ private:
     static void HalTerminate ();
     static void HalOpen (tHAL_NFC_CBACK* p_hal_cback, tHAL_NFC_DATA_CBACK* p_data_cback);
     static void HalClose ();
-    static void HalCoreInitialized (UINT8* p_core_init_rsp_params);
+    static void HalCoreInitialized (UINT16 data_len, UINT8* p_core_init_rsp_params);
     static void HalWrite (UINT16 data_len, UINT8* p_data);
 #if(NXP_EXTNS == TRUE)
     static int HalIoctl (long arg, void* p_data);

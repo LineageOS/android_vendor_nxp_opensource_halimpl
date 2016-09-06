@@ -83,7 +83,16 @@ else
 LOCAL_MULTILIB := 32
 endif
 LOCAL_MODULE_RELATIVE_PATH := hw
-LOCAL_SRC_FILES := $(call all-subdir-c-files)  $(call all-subdir-cpp-files)
+LOCAL_SRC_FILES := \
+	$(call all-c-files-under, common) \
+	$(call all-c-files-under, dnld) \
+	$(call all-c-files-under, hal) \
+	$(call all-c-files-under, log) \
+	$(call all-c-files-under, self-test) \
+	$(call all-c-files-under, tml) \
+	$(call all-c-files-under, utils) \
+	$(call all-cpp-files-under, utils) \
+	nfc_nci.c
 LOCAL_SHARED_LIBRARIES := liblog libcutils libhardware_legacy libdl
 LOCAL_MODULE_TAGS := optional
 LOCAL_PROPRIETARY_MODULE := true

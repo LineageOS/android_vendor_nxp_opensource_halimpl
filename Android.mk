@@ -108,7 +108,11 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/src/include \
     $(LOCAL_PATH)/$(NFC)/int \
     $(LOCAL_PATH)/src/hal/include \
     $(LOCAL_PATH)/src/hal/int \
-    $(LOCAL_PATH)/$(HALIMPL)/include
+    $(LOCAL_PATH)/$(HALIMPL)/include \
+    system/libhwbinder/include
+
+# Treble configuration
+LOCAL_SHARED_LIBRARIES += libhidl libhwbinder libutils android.hardware.nfc@1.0
 LOCAL_SRC_FILES := \
     $(call all-c-files-under, $(NFA)/ce $(NFA)/dm $(NFA)/ee) \
     $(call all-c-files-under, $(NFA)/hci $(NFA)/int $(NFA)/p2p $(NFA)/rw $(NFA)/sys) \
