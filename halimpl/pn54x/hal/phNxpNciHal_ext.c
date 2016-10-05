@@ -473,6 +473,19 @@ NFCSTATUS phNxpNciHal_process_ext_rsp (uint8_t *p_ntf, uint16_t *p_len)
                 }
             }
         }
+        else if(p_ntf[len-2] == 0x11) //for FW = 11.xx.xx
+        {
+           NXPLOG_NCIHAL_D ("NxpNci> Model ID: %x", p_ntf[len-3]>>4);
+           switch(p_ntf[len-3])
+           {
+                case 0x40:
+                    NXPLOG_NCIHAL_D ("NxpNci> Product: NQ310/PN5xx");
+                    break;
+                case 0x51:
+                    NXPLOG_NCIHAL_D ("NxpNci> Product: NQ330/PN5xx+eSE");
+                    break;
+           }
+        }
         else
         {
             /* Do Nothing */
