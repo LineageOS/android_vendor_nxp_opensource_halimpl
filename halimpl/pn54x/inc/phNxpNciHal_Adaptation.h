@@ -31,7 +31,7 @@ typedef struct
 
     /* Local definitions */
     int (*ioctl)(const struct nfc_nci_device *p_dev, long arg, void *p_data);
-
+    int(*check_fw_dwnld_flag)(const struct nfc_nci_device *p_dev, uint8_t* param1);
 } pn547_dev_t;
 
 /* NXP HAL functions */

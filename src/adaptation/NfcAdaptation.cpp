@@ -535,6 +535,8 @@ typedef struct {
 
     /* Local definitions */
     int(*ioctl)(const struct nfc_nci_device *p_dev, long arg, void *p_data);
+    int(*check_fw_dwnld_flag)(const struct nfc_nci_device *p_dev, uint8_t* param1);
+
 } pn547_dev_t;
 /*******************************************************************************
 **
@@ -579,7 +581,8 @@ int NfcAdaptation::HalGetFwDwnldFlag (UINT8* fwDnldRequest)
     ALOGD ("%s", func);
     if (mHalDeviceContext)
     {
-        status = mHalDeviceContext->check_fw_dwnld_flag(mHalDeviceContext, fwDnldRequest);
+        pn547_dev_t *dev = (pn547_dev_t*)mHalDeviceContext;
+        status = dev->check_fw_dwnld_flag(mHalDeviceContext, fwDnldRequest);
     }
     return status;
 }

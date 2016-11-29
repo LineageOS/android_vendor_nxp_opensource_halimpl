@@ -259,7 +259,7 @@ static int nfc_open(const hw_module_t* module, const char* name,
         dev->nci_device.close = hal_close;
         dev->nci_device.control_granted = hal_control_granted;
         dev->nci_device.power_cycle = hal_power_cycle;
-        dev->nci_device.check_fw_dwnld_flag = hal_get_fw_dwnld_flag;
+        dev->check_fw_dwnld_flag = hal_get_fw_dwnld_flag;
         *device = (hw_device_t*) dev;
     }
     else
