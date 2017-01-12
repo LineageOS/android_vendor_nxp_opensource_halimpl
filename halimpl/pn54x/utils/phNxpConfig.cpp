@@ -99,6 +99,8 @@ typedef enum
   MTP_TYPE_2                             = 0x04, /**< mtp config type2 TBD */
   QRD_TYPE_1                             = 0x05, /**< qrd config type1 DC DC ON*/
   QRD_TYPE_2                             = 0x06, /**< qrd config type2  Newer chip */
+  MTP_TYPE_NQ3XX                         = 0x07, /**< mtp config : for NQ33X chip */
+  QRD_TYPE_NQ3XX                         = 0x08, /**< qrd config : for NQ33X chip */
   DEFAULT_CONFIG                         = QRD_TYPE_DEFAULT, /**< default is qrd default config */
   CONFIG_INVALID                         = 0xFF
 } CONFIGIDVALUE;
@@ -120,6 +122,8 @@ typedef enum
   TARGET_MSM8997                       = 306, /**< 8997 target */
   TARGET_MSM8917                       = 303, /**< 8917 target */
   TARGET_MSM8940                       = 313, /**< 8940 target */
+  TARGET_SDM660                        = 317, /**< SDM660 target */
+  TARGET_SDM630                        = 318, /**< SDM630 target */
   TARGET_DEFAULT                       = TARGET_GENERIC, /**< new targets */
   TARGET_INVALID                       = 0xFF
 } TARGETTYPE;
@@ -344,15 +348,17 @@ int CNfcConfig::getconfiguration_id (char * config_file)
             strlcpy(config_file, config_name_qrd1, MAX_DATA_CONFIG_PATH_LEN);
             config_id = QRD_TYPE_1;
             break;
+        case TARGET_SDM660:
+        case TARGET_SDM630:
         case TARGET_MSM8998:
         case TARGET_MSM8997:
             if ((!strncmp(nq_chipid, NQ220, PROPERTY_VALUE_MAX)) || (!strncmp(nq_chipid, NQ210, PROPERTY_VALUE_MAX))) {
                 // NQ210 or NQ220
-                config_id = QRD_TYPE_DEFAULT;
-                strlcpy(config_file, config_name_qrd, MAX_DATA_CONFIG_PATH_LEN);
-            } else {
                 config_id = QRD_TYPE_2;
                 strlcpy(config_file, config_name_qrd2, MAX_DATA_CONFIG_PATH_LEN);
+            } else {
+                config_id = QRD_TYPE_NQ3XX;
+                strlcpy(config_file, config_name_qrd_NQ3XX, MAX_DATA_CONFIG_PATH_LEN);
             }
             break;
         default:
@@ -368,15 +374,17 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_GENERIC:
             config_id = CONFIG_GENERIC;
             break;
+        case TARGET_SDM660:
+        case TARGET_SDM630:
         case TARGET_MSM8998:
         case TARGET_MSM8997:
             if ((!strncmp(nq_chipid, NQ220, PROPERTY_VALUE_MAX)) || (!strncmp(nq_chipid, NQ210, PROPERTY_VALUE_MAX))) {
                 // NQ210 or NQ220
-                config_id = MTP_TYPE_DEFAULT;
-                strlcpy(config_file, config_name_mtp, MAX_DATA_CONFIG_PATH_LEN);
-            } else {
                 config_id = MTP_TYPE_1;
                 strlcpy(config_file, config_name_mtp1, MAX_DATA_CONFIG_PATH_LEN);
+            } else {
+                config_id = MTP_TYPE_NQ3XX;
+                strlcpy(config_file, config_name_mtp_NQ3XX, MAX_DATA_CONFIG_PATH_LEN);
             }
             break;
         default:
