@@ -81,7 +81,6 @@ UINT8 appl_trace_level = 0xff;
 UINT8 appl_dta_mode_flag = 0x00;
 #endif
 char bcm_nfc_location[120];
-char nci_hal_module[64];
 
 static UINT8 nfa_dm_cfg[sizeof ( tNFA_DM_CFG ) ];
 static UINT8 nfa_proprietary_cfg[sizeof ( tNFA_PROPRIETARY_CFG )];
@@ -402,16 +401,6 @@ void NfcAdaptation::InitializeHalDeviceContext ()
     const char* func = "NfcAdaptation::InitializeHalDeviceContext";
     ALOGD ("%s: enter", func);
     int ret = 0; //0 means success
-    if ( !GetStrValue ( NAME_NCI_HAL_MODULE, nci_hal_module, sizeof ( nci_hal_module) ) )
-    {
-#if(NXP_EXTNS == TRUE)
-    ALOGE("No HAL module specified in config, falling back to nqx");
-    strlcpy (nci_hal_module, "nfc_nci.nqx", sizeof(nci_hal_module));
-#else
-    ALOGE("No HAL module specified in config, falling back to BCM2079x");
-    strlcpy (nci_hal_module, "nfc_nci.bcm2079x", sizeof(nci_hal_module));
-#endif
-    }
 
     mHalEntryFuncs.initialize = HalInitialize;
     mHalEntryFuncs.terminate = HalTerminate;
@@ -426,10 +415,10 @@ void NfcAdaptation::InitializeHalDeviceContext ()
     mHalEntryFuncs.control_granted = HalControlGranted;
     mHalEntryFuncs.power_cycle = HalPowerCycle;
     mHalEntryFuncs.get_max_ee = HalGetMaxNfcee;
-    ALOGI("%s: INfc::getService(%s)", func, nci_hal_module);
-    mHal = INfc::getService(nci_hal_module);
+    ALOGI("%s: INfc::getService()", func);
+    mHal = INfc::getService();
     LOG_FATAL_IF(mHal == nullptr, "Failed to retrieve the NFC HAL!");
-    ALOGI("%s: INfc::getService(%s) returned %p (%s)", func, nci_hal_module,
+    ALOGI("%s: INfc::getService() returned %p (%s)", func,
           mHal.get(), (mHal->isRemote() ? "remote" : "local"));
     ALOGD ("%s: exit", func);
 }
