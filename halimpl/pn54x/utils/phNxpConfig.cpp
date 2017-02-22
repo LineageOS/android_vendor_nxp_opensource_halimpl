@@ -68,11 +68,13 @@ const char alternative_config_path[] = "";
 #endif
 
 #if 1
-const char transport_config_path[] = "/etc/";
+const char* transport_config_paths[] = {"/odm/etc/", "/vendor/etc/", "/etc/"};
 const char transit_config_path[] = "/data/nfc/";
 #else
-const char transport_config_path[] = "res/";
+const char* transport_config_paths[] = {"res/"};
 #endif
+const int transport_config_path_size =
+    (sizeof(transport_config_paths) / sizeof(transport_config_paths[0]));
 
 #define config_name             "libnfc-nxp.conf"
 #if (NXP_EXTNS == TRUE)
@@ -463,6 +465,30 @@ inline int getDigitValue(char c, int base)
 
 /*******************************************************************************
 **
+** Function:    findConfigFilePathFromTransportConfigPaths()
+**
+** Description: find a config file path with a given config name from transport
+**              config paths
+**
+** Returns:     none
+**
+*******************************************************************************/
+void findConfigFilePathFromTransportConfigPaths(const string& configName,
+                                                string& filePath) {
+  for (int i = 0; i < transport_config_path_size - 1; i++) {
+    filePath.assign(transport_config_paths[i]);
+    filePath += configName;
+    struct stat file_stat;
+    if (stat(filePath.c_str(), &file_stat) == 0 && S_ISREG(file_stat.st_mode)) {
+      return;
+    }
+  }
+  filePath.assign(transport_config_paths[transport_config_path_size - 1]);
+  filePath += configName;
+}
+
+/*******************************************************************************
+**
 ** Function:    CNfcConfig::readConfig()
 **
 ** Description: read Config settings and parse them into a linked list
@@ -779,8 +805,7 @@ CNfcConfig& CNfcConfig::GetInstance()
                 return theInstance;
             }
         }
-        strPath.assign(transport_config_path);
-        strPath += config_name;
+        findConfigFilePathFromTransportConfigPaths(config_name, strPath);
         //checks whether the default config file is present in th target
         if (theInstance.file_exist(strPath.c_str())) {
             ALOGI("default config file exists = %s, disables dynamic selection", strPath.c_str());
@@ -1307,13 +1332,17 @@ CNfcParam::CNfcParam(const char* name,  unsigned long value) :
 void readOptionalConfig(const char* extra)
 {
     string strPath;
-    strPath.assign(transport_config_path);
-    if (alternative_config_path[0] != '\0')
-        strPath.assign(alternative_config_path);
+    string configName(extra_config_base);
+    configName += extra;
+    configName += extra_config_ext;
 
-    strPath += extra_config_base;
-    strPath += extra;
-    strPath += extra_config_ext;
+    if (alternative_config_path[0] != '\0') {
+        strPath.assign(alternative_config_path);
+        strPath += configName;
+    } else {
+        findConfigFilePathFromTransportConfigPaths(configName, strPath);
+    }
+
     CNfcConfig::GetInstance().readConfig(strPath.c_str(), false);
 }
 
