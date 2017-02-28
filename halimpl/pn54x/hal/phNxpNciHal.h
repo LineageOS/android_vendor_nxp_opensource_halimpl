@@ -22,11 +22,19 @@
 #include <hardware/nfc.h>
 #include <phNxpNciHal_utils.h>
 #include <NXP_ESE_Features.h>
+#ifndef NXP_NFCC_FEATURES_H
+#include <NXP_NFCC_Features.h>
+#endif
 
 /********************* Definitions and structures *****************************/
 #define MAX_RETRY_COUNT       5
 #define NCI_MAX_DATA_LEN      300
 #define NCI_POLL_DURATION     500
+#define NXP_STAG_TIMEOUT_BUF_LEN                0x04 /*FIXME:TODO:remove*/
+#define NXP_WIREDMODE_RESUME_TIMEOUT_LEN        0x04
+#define NFCC_DECIDES          00
+#define POWER_ALWAYS_ON       01
+#define LINK_ALWAYS_ON        02
 #undef P2P_PRIO_LOGIC_HAL_IMP
 
 typedef struct
@@ -57,8 +65,10 @@ enum {
     HAL_NFC_IOCTL_NCI_TRANSCEIVE,
     HAL_NFC_IOCTL_P61_GET_ACCESS,
     HAL_NFC_IOCTL_P61_REL_ACCESS,
-    HAL_NFC_IOCTL_P73_ISO_RST,
-    HAL_NFC_IOCTL_REL_SVDD_WAIT
+    HAL_NFC_IOCTL_ESE_CHIP_RST,
+    HAL_NFC_IOCTL_REL_SVDD_WAIT,
+    HAL_NFC_IOCTL_SET_JCP_DWNLD_ENABLE,
+    HAL_NFC_IOCTL_SET_JCP_DWNLD_DISABLE
 };
 
 typedef void (phNxpNciHal_control_granted_callback_t)();
@@ -157,11 +167,13 @@ static const uint8_t get_cfg_arr[]={
 typedef enum {
     EEPROM_RF_CFG,
     EEPROM_FW_DWNLD,
-    EEPROM_WIREDMODE_RESUME_ENABLE,
     EEPROM_WIREDMODE_RESUME_TIMEOUT,
     EEPROM_ESE_SVDD_POWER,
     EEPROM_ESE_POWER_EXT_PMU,
-    EEPROM_PROP_ROUTING
+    EEPROM_PROP_ROUTING,
+    EEPROM_ESE_SESSION_ID,
+    EEPROM_SWP1_INTF,
+    EEPROM_SWP1A_INTF,
 }phNxpNci_EEPROM_request_type_t;
 
 typedef struct phNxpNci_EEPROM_info {
@@ -192,7 +204,8 @@ typedef enum {
 
 typedef enum {
     NFC_NORMAL_BOOT_MODE,
-    NFC_FAST_BOOT_MODE
+    NFC_FAST_BOOT_MODE,
+    NFC_OSU_BOOT_MODE
 }phNxpNciBootMode;
 /* NXP Poll Profile control structure */
 typedef struct phNxpNciProfile_Control
@@ -222,5 +235,5 @@ NFCSTATUS phNxpNciHal_send_get_cfgs();
 int phNxpNciHal_write_unlocked (uint16_t data_len, const uint8_t *p_data);
 static int phNxpNciHal_fw_mw_ver_check();
 NFCSTATUS request_EEPROM(phNxpNci_EEPROM_info_t *mEEPROM_info);
-
+NFCSTATUS phNxpNciHal_send_nfcee_pwr_cntl_cmd(uint8_t type);
 #endif /* _PHNXPNCIHAL_H_ */

@@ -26,7 +26,7 @@
 #include <phNxpConfig.h>
 #include <phDnldNfc.h>
 
-#define HAL_EXTNS_WRITE_RSP_TIMEOUT   (1000)                /* Timeout value to wait for response from PN548AD */
+#define HAL_EXTNS_WRITE_RSP_TIMEOUT   (2500)                /* Timeout value to wait for response from PN548AD */
 
 #undef P2P_PRIO_LOGIC_HAL_IMP
 
@@ -53,7 +53,6 @@ static uint8_t cmd_nfcee_setmode_enable[] = { 0x22, 0x01, 0x02, 0x01, 0x01 };
 extern uint32_t wFwVerRsp;
 /* External global variable to get FW version from FW file*/
 extern uint16_t wFwVer;
-
 uint16_t fw_maj_ver;
 uint16_t rom_version;
 /* local buffer to store CORE_INIT response */
@@ -64,7 +63,7 @@ static uint32_t bCoreRstNtf[40];
 static uint32_t iCoreRstNtfLen;
 
 extern uint32_t timeoutTimerId;
-#if ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551))
+#if(NXP_ESE_SVDD_SYNC == TRUE)
 extern uint32_t gSvddSyncOff_Delay; /*default delay*/
 #endif
 extern NFCSTATUS read_retry();
@@ -645,7 +644,7 @@ static NFCSTATUS phNxpNciHal_process_ext_cmd_rsp(uint16_t cmd_len, uint8_t *p_cm
 
     NXPLOG_NCIHAL_D("Checking response");
 
-    if((mGetCfg_info->isGetcfg == TRUE)&&
+    if((mGetCfg_info != NULL) && (mGetCfg_info->isGetcfg == TRUE)&&
             (nxpncihal_ctrl.p_rx_data[0] == 0x40)&&
             (nxpncihal_ctrl.p_rx_data[1] == 0x03)&&
             (nxpncihal_ctrl.p_rx_data[3] == NFCSTATUS_SUCCESS))
@@ -721,9 +720,9 @@ NFCSTATUS phNxpNciHal_write_ext(uint16_t *cmd_len, uint8_t *p_cmd_data,
         gFelicaReaderMode = p_cmd_data[3];
         /* frame the dummy response */
         *rsp_len = 4;
-        p_rsp_data[0] = 0x00;
-        p_rsp_data[1] = 0x00;
-        p_rsp_data[2] = 0x00;
+        p_rsp_data[0] = 0x40;
+        p_rsp_data[1] = 0x03;
+        p_rsp_data[2] = 0x01;
         p_rsp_data[3] = 0x00;
         status = NFCSTATUS_FAILED;
     }
@@ -753,7 +752,7 @@ NFCSTATUS phNxpNciHal_write_ext(uint16_t *cmd_len, uint8_t *p_cmd_data,
         nxpprofile_ctrl.profile_type = NFC_FORUM_PROFILE;
         status = NFCSTATUS_SUCCESS;
     }
-#if ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551))
+#if(NXP_ESE_SVDD_SYNC == TRUE)
     else if (p_cmd_data[0] == 0x2F &&
             p_cmd_data[1] == 0x31 &&
             p_cmd_data[2] == 0x01 &&
@@ -874,7 +873,6 @@ NFCSTATUS phNxpNciHal_write_ext(uint16_t *cmd_len, uint8_t *p_cmd_data,
         p_rsp_data[2] = 0x02;
         p_rsp_data[3] = 0x00;
         p_rsp_data[4] = 0x00;
-        phNxpNciHal_print_packet("RECV", p_rsp_data,5);
         status = NFCSTATUS_FAILED;
     }
     //2002 0904 3000 3100 3200 5000
@@ -1229,19 +1227,15 @@ NFCSTATUS request_EEPROM(phNxpNci_EEPROM_info_t *mEEPROM_info)
         addr[1]  = 0x0F;
         break;
 
-    case EEPROM_WIREDMODE_RESUME_ENABLE:
-        b_position = 0;
-        memIndex = 0x00;
-        addr[0]  = 0xFF; //To be updated actual value
-        addr[1]  = 0xFF; // To be updated actual value
-        break;
-    
     case EEPROM_WIREDMODE_RESUME_TIMEOUT:
-        b_position = 0;
+        mEEPROM_info->update_mode = BYTEWISE;
         memIndex = 0x00;
-        addr[0]  = 0xFF; //To be updated actual value
-        addr[1]  = 0xFF; // To be updated actual value
+        fieldLen = 0x04;
+        len = fieldLen + 4;
+        addr[0]  = 0xA0;
+        addr[1]  = 0xFC;
         break;
+
     case EEPROM_ESE_SVDD_POWER:
         b_position = 0;
         memIndex = 0x00;
@@ -1262,6 +1256,26 @@ NFCSTATUS request_EEPROM(phNxpNci_EEPROM_info_t *mEEPROM_info)
         addr[1]  = 0x98;
         break;
 
+    case EEPROM_ESE_SESSION_ID:
+        b_position = 0;
+        memIndex = 0x00;
+        addr[0]  = 0xA0;
+        addr[1]  = 0xEB;
+        break;
+
+    case EEPROM_SWP1_INTF:
+        b_position = 0;
+        memIndex = 0x00;
+        addr[0]  = 0xA0;
+        addr[1]  = 0xEC;
+        break;
+
+    case EEPROM_SWP1A_INTF:
+        b_position = 0;
+        memIndex = 0x00;
+        addr[0]  = 0xA0;
+        addr[1]  = 0xD4;
+        break;
     default:
         ALOGE("No valid request information found");
         break;
@@ -1391,14 +1405,19 @@ int phNxpNciHal_CheckFwRegFlashRequired(uint8_t* fw_update_req, uint8_t* rf_upda
 {
     int status = NFCSTATUS_OK;
     UNUSED(rf_update_req);
+    NXPLOG_NCIHAL_D ("phNxpNciHal_CheckFwRegFlashRequired() : enter");
     status = phDnldNfc_InitImgInfo();
-    NXPLOG_NCIHAL_D ("FW version for FW file = 0x%x", wFwVer);
-    NXPLOG_NCIHAL_D ("FW version from device = 0x%x", wFwVerRsp);
-    *fw_update_req = ((wFwVerRsp & 0x0000FFFF) != wFwVer) ?TRUE:FALSE;
+    NXPLOG_NCIHAL_D ("FW version of the libpn5xx.so binary = 0x%x", wFwVer);
+    NXPLOG_NCIHAL_D ("FW version found on the device = 0x%x", wFwVerRsp);
+    /* Consider for each chip type */
+    *fw_update_req = (((wFwVerRsp & 0x0000FFFF) != wFwVer) ? TRUE : FALSE);
+
     if(FALSE == *fw_update_req)
     {
         NXPLOG_NCIHAL_D ("FW update not required");
         phDnldNfc_ReSetHwDevHandle();
     }
+
+    NXPLOG_NCIHAL_D ("phNxpNciHal_CheckFwRegFlashRequired() : exit - status = %x ",status);
     return status;
 }
