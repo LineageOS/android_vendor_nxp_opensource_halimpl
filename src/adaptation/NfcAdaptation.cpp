@@ -278,7 +278,6 @@ void NfcAdaptation::MinInitialize ()
         mCondVar.wait();
     }
 
-    mHalDeviceContext = NULL;
     mHalCallback =  NULL;
     memset (&mHalEntryFuncs, 0, sizeof(mHalEntryFuncs));
     InitializeHalDeviceContext ();
@@ -569,12 +568,8 @@ int NfcAdaptation::HalIoctl (long arg, void* p_data)
 {
     const char* func = "NfcAdaptation::HalIoctl";
     ALOGD ("%s", func);
-    if (mHalDeviceContext)
-    {
-        pn547_dev_t *dev = (pn547_dev_t*)mHalDeviceContext;
-        return (dev->ioctl (mHalDeviceContext, arg, p_data));
-    }
-    return -1;
+
+    return 0;
 }
 
 /*******************************************************************************
@@ -591,11 +586,7 @@ int NfcAdaptation::HalGetFwDwnldFlag (UINT8* fwDnldRequest)
     const char* func = "NfcAdaptation::HalGetFwDwnldFlag";
     int status = NFA_STATUS_FAILED;
     ALOGD ("%s", func);
-    if (mHalDeviceContext)
-    {
-        pn547_dev_t *dev = (pn547_dev_t*)mHalDeviceContext;
-        status = dev->check_fw_dwnld_flag(mHalDeviceContext, fwDnldRequest);
-    }
+
     return status;
 }
 #endif
@@ -793,7 +784,7 @@ void NfcAdaptation::DownloadFirmware ()
                 goto TheEnd;
             }
             ALOGD ("%s: try init HAL", func);
-            HalCoreInitialized (&p_core_init_rsp_params);
+            HalCoreInitialized (sizeof(UINT8), &p_core_init_rsp_params);
             mHalInitCompletedEvent.lock ();
             mHalInitCompletedEvent.wait ();
             mHalInitCompletedEvent.unlock ();

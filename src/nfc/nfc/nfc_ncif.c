@@ -297,7 +297,7 @@ void nfc_ncif_cmd_timeout (void)
                 }
             }
         }
-        nfc_cb.p_hal->core_initialized (buffer);
+        nfc_cb.p_hal->core_initialized (bufflen, buffer);
 
         if(buffer != NULL) free(buffer);
     }
