@@ -63,6 +63,7 @@ static uint8_t read_failed_disable_nfc = FALSE;
 #endif
 static uint8_t pwr_link_required = FALSE;
 static uint8_t config_access = FALSE;
+static uint8_t config_success = true;
 static NFCSTATUS phNxpNciHal_FwDwnld(void);
 static NFCSTATUS phNxpNciHal_SendCmd(uint8_t cmd_len, uint8_t* pcmd_buff);
 static void phNxpNciHal_check_delete_nfaStorage_DHArea();
@@ -1249,6 +1250,7 @@ int phNxpNciHal_core_initialized(uint8_t* p_core_init_rsp_params)
 #endif
     static uint8_t swp_switch_timeout_cmd[] = {0x20, 0x02, 0x06, 0x01, 0xA0, 0xF3, 0x02, 0x00, 0x00};
 
+    config_success = true;
     uint8_t *buffer = NULL;
     unsigned long bufflen = 260;
     long retlen = 0;
@@ -2290,6 +2292,7 @@ invoke_callback:
                     nxpncihal_ctrl.rx_data_len, nxpncihal_ctrl.p_rx_data);
         }
     }
+    if (config_success == false) return NFCSTATUS_FAILED;
 /* This code is moved to JNI
 #ifdef PN547C2_CLOCK_SETTING
     if (isNxpConfigModified())
@@ -3809,8 +3812,8 @@ if((p_rx_data[2])&&(config_access == TRUE))
     {
         if(p_rx_data[3]!=NFCSTATUS_SUCCESS)
         {
-            NXPLOG_NCIHAL_W("Invalid Data from config file . Aborting..");
-            phNxpNciHal_close();
+            NXPLOG_NCIHAL_W("Invalid Data from config file.");
+            config_success = false;
         }
     }
 }
