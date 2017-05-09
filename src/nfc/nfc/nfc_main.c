@@ -52,7 +52,6 @@
 #include "llcp_int.h"
 
 #if(NXP_EXTNS == TRUE)
-static phNxpNci_getCfg_info_t* mGetCfg_info_main = NULL;
 extern void nfa_dm_init_cfgs (phNxpNci_getCfg_info_t* mGetCfg_info_main);
 #endif
 
@@ -462,17 +461,10 @@ void nfc_main_handle_hal_evt (tNFC_HAL_EVT_MSG *p_msg)
                      * During Setconfig request these stored values are compared
                      * If found same setconfigs will not be sent
                      * */
-                    if(mGetCfg_info_main == NULL)
                     {
-                        mGetCfg_info_main = (phNxpNci_getCfg_info_t*)malloc(sizeof(phNxpNci_getCfg_info_t));
-                        if(mGetCfg_info_main  != NULL)
-                        {
-                            memset(mGetCfg_info_main,0x00,sizeof(phNxpNci_getCfg_info_t));
-                            nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_GET_CONFIG_INFO,(void *)mGetCfg_info_main);
-                            nfa_dm_init_cfgs(mGetCfg_info_main);
-                            free(mGetCfg_info_main);
-                            mGetCfg_info_main = NULL;
-                        }
+                        nfc_nci_IoctlInOutData_t inpOutData;
+                        nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_GET_CONFIG_INFO,(void *)&inpOutData);
+                        nfa_dm_init_cfgs((phNxpNci_getCfg_info_t*)&inpOutData.out.data.nxpNciAtrInfo);
                     }
 #endif
                 }
@@ -801,10 +793,11 @@ tNFC_STATUS NFC_Enable (tNFC_RESPONSE_CBACK *p_cback)
     /* Open HAL transport. */
     nfc_set_state (NFC_STATE_W4_HAL_OPEN);
 #if(NXP_EXTNS == TRUE)
-    UINT16 boot_mode = nfc_cb.boot_mode;
     if(nfc_cb.boot_mode != NFC_NORMAL_BOOT_MODE)
     {
-        nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_BOOT_MODE,(void*)&boot_mode);
+        nfc_nci_IoctlInOutData_t inpOutData;
+        inpOutData.inp.data.bootMode = nfc_cb.boot_mode;
+        nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_BOOT_MODE,(void*)&inpOutData);
     }
 #endif
     nfc_cb.p_hal->open (nfc_main_hal_cback, nfc_main_hal_data_cback);
@@ -829,9 +822,7 @@ tNFC_STATUS NFC_Enable (tNFC_RESPONSE_CBACK *p_cback)
 void NFC_Disable (void)
 {
     NFC_TRACE_API1 ("NFC_Disable (): nfc_state = %d", nfc_cb.nfc_state);
-#if(NXP_EXTNS == TRUE)
-    UINT16 boot_mode = NFC_NORMAL_BOOT_MODE;
-#endif
+
     if ((nfc_cb.nfc_state == NFC_STATE_NONE) || (nfc_cb.nfc_state == NFC_STATE_NFCC_POWER_OFF_SLEEP))
     {
         nfc_set_state (NFC_STATE_NONE);
@@ -848,7 +839,9 @@ void NFC_Disable (void)
 #if(NXP_EXTNS == TRUE)
     if(nfc_cb.boot_mode != NFC_NORMAL_BOOT_MODE)
     {
-        nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_BOOT_MODE,(void*)&boot_mode);
+        nfc_nci_IoctlInOutData_t inpOutData;
+        inpOutData.inp.data.bootMode = NFC_NORMAL_BOOT_MODE;
+        nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_BOOT_MODE,(void*)&inpOutData);
     }
 #endif
 }
@@ -1590,7 +1583,11 @@ int  get_i2c_fragmentation_enabled()
 *******************************************************************************/
 INT32 NFC_ReqWiredAccess (void *pdata)
 {
-    return (nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_WIRED_MODE, pdata));
+    nfc_nci_IoctlInOutData_t inpOutData;
+    INT32 status;
+    status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_WIRED_MODE, &inpOutData);
+    *(tNFC_STATUS*)pdata = inpOutData.out.data.status;
+    return status;
 }
 /*******************************************************************************
 **
@@ -1604,7 +1601,11 @@ INT32 NFC_ReqWiredAccess (void *pdata)
 *******************************************************************************/
 INT32 NFC_RelWiredAccess (void *pdata)
 {
-    return (nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_IDLE_MODE, pdata));
+    nfc_nci_IoctlInOutData_t inpOutData;
+    INT32 status;
+    status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_IDLE_MODE, &inpOutData);
+    *(tNFC_STATUS*)pdata = inpOutData.out.data.status;
+    return status;
 }
 /*******************************************************************************
 **
@@ -1618,7 +1619,11 @@ INT32 NFC_RelWiredAccess (void *pdata)
 *******************************************************************************/
 INT32 NFC_GetP61Status (void *pdata)
 {
-    return (nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_PWR_MODE, pdata));
+    nfc_nci_IoctlInOutData_t inpOutData;
+    INT32 status;
+    status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_PWR_MODE, &inpOutData);
+    *(uint32_t*)pdata = inpOutData.out.data.p61CurrentState;
+    return status;
 }
 /*******************************************************************************
 *
@@ -1632,7 +1637,11 @@ INT32 NFC_GetP61Status (void *pdata)
 *******************************************************************************/
 INT32 NFC_DisableWired (void *pdata)
 {
-    return (nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_DISABLE_MODE, pdata));
+    nfc_nci_IoctlInOutData_t inpOutData;
+    INT32 status;
+    status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_DISABLE_MODE, &inpOutData);
+    *(tNFC_STATUS*)pdata = inpOutData.out.data.status;
+    return status;
 }
 /*******************************************************************************
 **
@@ -1646,7 +1655,11 @@ INT32 NFC_DisableWired (void *pdata)
 *******************************************************************************/
 INT32 NFC_EnableWired (void *pdata)
 {
-    return (nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_ENABLE_MODE, pdata));
+    nfc_nci_IoctlInOutData_t inpOutData;
+    INT32 status;
+    status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_ENABLE_MODE, &inpOutData);
+    *(tNFC_STATUS*)pdata = inpOutData.out.data.status;
+    return status;
 }
 #if (NXP_EXTNS == TRUE)
 #if (NXP_WIRED_MODE_STANDBY == TRUE)
@@ -1683,11 +1696,13 @@ tNFC_STATUS NFC_Nfcee_PwrLinkCtrl(UINT8 nfcee_id, UINT8 cfg_value)
 *******************************************************************************/
 INT32 NFC_SetP61Status (void *pdata, jcop_dwnld_state_t isJcopState)
 {
+    nfc_nci_IoctlInOutData_t inpOutData;
+    INT32 status;
     if(isJcopState == JCP_DWNLD_START)
-        isJcopState = (nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_JCP_DWNLD_ENABLE, pdata));
+        isJcopState = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_JCP_DWNLD_ENABLE, &inpOutData);
     else if(isJcopState == JCP_DWP_DWNLD_COMPLETE)
-        isJcopState = (nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_JCP_DWNLD_DISABLE, pdata));
-
+        isJcopState = (nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_JCP_DWNLD_DISABLE, &inpOutData));
+    *(tNFC_STATUS*)pdata = inpOutData.out.data.status;
     return isJcopState;
 }
 #endif
@@ -1705,7 +1720,11 @@ INT32 NFC_SetP61Status (void *pdata, jcop_dwnld_state_t isJcopState)
 *******************************************************************************/
 INT32 NFC_eSEChipReset (void *pdata)
 {
-    return (nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_ESE_CHIP_RST, pdata));
+    nfc_nci_IoctlInOutData_t inpOutData;
+    INT32 status;
+    status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_ESE_CHIP_RST, &inpOutData);
+    *(tNFC_STATUS*)pdata = inpOutData.out.data.status;
+    return status;
 }
 
 #if((NFC_NXP_ESE_VER == JCOP_VER_3_1) || (NFC_NXP_ESE_VER == JCOP_VER_3_2))
@@ -1722,7 +1741,11 @@ INT32 NFC_eSEChipReset (void *pdata)
 *******************************************************************************/
 INT32 NFC_GetEseAccess (void *pdata)
 {
-    return (nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_GET_ACCESS, pdata));
+    nfc_nci_IoctlInOutData_t inpOutData;
+    INT32 status;
+    inpOutData.inp.data.timeoutMilliSec = *(uint32_t*)pdata;
+    status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_GET_ACCESS, &inpOutData);
+    return status;
 }
 /*******************************************************************************
 **
@@ -1736,7 +1759,11 @@ INT32 NFC_GetEseAccess (void *pdata)
 *******************************************************************************/
 INT32 NFC_RelEseAccess (void *pdata)
 {
-    return (nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_REL_ACCESS, pdata));
+    nfc_nci_IoctlInOutData_t inpOutData;
+    INT32 status;
+    status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_REL_ACCESS, &inpOutData);
+    *(tNFC_STATUS*)pdata = inpOutData.out.data.status;
+    return status;
 }
 #endif
 
@@ -1753,7 +1780,11 @@ INT32 NFC_RelEseAccess (void *pdata)
 *******************************************************************************/
 INT32 NFC_RelSvddWait (void *pdata)
 {
-    return (nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_REL_SVDD_WAIT, pdata));
+    nfc_nci_IoctlInOutData_t inpOutData;
+    INT32 status;
+    status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_REL_SVDD_WAIT, &inpOutData);
+    *(tNFC_STATUS*)pdata = inpOutData.out.data.status;
+    return status;
 }
 #endif
 
@@ -1773,7 +1804,9 @@ void NFC_EnableDisableHalLog(UINT8 type)
 {
     if(0x01 == type || 0x00 == type)
     {
-        nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_DISABLE_HAL_LOG ,(void*)&type);
+        nfc_nci_IoctlInOutData_t inpOutData;
+        inpOutData.inp.data.halType = type;
+        nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_DISABLE_HAL_LOG, &inpOutData);
     }
 }
 #endif

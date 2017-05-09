@@ -3074,11 +3074,10 @@ static void phNxpNciHal_power_cycle_complete(NFCSTATUS status)
 int phNxpNciHal_ioctl(long arg, void *p_data)
 {
     NXPLOG_NCIHAL_D("%s : enter - arg = %ld", __FUNCTION__, arg);
-
+    nfc_nci_IoctlInOutData_t *pInpOutData = p_data;
     int ret = -1;
     NFCSTATUS status = NFCSTATUS_FAILED;
     phNxpNciHal_FwRfupdateInfo_t *FwRfInfo;
-    nfc_nci_ExtnCmd_t *ExtnCmd;
     NFCSTATUS fm_mw_ver_check = NFCSTATUS_FAILED;
 
     switch(arg)
@@ -3089,7 +3088,7 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
         if(NFCSTATUS_FAILED != status)
         {
             if(NULL != p_data)
-               *(uint16_t*)p_data = (uint16_t)status;
+               pInpOutData->out.data.status = (uint16_t)status;
             ret = 0;
         }
         break;
@@ -3098,7 +3097,7 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
         if(NFCSTATUS_FAILED != status)
         {
             if(NULL != p_data)
-               *(uint16_t*)p_data = (uint16_t)status;
+               pInpOutData->out.data.status = (uint16_t)status;
             ret = 0;
         }
         break;
@@ -3107,7 +3106,7 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
         if(NFCSTATUS_FAILED != status)
         {
             if(NULL != p_data)
-               *(uint16_t*)p_data = (uint16_t)status;
+               pInpOutData->out.data.status = (uint16_t)status;
             ret = 0;
         }
         break;
@@ -3116,7 +3115,7 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
         if(NFCSTATUS_FAILED != status)
         {
             if(NULL != p_data)
-               *(uint16_t*)p_data = (uint16_t)status;
+               pInpOutData->out.data.p61CurrentState = (uint16_t)status;
             ret = 0;
         }
         break;
@@ -3125,14 +3124,14 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
         if(NFCSTATUS_FAILED != status)
         {
             if(NULL != p_data)
-               *(uint16_t*)p_data = (uint16_t)status;
+               pInpOutData->out.data.status = (uint16_t)status;
             ret = 0;
         }
         break;
     case HAL_NFC_IOCTL_P61_GET_ACCESS:
         if(p_data != NULL) {
-            NXPLOG_NCIHAL_D("HAL_NFC_IOCTL_P61_GET_ACCESS timeout = %d",(*(int32_t *)p_data));
-            status = phTmlNfc_get_ese_access(gpphTmlNfc_Context->pDevHandle, (*(int32_t *)p_data));
+            NXPLOG_NCIHAL_D("HAL_NFC_IOCTL_P61_GET_ACCESS timeoutInMillisec = %d",pInpOutData->inp.data.timeoutMilliSec);
+            status = phTmlNfc_get_ese_access(gpphTmlNfc_Context->pDevHandle, pInpOutData->inp.data.timeoutMilliSec);
             if(NFCSTATUS_SUCCESS == status)
             {
                 ret = 0;
@@ -3142,6 +3141,7 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
     case HAL_NFC_IOCTL_P61_REL_ACCESS:
         status = phTmlNfc_IoCtl(phTmlNfc_e_RelP61Access);
         NXPLOG_NCIHAL_D("HAL_NFC_IOCTL_P61_REL_ACCESS retval = %d\n",status);
+        pInpOutData->out.data.status = status;
         if(NFCSTATUS_SUCCESS == status)
         {
             ret = 0;
@@ -3152,7 +3152,7 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
         if(NFCSTATUS_FAILED != status)
         {
             if(NULL != p_data)
-               *(uint16_t*)p_data = (uint16_t)status;
+               pInpOutData->out.data.status = (uint16_t)status;
             ret = 0;
         }
         break;
@@ -3160,6 +3160,7 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
     case HAL_NFC_IOCTL_REL_SVDD_WAIT:
         status = phTmlNfc_rel_svdd_wait(gpphTmlNfc_Context->pDevHandle);
         NXPLOG_NCIHAL_D("HAL_NFC_IOCTL_P61_REL_SVDD_WAIT retval = %d\n",status);
+        pInpOutData->out.data.status = status;
         if(NFCSTATUS_SUCCESS == status)
         {
             ret = 0;
@@ -3170,10 +3171,10 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
     case HAL_NFC_IOCTL_SET_BOOT_MODE:
         if(NULL != p_data)
         {
-            status = phNxpNciHal_set_Boot_Mode(*(uint8_t*)p_data);
+            status = phNxpNciHal_set_Boot_Mode(pInpOutData->inp.data.bootMode);
             if(NFCSTATUS_FAILED != status)
             {
-                *(uint16_t*)p_data = (uint16_t)status;
+                pInpOutData->out.data.status = (uint16_t)status;
                 ret = 0;
             }
         }
@@ -3185,7 +3186,7 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
         if(NFCSTATUS_FAILED != status)
         {
             if(NULL != p_data)
-               *(uint16_t*)p_data = (uint16_t)status;
+               pInpOutData->out.data.status = (uint16_t)status;
             ret = 0;
         }
         break;
@@ -3194,7 +3195,7 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
         if(NFCSTATUS_FAILED != status)
         {
             if(NULL != p_data)
-               *(uint16_t*)p_data = (uint16_t)status;
+               pInpOutData->out.data.status = (uint16_t)status;
             ret = 0;
         }
         break;
@@ -3202,7 +3203,7 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
     case HAL_NFC_IOCTL_GET_CONFIG_INFO:
         if(p_data != NULL)
         {
-            memcpy(p_data, mGetCfg_info , sizeof(phNxpNci_getCfg_info_t));
+            memcpy(pInpOutData->out.data.nxpNciAtrInfo, mGetCfg_info , sizeof(phNxpNci_getCfg_info_t));
             free(mGetCfg_info);
             mGetCfg_info = NULL;
          }
@@ -3211,7 +3212,7 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
     case HAL_NFC_IOCTL_CHECK_FLASH_REQ:
         if(p_data != NULL)
         {
-            FwRfInfo = (phNxpNciHal_FwRfupdateInfo_t *) p_data;
+            FwRfInfo = (phNxpNciHal_FwRfupdateInfo_t *) &pInpOutData->out.data.fwUpdateInf;
             status = phNxpNciHal_CheckFwRegFlashRequired(&FwRfInfo->fw_update_reqd,
                 &FwRfInfo->rf_update_reqd);
             if(NFCSTATUS_SUCCESS == status)
@@ -3223,7 +3224,7 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
     case HAL_NFC_IOCTL_FW_DWNLD:
         status = phNxpNciHal_FwDwnld();
         if(p_data != NULL)
-            *(uint16_t*)p_data = (uint16_t)status;
+            pInpOutData->out.data.fwDwnldStatus = (uint16_t)status;
         if(NFCSTATUS_SUCCESS == status)
         {
             ret = 0;
@@ -3235,7 +3236,7 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
     case HAL_NFC_IOCTL_FW_MW_VER_CHECK:
         fm_mw_ver_check = phNxpNciHal_fw_mw_ver_check();
         if(p_data != NULL)
-            *(uint16_t *)p_data = fm_mw_ver_check;
+            pInpOutData->out.data.fwMwVerStatus = fm_mw_ver_check;
         ret = 0;
         break;
     case HAL_NFC_IOCTL_NCI_TRANSCEIVE:
@@ -3244,20 +3245,23 @@ int phNxpNciHal_ioctl(long arg, void *p_data)
             ret = -1;
             break;
         }
-        ExtnCmd = (nfc_nci_ExtnCmd_t *)p_data;
-        if(ExtnCmd->cmd_len <= 0 || ExtnCmd->p_cmd == NULL)
+
+        if(pInpOutData->inp.data.nciCmd.cmd_len <= 0)
         {
             ret = -1;
             break;
         }
 
-        ret  = phNxpNciHal_send_ext_cmd(ExtnCmd->cmd_len, ExtnCmd->p_cmd);
-        ExtnCmd->rsp_len = nxpncihal_ctrl.rx_data_len;
-        ExtnCmd->p_cmd_rsp = nxpncihal_ctrl.p_rx_data;
+        ret  = phNxpNciHal_send_ext_cmd(pInpOutData->inp.data.nciCmd.cmd_len, pInpOutData->inp.data.nciCmd.p_cmd);
+        pInpOutData->out.data.nciRsp.rsp_len = nxpncihal_ctrl.rx_data_len;
+        if((nxpncihal_ctrl.rx_data_len > 0) && (nxpncihal_ctrl.rx_data_len <= MAX_IOCTL_TRANSCEIVE_RESP_LEN) && (nxpncihal_ctrl.p_rx_data != NULL))
+	{
+            memcpy(pInpOutData->out.data.nciRsp.p_rsp, nxpncihal_ctrl.p_rx_data, nxpncihal_ctrl.rx_data_len);
+        }
         break;
     case HAL_NFC_IOCTL_DISABLE_HAL_LOG:
         if(p_data != NULL)
-            status = phNxpLog_EnableDisableLogLevel(*(uint8_t*)p_data);
+            status = phNxpLog_EnableDisableLogLevel(pInpOutData->inp.data.halType);
         break;
     default:
         NXPLOG_NCIHAL_E("%s : Wrong arg = %ld", __FUNCTION__, arg);

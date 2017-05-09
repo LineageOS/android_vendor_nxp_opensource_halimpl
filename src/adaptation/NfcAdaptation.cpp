@@ -22,6 +22,7 @@
  *
  ******************************************************************************/
 #include <android/hardware/nfc/1.0/INfc.h>
+#include <vendor/nxp/hardware/nfc/1.0/INqNfc.h>
 #include <android/hardware/nfc/1.0/INfcClientCallback.h>
 #include <hwbinder/ProcessState.h>
 #include <pthread.h>
@@ -49,6 +50,7 @@ using android::hardware::ProcessState;
 using android::hardware::Return;
 using android::hardware::Void;
 using android::hardware::nfc::V1_0::INfc;
+using vendor::nxp::hardware::nfc::V1_0::INqNfc;
 using android::hardware::nfc::V1_0::INfcClientCallback;
 using android::hardware::hidl_vec;
 
@@ -73,6 +75,7 @@ static UINT8 isSignaled = SIGNAL_NONE;
 static UINT8 evt_status;
 #endif
 sp<INfc> NfcAdaptation::mHal;
+sp<INqNfc> NfcAdaptation::mNqHal;
 INfcClientCallback* NfcAdaptation::mCallback;
 
 UINT32 ScrProtocolTraceFlag = SCR_PROTO_TRACE_ALL; //0x017F00;
@@ -419,6 +422,10 @@ void NfcAdaptation::InitializeHalDeviceContext ()
     LOG_FATAL_IF(mHal == nullptr, "Failed to retrieve the NFC HAL!");
     ALOGI("%s: INfc::getService() returned %p (%s)", func,
           mHal.get(), (mHal->isRemote() ? "remote" : "local"));
+    mNqHal = INqNfc::getService();
+    LOG_FATAL_IF(mNqHal == nullptr, "Failed to retrieve the vendor NFC HAL!");
+    ALOGI("%s: INqNfc::getService() returned %p (%s)", func,
+          mNqHal.get(), (mNqHal->isRemote() ? "remote" : "local"));
     ALOGD ("%s: exit", func);
 }
 
@@ -549,6 +556,34 @@ typedef struct {
     int(*check_fw_dwnld_flag)(const struct nfc_nci_device *p_dev, uint8_t* param1);
 
 } pn547_dev_t;
+
+
+/*******************************************************************************
+**
+** Function:    IoctlCallback
+**
+** Description: Callback from HAL stub for IOCTL api invoked.
+**              Output data for IOCTL is sent as argument
+**
+** Returns:     None.
+**
+*******************************************************************************/
+void IoctlCallback(::android::hardware::nfc::V1_0::NfcData outputData)
+{
+  const char* func = "IoctlCallback";
+  nfc_nci_ExtnOutputData_t* pOutData = (nfc_nci_ExtnOutputData_t*)&outputData[0];
+  NfcAdaptation* pAdaptation = (NfcAdaptation*)pOutData->context;
+
+  ALOGD("%s Ioctl Type = %llu", func, pOutData->ioctlType);
+
+  /*
+   * Output Data from stub->Proxy is copied back to output data
+   * This data will be sent back to libnfc
+   */
+  memcpy(&pAdaptation->mCurrentIoctlData->out, &outputData[0],
+         sizeof(nfc_nci_ExtnOutputData_t));
+}
+
 /*******************************************************************************
 **
 ** Function:    NfcAdaptation::HalIoctl
@@ -567,9 +602,17 @@ typedef struct {
 int NfcAdaptation::HalIoctl (long arg, void* p_data)
 {
     const char* func = "NfcAdaptation::HalIoctl";
-    ALOGD ("%s", func);
+    ::android::hardware::nfc::V1_0::NfcData data;
+    nfc_nci_IoctlInOutData_t *pInpOutData = (nfc_nci_IoctlInOutData_t*)p_data;
+    int status = 0;
 
-    return 0;
+    ALOGD ("%s arg = %ld", func, arg);
+    pInpOutData->inp.context= &NfcAdaptation::GetInstance();
+    NfcAdaptation::GetInstance().mCurrentIoctlData = pInpOutData;
+    data.setToExternal((uint8_t*)pInpOutData, sizeof(nfc_nci_IoctlInOutData_t));
+    mNqHal->ioctl(arg, data, IoctlCallback);
+    ALOGD ("%s Ioctl Completed for Type = %llu", func, pInpOutData->out.ioctlType);
+    return (pInpOutData->out.result);
 }
 
 /*******************************************************************************
@@ -705,6 +748,7 @@ void NfcAdaptation::DownloadFirmware ()
     static UINT8 cmd_init_nci[]  = {0x20,0x01,0x00};
     static UINT8 cmd_reset_nci_size = sizeof(cmd_reset_nci) / sizeof(UINT8);
     static UINT8 cmd_init_nci_size  = sizeof(cmd_init_nci)  / sizeof(UINT8);
+    nfc_nci_IoctlInOutData_t inpOutData;
     tNFC_FWUpdate_Info_t fw_update_inf;
     UINT8 p_core_init_rsp_params;
     UINT16 fw_dwnld_status = NFC_STATUS_FAILED;
@@ -747,11 +791,13 @@ void NfcAdaptation::DownloadFirmware ()
     {
         goto TheEnd;
     }
-    mHalEntryFuncs.ioctl(HAL_NFC_IOCTL_CHECK_FLASH_REQ, &fw_update_inf);
+    mHalEntryFuncs.ioctl(HAL_NFC_IOCTL_CHECK_FLASH_REQ, &inpOutData);
+    fw_update_inf = *(tNFC_FWUpdate_Info_t*)&inpOutData.out.data.fwUpdateInf;
     NFC_TRACE_DEBUG1 ("fw_update required  -> %d", fw_update_inf.fw_update_reqd);
     if(fw_update_inf.fw_update_reqd == TRUE)
     {
-        mHalEntryFuncs.ioctl(HAL_NFC_IOCTL_FW_DWNLD, &fw_dwnld_status);
+        mHalEntryFuncs.ioctl(HAL_NFC_IOCTL_FW_DWNLD, &inpOutData);
+        fw_dwnld_status = inpOutData.out.data.fwDwnldStatus;
         if (fw_dwnld_status !=  NFC_STATUS_OK)
         {
             ALOGD ("%s: FW Download failed", func);

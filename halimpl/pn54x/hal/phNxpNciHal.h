@@ -37,14 +37,6 @@
 #define LINK_ALWAYS_ON        02
 #undef P2P_PRIO_LOGIC_HAL_IMP
 
-typedef struct
-{
-    uint16_t cmd_len;
-    uint8_t *p_cmd;
-    uint16_t rsp_len;
-    uint8_t *p_cmd_rsp;
-} nfc_nci_ExtnCmd_t;
-
 enum {
     HAL_NFC_ENABLE_I2C_FRAGMENTATION_EVT = 0x07,
     HAL_NFC_POST_MIN_INIT_CPLT_EVT  = 0x08
