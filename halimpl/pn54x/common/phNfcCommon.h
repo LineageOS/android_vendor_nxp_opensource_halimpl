@@ -33,7 +33,7 @@
 #include <phNfcCompId.h>
 
 
-#define FW_DLL_ROOT_DIR "/system/vendor/firmware/"
+#define FW_DLL_ROOT_DIR "/vendor/firmware/"
 #define FW_DLL_EXTENSION ".so"
 
 #if(NFC_NXP_CHIP_TYPE == PN548C2)

@@ -133,7 +133,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE       := libnfc-brcm.conf
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH  := $(TARGET_OUT_ETC)
+LOCAL_MODULE_PATH  := $(TARGET_OUT_VENDOR_ETC)
 LOCAL_SRC_FILES    := $(LOCAL_MODULE)
 include $(BUILD_PREBUILT)
 
@@ -141,7 +141,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE       := libnfc-nxp.conf
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH  := $(TARGET_OUT_ETC)
+LOCAL_MODULE_PATH  := $(TARGET_OUT_VENDOR_ETC)
 ifeq ($(strip $(NQ3XX_PRESENT)),true)
 LOCAL_SRC_FILES    := libnfc-nxp-PN80T_example.conf
 else
@@ -153,7 +153,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE       := libnfc-nxp_default.conf
 LOCAL_MODULE_TAGS  := optional
 LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH  := $(TARGET_OUT_ETC)
+LOCAL_MODULE_PATH  := $(TARGET_OUT_VENDOR_ETC)
 
 ifeq ($(strip $(NQ3XX_PRESENT)),true)
 LOCAL_SRC_FILES    := libnfc-nxp-PN80T_example.conf
