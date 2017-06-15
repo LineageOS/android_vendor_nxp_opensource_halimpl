@@ -339,13 +339,22 @@ int CNfcConfig::getconfiguration_id (char * config_file)
             config_id = CONFIG_GENERIC;
             break;
         case TARGET_MSM8952:
-        case TARGET_MSM8953:
-        case TARGET_MSM8937:
         case TARGET_MSM8909:
-        case TARGET_MSM8917:
-        case TARGET_MSM8940:
             config_id = QRD_TYPE_DEFAULT;
             strlcpy(config_file, config_name_qrd, MAX_DATA_CONFIG_PATH_LEN);
+            break;
+        case TARGET_MSM8953:
+        case TARGET_MSM8937:
+        case TARGET_MSM8917:
+        case TARGET_MSM8940:
+            if ((!strncmp(nq_chipid, NQ220, PROPERTY_VALUE_MAX)) || (!strncmp(nq_chipid, NQ210, PROPERTY_VALUE_MAX))) {
+                // NQ210 or NQ220
+                config_id = QRD_TYPE_DEFAULT;
+                strlcpy(config_file, config_name_qrd, MAX_DATA_CONFIG_PATH_LEN);
+            } else {
+                config_id = QRD_TYPE_NQ3XX;
+                strlcpy(config_file, config_name_qrd_NQ3XX, MAX_DATA_CONFIG_PATH_LEN);
+            }
             break;
         case TARGET_MSM8976:
         case TARGET_MSM8996:
@@ -378,6 +387,19 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         {
         case TARGET_GENERIC:
             config_id = CONFIG_GENERIC;
+            break;
+        case TARGET_MSM8953:
+        case TARGET_MSM8937:
+        case TARGET_MSM8917:
+        case TARGET_MSM8940:
+            if ((!strncmp(nq_chipid, NQ220, PROPERTY_VALUE_MAX)) || (!strncmp(nq_chipid, NQ210, PROPERTY_VALUE_MAX))) {
+                // NQ210 or NQ220
+                config_id = MTP_TYPE_DEFAULT;
+                strlcpy(config_file, config_name_mtp, MAX_DATA_CONFIG_PATH_LEN);
+            } else {
+                config_id = MTP_TYPE_NQ3XX;
+                strlcpy(config_file, config_name_mtp_NQ3XX, MAX_DATA_CONFIG_PATH_LEN);
+            }
             break;
         case TARGET_SDM845:
         case TARGET_SDM660:
