@@ -17,7 +17,6 @@ LOCAL_PRELINK_MODULE := false
 LOCAL_ARM_MODE := arm
 LOCAL_MODULE := libp61-jcop-kit
 LOCAL_MODULE_TAGS := optional
-LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := nxp
 LOCAL_SHARED_LIBRARIES := libhardware_legacy libcutils liblog libdl libhardware
 LOCAL_CFLAGS := $(D_CFLAGS)
