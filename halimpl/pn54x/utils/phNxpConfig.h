@@ -175,6 +175,6 @@ int updateNxpConfigTimestamp();
 #define DEBUG 0
 
 /* default configuration */
-#define default_storage_location "/data/nfc"
+#define default_storage_location "/data/vendor/nfc"
 
 #endif
