@@ -193,13 +193,13 @@ void nfc_ncif_cmd_timeout (void)
         if (nfc_cb.nfc_state == NFC_STATE_CORE_INIT)
         {
 #if((NXP_EXTNS == TRUE) && (NXP_NFCC_MW_RCVRY_BLK_FW_DNLD == TRUE))
-             nfc_nci_IoctlInOutData_t inpOutData;
              NFC_TRACE_ERROR0("MW recovery should abort FW download checking at time of cmd_timeout");
 #else
              NFC_TRACE_ERROR0 ("Force FW Download !");
              NFC_TRACE_ERROR0 ("Force FW Download !");
+             nfc_nci_IoctlInOutData_t inpOutData;
              nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_CHECK_FLASH_REQ, &inpOutData);
-             fw_update_inf = inpOutData.out.data.fwUpdateInf;
+             fw_update_inf = *(tNFC_FWUpdate_Info_t*)&inpOutData.out.data.fwUpdateInf;
              nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_FW_DWNLD, &inpOutData);
              fw_dwnld_status = inpOutData.out.data.fwDwnldStatus;
              NFC_TRACE_ERROR1 ("FW Download 0x%x", fw_dwnld_status);
@@ -2943,7 +2943,7 @@ void uicc_eeprom_get_config(UINT8* config_resp )
     while((config_status != NCI_STATUS_OK) && (retry_count <= 3));
     if(config_status == NCI_STATUS_OK && inpOutData.out.data.nciRsp.rsp_len > 0)
     {
-            memcpy(config_resp, inpOutData.out.data.p_rsp, inpOutData.out.data.rsp_len);
+            memcpy(config_resp, inpOutData.out.data.nciRsp.p_rsp, inpOutData.out.data.nciRsp.rsp_len);
     }
     else
     {
