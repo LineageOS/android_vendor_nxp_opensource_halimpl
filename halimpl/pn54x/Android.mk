@@ -26,6 +26,7 @@ PN547C2 := 1
 PN548C2 := 2
 PN551   := 3
 PN553   := 4
+PN557   := 5
 
 NQ110 := $PN547C2
 NQ120 := $PN547C2
@@ -48,10 +49,13 @@ endif
 ifeq ($(PN553),4)
 D_CFLAGS += -DPN553=4
 endif
+ifeq ($(PN557),5)
+D_CFLAGS += -DPN557=5
+endif
 
 #### Select the CHIP ####
 ifeq ($(strip $(NQ3XX_PRESENT)),true)
-NXP_CHIP_TYPE := $(PN553)
+NXP_CHIP_TYPE := $(PN557)
 else
 NXP_CHIP_TYPE := $(PN548C2)
 endif
@@ -64,6 +68,8 @@ else ifeq ($(NXP_CHIP_TYPE),$(PN551))
 D_CFLAGS += -DNFC_NXP_CHIP_TYPE=PN551
 else ifeq ($(NXP_CHIP_TYPE),$(PN553))
 D_CFLAGS += -DNFC_NXP_CHIP_TYPE=PN553
+else ifeq ($(NXP_CHIP_TYPE),$(PN557))
+D_CFLAGS += -DNFC_NXP_CHIP_TYPE=PN557
 endif
 
 LOCAL_PATH := $(call my-dir)
@@ -75,6 +81,8 @@ LOCAL_MODULE := nfc_nci.nqx.default
 else ifeq ($(NXP_CHIP_TYPE),$(PN551))
 LOCAL_MODULE := nfc_nci.nqx.default
 else ifeq ($(NXP_CHIP_TYPE),$(PN553))
+LOCAL_MODULE := nfc_nci.nqx.default
+else ifeq ($(NXP_CHIP_TYPE),$(PN557))
 LOCAL_MODULE := nfc_nci.nqx.default
 endif
 ifeq (true,$(TARGET_IS_64_BIT))

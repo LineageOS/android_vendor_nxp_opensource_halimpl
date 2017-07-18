@@ -67,6 +67,7 @@ typedef union {
     uint8_t           halType;
     nfc_nci_ExtnCmd_t nciCmd;
     uint32_t          timeoutMilliSec;
+    long              nfcServicePid;
 }InputData_t;
 /*
  * nfc_nci_ExtnInputData_t :Apart from InputData_t, there are context data
