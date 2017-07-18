@@ -26,11 +26,12 @@
 #define PN544_MAGIC 0xE9
 
 /* Function declarations */
-void phTmlNfc_i2c_close(void *pDevHandle);
-NFCSTATUS phTmlNfc_i2c_open_and_configure(pphTmlNfc_Config_t pConfig, void ** pLinkHandle);
-int phTmlNfc_i2c_read(void *pDevHandle, uint8_t * pBuffer, int nNbBytesToRead);
-int phTmlNfc_i2c_write(void *pDevHandle,uint8_t * pBuffer, int nNbBytesToWrite);
-int phTmlNfc_i2c_reset(void *pDevHandle,long level);
+void phTmlNfc_i2c_close(void* pDevHandle);
+NFCSTATUS phTmlNfc_i2c_open_and_configure(pphTmlNfc_Config_t pConfig,
+                                          void** pLinkHandle);
+int phTmlNfc_i2c_read(void* pDevHandle, uint8_t* pBuffer, int nNbBytesToRead);
+int phTmlNfc_i2c_write(void* pDevHandle, uint8_t* pBuffer, int nNbBytesToWrite);
+int phTmlNfc_i2c_reset(void* pDevHandle, long level);
 bool_t getDownloadFlag(void);
 bool_t notifyFwrequest;
 phTmlNfc_i2cfragmentation_t fragmentation_enabled;
@@ -43,15 +44,15 @@ phTmlNfc_i2cfragmentation_t fragmentation_enabled;
  */
 #define PN544_SET_PWR    _IOW(PN544_MAGIC, 0x01, unsigned int)
 
-#if(NFC_NXP_ESE == TRUE)
-NFCSTATUS phTmlNfc_i2c_get_p61_power_state(void *pDevHandle);
-NFCSTATUS phTmlNfc_i2c_set_p61_power_state(void *pDevHandle, long arg);
-NFCSTATUS phTmlNfc_set_pid(void *pDevHandle, long pid);
-NFCSTATUS phTmlNfc_set_power_scheme(void *pDevHandle, long id);
-NFCSTATUS phTmlNfc_get_ese_access(void *pDevHandle, long timeout);
-NFCSTATUS phTmlNfc_i2c_set_Jcop_dwnld_state(void *pDevHandle, long level);
-#if (NXP_ESE_SVDD_SYNC == TRUE)
-NFCSTATUS phTmlNfc_rel_svdd_wait(void *pDevHandle);
+#if (NFC_NXP_ESE == TRUE)
+NFCSTATUS phTmlNfc_i2c_get_p61_power_state(void* pDevHandle);
+NFCSTATUS phTmlNfc_i2c_set_p61_power_state(void* pDevHandle, long arg);
+NFCSTATUS phTmlNfc_set_pid(void* pDevHandle, long pid);
+NFCSTATUS phTmlNfc_set_power_scheme(void* pDevHandle, long id);
+NFCSTATUS phTmlNfc_get_ese_access(void* pDevHandle, long timeout);
+NFCSTATUS phTmlNfc_i2c_set_Jcop_dwnld_state(void* pDevHandle, long level);
+#if (NXP_ESE_SVDD_SYNC == true)
+NFCSTATUS phTmlNfc_rel_svdd_wait(void* pDevHandle);
 #endif
 /*
  * SPI Request NFCC to enable p61 power, only in param
@@ -87,7 +88,7 @@ NFCSTATUS phTmlNfc_rel_svdd_wait(void *pDevHandle);
   NFC and SPI will call the ioctl to update the power scheme
 */
 #define P544_SET_POWER_SCHEME _IOW(PN544_MAGIC, 0x07, long)
-#if (NXP_ESE_SVDD_SYNC == TRUE)
+#if (NXP_ESE_SVDD_SYNC == true)
 /*
   NFC will call the ioctl to release the svdd protection
 */
@@ -97,5 +98,5 @@ NFCSTATUS phTmlNfc_rel_svdd_wait(void *pDevHandle);
  * state of P61
  *
 */
-#define PN544_SET_DWNLD_STATUS    _IOW(PN544_MAGIC, 0x09, long)
+#define PN544_SET_DWNLD_STATUS _IOW(PN544_MAGIC, 0x09, long)
 #endif

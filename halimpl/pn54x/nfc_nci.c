@@ -186,7 +186,7 @@ static int hal_power_cycle(const struct nfc_nci_device *p_dev)
 **
 ** Description      Notify FW download request.
 **
-** Returns          TRUE if successful otherwise FALSE.
+** Returns          true if successful otherwise false.
 **
 *******************************************************************************/
 static int hal_get_fw_dwnld_flag(const struct nfc_nci_device *p_dev, uint8_t* fwDnldRequest)
@@ -196,7 +196,7 @@ static int hal_get_fw_dwnld_flag(const struct nfc_nci_device *p_dev, uint8_t* fw
 
     retval = phNxpNciHal_getFWDownloadFlag(fwDnldRequest);
 
-    return retval;
+  return retval;
 }
 
 /*************************************
@@ -212,11 +212,10 @@ static int hal_get_fw_dwnld_flag(const struct nfc_nci_device *p_dev, uint8_t* fw
 ** Returns          0 if successful
 **
 *******************************************************************************/
-static int nfc_close(hw_device_t *dev)
-{
-    int retval = 0;
-    free(dev);
-    return retval;
+static int nfc_close(hw_device_t* dev) {
+  int retval = 0;
+  free(dev);
+  return retval;
 }
 
 /*******************************************************************************
@@ -233,62 +232,57 @@ static int nfc_open(const hw_module_t* module, const char* name,
 {
     ALOGD("%s: enter; name=%s", __FUNCTION__, name);
     int retval = 0; /* 0 is ok; -1 is error */
-
+    pn547_dev_t *dev = NULL;
     if (strcmp(name, NFC_NCI_CONTROLLER) == 0)
     {
-        pn547_dev_t *dev = calloc(1, sizeof(pn547_dev_t));
-
+        dev = calloc(1, sizeof(pn547_dev_t));
         if(dev == NULL)
         {
-            retval = -ENOMEM;
-            goto exit;
+            retval = -EINVAL;
         }
+        else
+        {
+            /* Common hw_device_t fields */
+            dev->nci_device.common.tag = HARDWARE_DEVICE_TAG;
+            dev->nci_device.common.version = 0x00010000; /* [31:16] major, [15:0] minor */
+            dev->nci_device.common.module = (struct hw_module_t*) module;
+            dev->nci_device.common.close = nfc_close;
 
-        /* Common hw_device_t fields */
-        dev->nci_device.common.tag = HARDWARE_DEVICE_TAG;
-        dev->nci_device.common.version = 0x00010000; /* [31:16] major, [15:0] minor */
-        dev->nci_device.common.module = (struct hw_module_t*) module;
-        dev->nci_device.common.close = nfc_close;
+            /* NCI HAL method pointers */
+            dev->nci_device.open = hal_open;
+            dev->nci_device.write = hal_write;
+            dev->ioctl = hal_ioctl;
+            dev->nci_device.core_initialized = hal_core_initialized;
+            dev->nci_device.pre_discover = hal_pre_discover;
+            dev->nci_device.close = hal_close;
+            dev->nci_device.control_granted = hal_control_granted;
+            dev->nci_device.power_cycle = hal_power_cycle;
+            dev->check_fw_dwnld_flag = hal_get_fw_dwnld_flag;
+            *device = (hw_device_t*) dev;
+        }
+  } else {
+    retval = -EINVAL;
+  }
 
-        /* NCI HAL method pointers */
-        dev->nci_device.open = hal_open;
-        dev->nci_device.write = hal_write;
-        dev->ioctl = hal_ioctl;
-        dev->nci_device.core_initialized = hal_core_initialized;
-        dev->nci_device.pre_discover = hal_pre_discover;
-        dev->nci_device.close = hal_close;
-        dev->nci_device.control_granted = hal_control_granted;
-        dev->nci_device.power_cycle = hal_power_cycle;
-        dev->check_fw_dwnld_flag = hal_get_fw_dwnld_flag;
-        *device = (hw_device_t*) dev;
-    }
-    else
-    {
-        retval = -EINVAL;
-    }
-
-exit:
-    ALOGD("%s: exit %d", __FUNCTION__, retval);
-    return retval;
+  ALOGD("%s: exit %d", __func__, retval);
+  return retval;
 }
 
 /* Android hardware module definition */
-static struct hw_module_methods_t nfc_module_methods =
-{
+static struct hw_module_methods_t nfc_module_methods = {
     .open = nfc_open,
 };
 
 /* NFC module definition */
-struct nfc_nci_module_t HAL_MODULE_INFO_SYM =
-{
+struct nfc_nci_module_t HAL_MODULE_INFO_SYM = {
     .common =
-    {
-        .tag = HARDWARE_MODULE_TAG,
-        .module_api_version = 0x0100, /* [15:8] major, [7:0] minor (1.0) */
-        .hal_api_version = 0x00, /* 0 is only valid value */
-        .id = NFC_NCI_HARDWARE_MODULE_ID,
-        .name = "NXP PN54X NFC NCI HW HAL",
-        .author = "NXP Semiconductors",
-        .methods = &nfc_module_methods,
-    },
+        {
+         .tag = HARDWARE_MODULE_TAG,
+         .module_api_version = 0x0100, /* [15:8] major, [7:0] minor (1.0) */
+         .hal_api_version = 0x00,      /* 0 is only valid value */
+         .id = NFC_NCI_HARDWARE_MODULE_ID,
+         .name = "NXP PN54X NFC NCI HW HAL",
+         .author = "NXP Semiconductors",
+         .methods = &nfc_module_methods,
+        },
 };

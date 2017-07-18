@@ -20,45 +20,46 @@
 #ifndef DATA_TYPES_H
 #define DATA_TYPES_H
 
+#include <stdint.h>
+#include <stdbool.h>
+
 #ifndef NULL
-#define NULL     0
+#define NULL 0
+#endif
+
+#ifndef false
+#define false 0
 #endif
 
 #ifndef FALSE
-#define FALSE  0
+#define FALSE 0
 #endif
 
-typedef unsigned char   UINT8;
-typedef unsigned short  UINT16;
-typedef unsigned long   UINT32;
-typedef unsigned long long int UINT64;
-typedef signed   long   INT32;
-typedef signed   char   INT8;
-typedef signed   short  INT16;
-typedef unsigned char   BOOLEAN;
-typedef UINT32          UINTPTR;
-typedef UINT32          TIME_STAMP;
+typedef uint32_t TIME_STAMP;
+
+#ifndef true
+#define true (!false)
+#endif
 
 #ifndef TRUE
-#define TRUE   (!FALSE)
+#define TRUE (!FALSE)
 #endif
-
-typedef unsigned char   UBYTE;
+typedef unsigned char UBYTE;
 
 #ifdef __arm
-#define PACKED  __packed
-#define INLINE  __inline
+#define PACKED __packed
+#define INLINE __inline
 #else
 #define PACKED
 #define INLINE
 #endif
 
 #ifndef BIG_ENDIAN
-#define BIG_ENDIAN FALSE
+#define BIG_ENDIAN false
 #endif
 
-#define UINT16_LOW_BYTE(x)      ((x) & 0xff)
-#define UINT16_HI_BYTE(x)       ((x) >> 8)
+#define UINT16_LOW_BYTE(x) ((x)&0xff)
+#define UINT16_HI_BYTE(x) ((x) >> 8)
 
 /* MACRO definitions for safe string functions */
 /* Replace standard string functions with safe functions if available */
