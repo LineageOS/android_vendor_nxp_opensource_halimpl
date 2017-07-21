@@ -28,7 +28,7 @@
 #include <sys/stat.h>
 
 JcopOsDwnld JcopOsDwnld::sJcopDwnld;
-INT32 gTransceiveTimeout = 120000;
+int32_t gTransceiveTimeout = 120000;
 
 tJBL_STATUS (JcopOsDwnld::*JcopOs_dwnld_seqhandler[])(
             JcopOs_ImageInfo_t* pContext, tJBL_STATUS status, JcopOs_TranscieveInfo_t* pInfo)={
@@ -43,9 +43,9 @@ tJBL_STATUS (JcopOsDwnld::*JcopOs_dwnld_seqhandler[])(
    };
 
 pJcopOs_Dwnld_Context_t gpJcopOs_Dwnld_Context = NULL;
-static const char *path[3] = {"/data/nfc/JcopOs_Update1.apdu",
-                             "/data/nfc/JcopOs_Update2.apdu",
-                             "/data/nfc/JcopOs_Update3.apdu"};
+static const char *path[3] = {"/data/vendor/nfc/JcopOs_Update1.apdu",
+                             "/data/vendor/nfc/JcopOs_Update2.apdu",
+                             "/data/vendor/nfc/JcopOs_Update3.apdu"};
 
 /*******************************************************************************
 **
@@ -112,7 +112,7 @@ bool JcopOsDwnld::initialize (IChannel_t *channel)
     gpJcopOs_Dwnld_Context = (pJcopOs_Dwnld_Context_t)malloc(sizeof(JcopOs_Dwnld_Context_t));
     if(gpJcopOs_Dwnld_Context != NULL)
     {
-        memset((void *)gpJcopOs_Dwnld_Context, 0, (UINT32)sizeof(JcopOs_Dwnld_Context_t));
+        memset((void *)gpJcopOs_Dwnld_Context, 0, (uint32_t)sizeof(JcopOs_Dwnld_Context_t));
         gpJcopOs_Dwnld_Context->channel = (IChannel_t*)malloc(sizeof(IChannel_t));
         if(gpJcopOs_Dwnld_Context->channel != NULL)
         {
@@ -123,7 +123,7 @@ bool JcopOsDwnld::initialize (IChannel_t *channel)
             ALOGD("%s: Memory allocation for IChannel is failed", fn);
             return (false);
         }
-        gpJcopOs_Dwnld_Context->pJcopOs_TransInfo.sSendData = (UINT8*)malloc(sizeof(UINT8)*JCOP_MAX_BUF_SIZE);
+        gpJcopOs_Dwnld_Context->pJcopOs_TransInfo.sSendData = (uint8_t*)malloc(sizeof(uint8_t)*JCOP_MAX_BUF_SIZE);
         if(gpJcopOs_Dwnld_Context->pJcopOs_TransInfo.sSendData != NULL)
         {
             memset(gpJcopOs_Dwnld_Context->pJcopOs_TransInfo.sSendData, 0, JCOP_MAX_BUF_SIZE);
@@ -191,7 +191,7 @@ tJBL_STATUS JcopOsDwnld::JcopOs_Download()
     tJBL_STATUS wstatus = STATUS_FAILED;
     JcopOs_TranscieveInfo_t pTranscv_Info;
     JcopOs_ImageInfo_t ImageInfo;
-    UINT8 retry_cnt = 0x00;
+    uint8_t retry_cnt = 0x00;
     ALOGD("%s: enter:", fn);
     if(mIsInit == false)
     {
@@ -224,7 +224,7 @@ tJBL_STATUS JcopOsDwnld::JcopOs_Download()
 tJBL_STATUS JcopOsDwnld::JcopOs_update_seq_handler()
 {
     static const char fn[] = "JcopOsDwnld::JcopOs_update_seq_handler";
-    UINT8 seq_counter = 0;
+    uint8_t seq_counter = 0;
     JcopOs_ImageInfo_t update_info = (JcopOs_ImageInfo_t )gpJcopOs_Dwnld_Context->Image_info;
     JcopOs_TranscieveInfo_t trans_info = (JcopOs_TranscieveInfo_t )gpJcopOs_Dwnld_Context->pJcopOs_TransInfo;
     update_info.index = 0x00;
@@ -269,7 +269,7 @@ tJBL_STATUS JcopOsDwnld::TriggerApdu(JcopOs_ImageInfo_t* pVersionInfo, tJBL_STAT
     static const char fn [] = "JcopOsDwnld::TriggerApdu";
     bool stat = false;
     IChannel_t *mchannel = gpJcopOs_Dwnld_Context->channel;
-    INT32 recvBufferActualSize = 0;
+    int32_t recvBufferActualSize = 0;
 
     ALOGD("%s: enter;", fn);
 
@@ -282,8 +282,8 @@ tJBL_STATUS JcopOsDwnld::TriggerApdu(JcopOs_ImageInfo_t* pVersionInfo, tJBL_STAT
     else
     {
         pTranscv_Info->timeout = gTransceiveTimeout;
-        pTranscv_Info->sSendlength = (INT32)sizeof(Trigger_APDU);
-        pTranscv_Info->sRecvlength = 1024;//(INT32)sizeof(INT32);
+        pTranscv_Info->sSendlength = (int32_t)sizeof(Trigger_APDU);
+        pTranscv_Info->sRecvlength = 1024;//(int32_t)sizeof(int32_t);
         memcpy(pTranscv_Info->sSendData, Trigger_APDU, pTranscv_Info->sSendlength);
 
         ALOGD("%s: Calling Secure Element Transceive", fn);
@@ -333,7 +333,7 @@ tJBL_STATUS JcopOsDwnld::GetInfo(JcopOs_ImageInfo_t* pImageInfo, tJBL_STATUS sta
 
     bool stat = false;
     IChannel_t *mchannel = gpJcopOs_Dwnld_Context->channel;
-    INT32 recvBufferActualSize = 0;
+    int32_t recvBufferActualSize = 0;
 
     ALOGD("%s: enter;", fn);
 
@@ -349,7 +349,7 @@ tJBL_STATUS JcopOsDwnld::GetInfo(JcopOs_ImageInfo_t* pImageInfo, tJBL_STATUS sta
 
         memset(pTranscv_Info->sSendData, 0, JCOP_MAX_BUF_SIZE);
         pTranscv_Info->timeout = gTransceiveTimeout;
-        pTranscv_Info->sSendlength = (UINT32)sizeof(GetInfo_APDU);
+        pTranscv_Info->sSendlength = (uint32_t)sizeof(GetInfo_APDU);
         pTranscv_Info->sRecvlength = 1024;
         memcpy(pTranscv_Info->sSendData, GetInfo_APDU, pTranscv_Info->sSendlength);
 
@@ -428,11 +428,11 @@ tJBL_STATUS JcopOsDwnld::load_JcopOS_image(JcopOs_ImageInfo_t *Os_info, tJBL_STA
     static const char fn [] = "JcopOsDwnld::load_JcopOS_image";
     bool stat = false;
     int wResult, size =0;
-    INT32 wIndex,wCount=0;
-    INT32 wLen;
+    int32_t wIndex,wCount=0;
+    int32_t wLen;
 
     IChannel_t *mchannel = gpJcopOs_Dwnld_Context->channel;
-    INT32 recvBufferActualSize = 0;
+    int32_t recvBufferActualSize = 0;
     ALOGD("%s: enter", fn);
     if(Os_info == NULL ||
        pTranscv_Info == NULL)
@@ -570,12 +570,12 @@ exit:
 ** Returns:         Success if ok.
 **
 *******************************************************************************/
-tJBL_STATUS JcopOsDwnld::GetJcopOsState(JcopOs_ImageInfo_t *Os_info, UINT8 *counter)
+tJBL_STATUS JcopOsDwnld::GetJcopOsState(JcopOs_ImageInfo_t *Os_info, uint8_t *counter)
 {
     static const char fn [] = "JcopOsDwnld::GetJcopOsState";
     tJBL_STATUS status = STATUS_SUCCESS;
     FILE *fp;
-    UINT8 xx=0;
+    uint8_t xx=0;
     ALOGD("%s: enter", fn);
     if(Os_info == NULL)
     {
@@ -642,7 +642,7 @@ tJBL_STATUS JcopOsDwnld::GetJcopOsState(JcopOs_ImageInfo_t *Os_info, UINT8 *coun
 ** Returns:         Success if ok.
 **
 *******************************************************************************/
-tJBL_STATUS JcopOsDwnld::SetJcopOsState(JcopOs_ImageInfo_t *Os_info, UINT8 state)
+tJBL_STATUS JcopOsDwnld::SetJcopOsState(JcopOs_ImageInfo_t *Os_info, uint8_t state)
 {
     static const char fn [] = "JcopOsDwnld::SetJcopOsState";
     tJBL_STATUS status = STATUS_FAILED;
@@ -674,7 +674,7 @@ tJBL_STATUS JcopOsDwnld::SetJcopOsState(JcopOs_ImageInfo_t *Os_info, UINT8 state
 }
 
 #if 0
-void *JcopOsDwnld::GetMemory(UINT32 size)
+void *JcopOsDwnld::GetMemory(uint32_t size)
 {
     void *pMem;
     static const char fn [] = "JcopOsDwnld::GetMemory";
