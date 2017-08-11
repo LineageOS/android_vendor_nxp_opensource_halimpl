@@ -411,7 +411,6 @@ void nfc_ce_t3t_set_listen_params(void) {
   if(NFC_GetNCIVersion() != NCI_VERSION_2_0) {
     UINT8_TO_STREAM (p_params, NCI_PARAM_ID_LF_T3T_PMM);      /* type */
     UINT8_TO_STREAM (p_params, NCI_PARAM_LEN_LF_T3T_PMM);     /* length */
-    ARRAY_TO_BE_STREAM(p_params,t3tPMM, NCI_T3T_PMM_LEN);
   }
 #else
   /* Mask of IDs to disable listening */
