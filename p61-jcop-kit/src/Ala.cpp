@@ -526,7 +526,6 @@ tJBL_STATUS ALA_OpenChannel(Ala_ImageInfo_t *Os_info, tJBL_STATUS status,
     bool stat = false;
     int32_t recvBufferActualSize = 0;
     IChannel_t *mchannel = gpAla_Dwnld_Context->mchannel;
-    Os_info->channel_cnt = 0x00;
     ALOGD("%s: enter", fn);
     if(Os_info == NULL ||
        pTranscv_Info == NULL)
@@ -535,6 +534,7 @@ tJBL_STATUS ALA_OpenChannel(Ala_ImageInfo_t *Os_info, tJBL_STATUS status,
     }
     else
     {
+        Os_info->channel_cnt = 0x00;
         pTranscv_Info->timeout = gTransceiveTimeout;
         pTranscv_Info->sSendlength = (int32_t)sizeof(OpenChannel);
         pTranscv_Info->sRecvlength = 1024;//(int32_t)sizeof(int32_t);
@@ -792,6 +792,14 @@ tJBL_STATUS ALA_loadapplet(Ala_ImageInfo_t *Os_info, tJBL_STATUS status, Ala_Tra
     uint8_t temp_buf[1024];
     uint8_t len_byte=0, offset =0;
     IChannel_t *mchannel = gpAla_Dwnld_Context->mchannel;
+
+    ALOGD("%s: enter", fn);
+    if(Os_info == NULL ||
+       pTranscv_Info == NULL)
+    {
+        ALOGE("%s: invalid parameter", fn);
+        return status;
+    }
     Os_info->bytes_read = 0;
 #if(NXP_LDR_SVC_VER_2 == TRUE)
     bool    reachEOFCheck = false;
@@ -812,13 +820,6 @@ tJBL_STATUS ALA_loadapplet(Ala_ImageInfo_t *Os_info, tJBL_STATUS status, Ala_Tra
         ALOGD("%s: Response Out file is optional as per input", fn);
     }
 #endif
-    ALOGD("%s: enter", fn);
-    if(Os_info == NULL ||
-       pTranscv_Info == NULL)
-    {
-        ALOGE("%s: invalid parameter", fn);
-        return status;
-    }
     Os_info->fp = fopen(Os_info->fls_path, "r");
 
     if (Os_info->fp == NULL) {
