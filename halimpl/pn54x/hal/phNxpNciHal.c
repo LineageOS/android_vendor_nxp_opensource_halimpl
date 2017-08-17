@@ -3165,11 +3165,13 @@ int phNxpNciHal_ioctl(long arg, void* p_data) {
       status = phNxpLog_EnableDisableLogLevel(pInpOutData->inp.data.halType);
       break;
     case HAL_NFC_IOCTL_SET_NFC_SERVICE_PID:
-      gpphTmlNfc_Context->nfc_service_pid = pInpOutData->inp.data.nfcServicePid;
-      status = phTmlNfc_IoCtl(phTmlNfc_e_SetNfcServicePid);
-      if (NFCSTATUS_FAILED != status) {
-        if (NULL != p_data) pInpOutData->out.data.status = (uint16_t)status;
-        ret = 0;
+      if(gpphTmlNfc_Context) {
+          gpphTmlNfc_Context->nfc_service_pid = pInpOutData->inp.data.nfcServicePid;
+          status = phTmlNfc_IoCtl(phTmlNfc_e_SetNfcServicePid);
+          if (NFCSTATUS_FAILED != status) {
+              if (NULL != p_data) pInpOutData->out.data.status = (uint16_t)status;
+              ret = 0;
+          }
       }
       break;
     default:
