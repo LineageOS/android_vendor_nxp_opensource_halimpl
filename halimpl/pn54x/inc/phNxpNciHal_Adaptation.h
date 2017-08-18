@@ -97,6 +97,7 @@ typedef union{
     uint16_t            fwUpdateInf;
     uint16_t            fwDwnldStatus;
     uint16_t            fwMwVerStatus;
+    uint8_t             chipType;
 }outputData_t;
 
 /*
