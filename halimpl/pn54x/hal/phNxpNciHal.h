@@ -21,10 +21,7 @@
 
 #include <hardware/nfc.h>
 #include <phNxpNciHal_utils.h>
-#include <NXP_ESE_Features.h>
-#ifndef NXP_NFCC_FEATURES_H
-#include <NXP_NFCC_Features.h>
-#endif
+#include "NxpNfcCapability.h"
 
 /********************* Definitions and structures *****************************/
 #define MAX_RETRY_COUNT 5
@@ -147,6 +144,7 @@ typedef struct phNxpNciHal_Control {
   uint8_t read_retry_cnt;
   phNxpNciInfo_t nci_info;
   uint8_t hal_boot_mode;
+  tNFC_chipType chipType;
 } phNxpNciHal_Control_t;
 
 typedef struct {
@@ -250,4 +248,31 @@ int phNxpNciHal_write_unlocked(uint16_t data_len, const uint8_t* p_data);
 static int phNxpNciHal_fw_mw_ver_check();
 NFCSTATUS request_EEPROM(phNxpNci_EEPROM_info_t* mEEPROM_info);
 NFCSTATUS phNxpNciHal_send_nfcee_pwr_cntl_cmd(uint8_t type);
+
+/*******************************************************************************
+**
+** Function         phNxpNciHal_configFeatureList
+**
+** Description      Configures the featureList based on chip type
+**                  HW Version information number will provide chipType.
+**                  HW Version can be obtained from CORE_INIT_RESPONSE(NCI 1.0)
+**                  or CORE_RST_NTF(NCI 2.0)
+**
+** Parameters       CORE_INIT_RESPONSE/CORE_RST_NTF, len
+**
+** Returns          none
+*******************************************************************************/
+void phNxpNciHal_configFeatureList(uint8_t* init_rsp, uint16_t rsp_len);
+
+/*******************************************************************************
+**
+** Function         phNxpNciHal_getChipType
+**
+** Description      Gets the chipType which is configured during bootup
+**
+** Parameters       none
+**
+** Returns          chipType
+*******************************************************************************/
+tNFC_chipType phNxpNciHal_getChipType();
 #endif /* _PHNXPNCIHAL_H_ */

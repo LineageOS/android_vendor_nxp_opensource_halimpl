@@ -40,7 +40,6 @@
 #include "nfc_target.h"
 #include "nfc_hal_api.h"
 #include <hardware/nfc.h>
-
 #include <utils/RefBase.h>
 
 namespace android {
@@ -59,16 +58,16 @@ namespace V1_0 {
 struct INqNfc;
 } } } } }
 
-class ThreadMutex
-{
-public:
-    ThreadMutex();
-    virtual ~ThreadMutex();
-    void lock();
-    void unlock();
-    operator pthread_mutex_t* () {return &mMutex;}
-private:
-    pthread_mutex_t mMutex;
+class ThreadMutex {
+ public:
+  ThreadMutex();
+  virtual ~ThreadMutex();
+  void lock();
+  void unlock();
+  operator pthread_mutex_t*() { return &mMutex; }
+
+ private:
+  pthread_mutex_t mMutex;
 };
 
 class ThreadCondVar : public ThreadMutex {
@@ -111,26 +110,27 @@ class NfcAdaptation {
   nfc_nci_IoctlInOutData_t* mCurrentIoctlData;
 #endif
 
-private:
-    NfcAdaptation();
-    void    signal();
-    static  NfcAdaptation* mpInstance;
-    static  ThreadMutex sLock;
-    ThreadCondVar    mCondVar;
-    tHAL_NFC_ENTRY   mHalEntryFuncs; // function pointers for HAL entry points
-    static nfc_nci_device_t* mHalDeviceContext;
-    static android::sp<android::hardware::nfc::V1_0::INfc> mHal;
-    static android::sp<vendor::nxp::hardware::nfc::V1_0::INqNfc> mNqHal;
-    static android::hardware::nfc::V1_0::INfcClientCallback* mCallback;
-    static tHAL_NFC_CBACK* mHalCallback;
-    static tHAL_NFC_DATA_CBACK* mHalDataCallback;
-    static ThreadCondVar mHalOpenCompletedEvent;
-    static ThreadCondVar mHalCloseCompletedEvent;
-#if(NXP_EXTNS == TRUE)
-    pthread_t mThreadId;
-    static ThreadCondVar mHalCoreResetCompletedEvent;
-    static ThreadCondVar mHalCoreInitCompletedEvent;
-    static ThreadCondVar mHalInitCompletedEvent;
+ private:
+  NfcAdaptation();
+  void signal();
+  static NfcAdaptation* mpInstance;
+  static ThreadMutex sLock;
+  ThreadCondVar mCondVar;
+  tHAL_NFC_ENTRY mHalEntryFuncs;  // function pointers for HAL entry points
+  static nfc_nci_device_t* mHalDeviceContext;
+  static tHAL_NFC_CBACK* mHalCallback;
+  static tHAL_NFC_DATA_CBACK* mHalDataCallback;
+  static ThreadCondVar mHalOpenCompletedEvent;
+  static ThreadCondVar mHalCloseCompletedEvent;
+  static ThreadCondVar mHalIoctlEvent;
+  static android::sp<android::hardware::nfc::V1_0::INfc> mHal;
+  static android::sp<vendor::nxp::hardware::nfc::V1_0::INqNfc> mNqHal;
+  static android::hardware::nfc::V1_0::INfcClientCallback* mCallback;
+#if (NXP_EXTNS == TRUE)
+  pthread_t mThreadId;
+  static ThreadCondVar mHalCoreResetCompletedEvent;
+  static ThreadCondVar mHalCoreInitCompletedEvent;
+  static ThreadCondVar mHalInitCompletedEvent;
 #endif
   static uint32_t NFCA_TASK(uint32_t arg);
   static uint32_t Thread(uint32_t arg);

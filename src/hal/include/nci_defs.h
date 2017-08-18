@@ -273,7 +273,7 @@ typedef uint8_t tNCI_STATUS;
 #define NCI_MSG_NFCEE_DISCOVER 0
 #define NCI_MSG_NFCEE_MODE_SET 1
 #define NCI_MSG_NFCEE_STATUS   2
-#if (NXP_EXTNS == TRUE) && (NXP_WIRED_MODE_STANDBY == true)
+#if (NXP_EXTNS == TRUE)
 #define NCI_MSG_NFCEE_PWR_LNK_CTRL 3
 #define NCI_MSG_NFCEE_POWER_LINK_CTRL 4
 #endif
@@ -443,13 +443,7 @@ typedef uint8_t tNCI_NFCEE_PL_CONFIG;
 #define NCI_INTERFACE_FIRST_VS 0x80
 #if (NXP_EXTNS == TRUE)
 #define NCI_INTERFACE_MIFARE 0x80
-#if (NFC_NXP_CHIP_TYPE != PN547C2)
-#define NCI_INTERFACE_UICC_DIRECT 0x82
-#define NCI_INTERFACE_ESE_DIRECT 0x83
-#else
-#define NCI_INTERFACE_UICC_DIRECT 0x81
-#define NCI_INTERFACE_ESE_DIRECT 0x82
-#endif
+
 #endif
 typedef uint8_t tNCI_INTF_TYPE;
 
@@ -470,14 +464,6 @@ typedef uint8_t tNCI_INTF_TYPE;
 #define NCI_ROUTE_QUAL_LONG_SELECT  0x10 /* AID matching is allowed when the SELECT AID is longer */
 #define NCI_ROUTE_QUAL_SHORT_SELECT 0x20 /* AID matching is allowed when the SELECT AID is shorter */
 #define NCI_ROUTE_QUAL_BLOCK_ROUTE  0x40 /* AID is blocked in unsupported power mode */
-/**********************************************
- * NCI RF Management / PWR AND LINK CTRl Group Params
- **********************************************/
-#if (NXP_EXTNS == TRUE) && (NXP_WIRED_MODE_STANDBY == true)
-#define NCI_PWR_LINK_PARAM_CMD_SIZE 0x02 /*nfcee id, nfcee_pwr_link_cfg*/
-#define NCI_EE_PWR_LINK_ALWAYS_ON 0x01   /*NFCEE Power Supply always On*/
-#endif
-
 /**********************************************
  * Supported Protocols
  **********************************************/
@@ -544,11 +530,11 @@ typedef uint8_t tNCI_DISCOVERY_TYPE;
 #define NCI_ROUTE_PWR_STATE_BATT_OFF 0x04
 #if (NXP_EXTNS == TRUE)
 /* The device is screen off Unlock mode */
-#define NCI_ROUTE_PWR_STATE_SCREEN_OFF_UNLOCK()   ((NFC_GetNCIVersion() == NCI_VERSION_2_0)?0x08:0x00)
+#define NCI_ROUTE_PWR_STATE_SCREEN_OFF_UNLOCK()   ((NFC_GetNCIVersion() == NCI_VERSION_2_0)?0x08:0x80)
 /* The device is screen on lock mode */
 #define NCI_ROUTE_PWR_STATE_SCREEN_ON_LOCK()    ((NFC_GetNCIVersion() == NCI_VERSION_2_0)?0x10:0x40)
 /* The device is screen off lock mode */
-#define NCI_ROUTE_PWR_STATE_SCREEN_OFF_LOCK()   ((NFC_GetNCIVersion() == NCI_VERSION_2_0)?0x20:0x80)
+#define NCI_ROUTE_PWR_STATE_SCREEN_OFF_LOCK()   ((NFC_GetNCIVersion() == NCI_VERSION_2_0)?0x20:0x00)
 #endif
 /* Hardware / Registration Identification  */
 #define NCI_NFCEE_TAG_HW_ID 0x00

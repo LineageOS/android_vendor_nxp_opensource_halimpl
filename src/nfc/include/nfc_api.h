@@ -50,11 +50,7 @@
 #include "nfc_hal_api.h"
 #include "gki.h"
 #include "vendor_cfg.h"
-#if (NXP_EXTNS == TRUE)
-#include <NXP_NFCC_Features.h>
-#include <NXP_ESE_Features.h>
-#include <NXP_Platform_Features.h>
-#endif
+
 /* NFC application return status codes */
 /* Command succeeded    */
 #define NFC_STATUS_OK NCI_STATUS_OK
@@ -114,16 +110,16 @@
 #define NXP_EN_PN66T 0
 #define NXP_EN_PN551 0
 #define NXP_EN_PN67T 0
-#define NXP_EN_PN553 0
-#define NXP_EN_PN80T 0
+#define NXP_EN_PN553 1
+#define NXP_EN_PN80T 1
 #define NXP_EN_PN553_MR1 0
 #define NXP_EN_PN81A     0
 #define NXP_EN_PN553_MR2 0
 #define NXP_EN_PN557     1
 #define NXP_EN_PN81T     1
 #define NXP_ANDROID_VER (8U)        /* NXP android version */
-#define NFC_NXP_MW_VERSION_MAJ (0U) /* MW Major Version */
-#define NFC_NXP_MW_VERSION_MIN (9U) /* MW Minor Version */
+#define NFC_NXP_MW_VERSION_MAJ (0x00) /* MW Major Version */
+#define NFC_NXP_MW_VERSION_MIN (0x13) /* MW Minor Version */
 #endif
 /* 0xE0 ~0xFF are proprietary status codes */
 /* Command started successfully                     */
@@ -305,15 +301,13 @@ typedef tNCI_DISCOVER_PARAMS tNFC_DISCOVER_PARAMS;
 #define NFC_FIRST_REVT 0x5000
 #define NFC_FIRST_CEVT 0x6000
 #define NFC_FIRST_TEVT 0x8000
-#if ((NXP_EXTNS == TRUE) && \
-     (NXP_ESE_DUAL_MODE_PRIO_SCHEME == NXP_ESE_WIRED_MODE_RESUME))
+#if (NXP_EXTNS == TRUE)
 void nfc_ncif_onWiredModeHold_timeout();
 void nfc_ncif_allow_dwp_transmission();
 void nfc_ncif_modeSet_Ntf_timeout();
 void nfc_ncif_modeSet_rsp_timeout();
 void nfc_ncif_resume_dwp_wired_mode();
 void nfc_ncif_pwr_link_rsp_timeout();
-#endif
 /* the events reported on tNFC_RESPONSE_CBACK */
 enum {
   NFC_ENABLE_REVT = NFC_FIRST_REVT, /* 0  Enable event                  */
@@ -356,9 +350,7 @@ enum {
 #if (NXP_EXTNS == TRUE)
   NFC_RF_WTX_CEVT, /* 6  received rf wtx */
 #endif
-#if (NFC_NXP_CHIP_TYPE != PN547C2)
   NFC_RF_TRANSMISSION_ERROR, /* 7 CE Error events */
-#endif
   NFC_HCI_RESTART_TIMER
 };
 typedef uint16_t tNFC_CONN_EVT;
@@ -413,7 +405,6 @@ typedef struct {
   uint8_t nfcee_id;
 } tNFC_NFCEE_MODE_SET_INFO;
 
-#if (NXP_ESE_JCOP_DWNLD_PROTECTION == true)
 #define ESE_STATE_JCOP_DWNLD                                      \
   0x8000 /* Depicts the state of Jcop download to be matched with \
             P61_STATE_JCP_DWNLD                                   \
@@ -426,7 +417,6 @@ typedef enum jcop_dwnld_state {
   JCP_SPI_DWNLD_COMPLETE = 0x8040, /* jcop download complete in spi interface*/
   JCP_DWP_DWNLD_COMPLETE = 0x8080, /* jcop download complete */
 } jcop_dwnld_state_t;
-#endif
 #endif
 
 /* the data type associated with NFC_NFCEE_DISCOVER_REVT */
@@ -733,9 +723,7 @@ typedef union {
   tNFC_NFCEE_MODE_SET_REVT mode_set;
 #if (NXP_EXTNS == TRUE)
   tNFC_NFCEE_MODE_SET_INFO mode_set_info;
-#if (NXP_WIRED_MODE_STANDBY == true)
   tNFC_NFCEE_EE_PWR_LNK_REVT pwr_lnk_ctrl;
-#endif
 #endif
   tNFC_NFCEE_PL_CONTROL_REVT  pl_control;
   tNFC_NFCEE_STATUS_REVT  nfcee_status;
@@ -987,6 +975,10 @@ typedef union {
 
 #define NFC_RF_PARAM_SOS_REQUIRED 0x00     /* SoS required */
 #define NFC_RF_PARAM_SOS_NOT_REQUIRED 0x01 /* SoS not required */
+
+#if (NXP_EXTNS == TRUE)
+#define NFA_EE_MAX_EE_SUPPORTED_DEFAULT 0x04
+#endif
 
 typedef struct {
   bool include_rf_tech_mode; /* true if including RF Tech and Mode update    */
@@ -1497,7 +1489,6 @@ extern tNFC_STATUS NFC_SendVsCommand(uint8_t oid, NFC_HDR* p_data,
 extern tNFC_STATUS NFC_SendNxpNciCommand(NFC_HDR* p_data,
                                          tNFC_VS_CBACK* p_cback);
 
-#if (NXP_ESE_JCOP_DWNLD_PROTECTION)
 /*******************************************************************************
 **
 ** Function         NFC_SetP61Status
@@ -1509,7 +1500,6 @@ extern tNFC_STATUS NFC_SendNxpNciCommand(NFC_HDR* p_data,
 **
 *******************************************************************************/
 extern int32_t NFC_SetP61Status(void* pdata, jcop_dwnld_state_t isJcopState);
-#endif
 #endif
 
 /*******************************************************************************
@@ -1539,6 +1529,17 @@ extern tNFC_STATUS NFC_TestLoopback(NFC_HDR* p_data);
 **
 *******************************************************************************/
 extern uint8_t NFC_SetTraceLevel(uint8_t new_level);
+
+/*******************************************************************************
+**
+** Function         NFC_GetChipType
+**
+** Description      Gets the chipType
+**
+** Returns          ChipType
+**
+*******************************************************************************/
+tNFC_chipType NFC_GetChipType();
 
 #if (BT_TRACE_VERBOSE == true)
 /*******************************************************************************
@@ -1588,7 +1589,6 @@ extern uint8_t nfc_hal_nfcc_init(uint8_t** pinit_rsp);
 **
 *******************************************************************************/
 void NFC_EnableDisableHalLog(uint8_t type);
-#if ((NFC_NXP_CHIP_TYPE != PN547C2) && (NFC_NXP_AID_MAX_SIZE_DYN == TRUE))
 /*******************************************************************************
 **
 ** Function         nfc_ncif_getMaxRoutingTableSize
@@ -1600,9 +1600,7 @@ void NFC_EnableDisableHalLog(uint8_t type);
 **
 *******************************************************************************/
 extern uint16_t nfc_ncif_getMaxRoutingTableSize();
-#endif
-#if (NFC_NXP_ESE == TRUE)
-#if (NXP_EXTNS == TRUE) && (NXP_WIRED_MODE_STANDBY == true)
+
 /*******************************************************************************
 **
 ** Function         NFC_Nfcee_PwrLinkCtrl
@@ -1621,7 +1619,6 @@ extern uint16_t nfc_ncif_getMaxRoutingTableSize();
 **
 *******************************************************************************/
 extern tNFC_STATUS NFC_Nfcee_PwrLinkCtrl(uint8_t nfcee_id, uint8_t cfg_value);
-#endif
 
 /*******************************************************************************
 **
@@ -1689,7 +1686,6 @@ int32_t NFC_eSEChipReset(void* pdata);
 *******************************************************************************/
 int32_t NFC_EnableWired(void* pdata);
 
-#if ((NFC_NXP_ESE_VER == JCOP_VER_3_1) || (NFC_NXP_ESE_VER == JCOP_VER_3_2))
 /*******************************************************************************
 **
 ** Function         NFC_GetEseAccess
@@ -1715,9 +1711,6 @@ int32_t NFC_GetEseAccess(void* pdata);
 *******************************************************************************/
 int32_t NFC_RelEseAccess(void* pdata);
 
-#endif
-
-#if (NXP_ESE_SVDD_SYNC == true)
 /*******************************************************************************
 **
 ** Function         NFC_RelSvddWait
@@ -1729,10 +1722,18 @@ int32_t NFC_RelEseAccess(void* pdata);
 **
 *******************************************************************************/
 int32_t NFC_RelSvddWait(void* pdata);
-#endif
 
-#endif
-#if (NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function         NFC_GetChipType
+**
+** Description      Returns currently selected chip type
+**
+** Returns          chipType
+**
+*******************************************************************************/
+tNFC_chipType NFC_GetChipType();
+
 /*******************************************************************************
 **
 ** Function         NFC_Queue_Is_empty
