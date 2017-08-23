@@ -41,6 +41,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <cutils/properties.h>
 
 #undef LOG_TAG
 #define LOG_TAG "NfcAdaptation"
@@ -54,6 +55,7 @@ const char transit_config_path[] = "/data/vendor/nfc/";
 #endif
 
 #define config_name "libnfc-brcm.conf"
+#define config_name_NCI2 "libnfc-brcm_NCI2_0.conf"
 #if (NXP_EXTNS == TRUE)
 #define extra_config_base "libnfc-"
 #else
@@ -407,7 +409,20 @@ CNfcConfig& CNfcConfig::GetInstance() {
 
   if (theInstance.size() == 0 && theInstance.mValidFile) {
     string strPath;
-    findConfigFilePathFromTransportConfigPaths(config_name, strPath);
+    int rc = 0;
+    char nq_fw_ver[PROPERTY_VALUE_MAX] = {0};
+
+    rc = __system_property_get("sys.nfc.nq.fwver", nq_fw_ver);
+    if (rc <= 0)
+        ALOGE("get sys.nfc.nq.fwver fail, rc = %d\n", rc);
+    else
+        ALOGD("sys.nfc.nq.fwver = %s\n", nq_fw_ver);
+
+    if (!strncmp(nq_fw_ver, FW_MAJOR_NUM_NQ4xx, FW_MAJOR_NUM_LENGTH))
+        findConfigFilePathFromTransportConfigPaths(config_name_NCI2, strPath);
+    else
+        findConfigFilePathFromTransportConfigPaths(config_name, strPath);
+
     theInstance.readConfig(strPath.c_str(), true);
 #if (NXP_EXTNS == TRUE)
     readOptionalConfigExt("nxp");

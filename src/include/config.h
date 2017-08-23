@@ -152,6 +152,15 @@ int GetNumValue(const char* name, void* p_value, unsigned long len);
 // default configuration
 #define default_transport "/dev/bcm2079x"
 
+/**
+ *  @brief defines the different major number used.
+ */
+#define FW_MAJOR_NUM_NQ2xx      "10"
+#define FW_MAJOR_NUM_NQ3xx      "11"
+#define FW_MAJOR_NUM_NQ4xx      "12"
+
+#define FW_MAJOR_NUM_LENGTH     2
+
 struct tUART_CONFIG {
   int m_iBaudrate;  // 115200
   int m_iDatabits;  // 8

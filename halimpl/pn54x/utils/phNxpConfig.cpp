@@ -829,7 +829,21 @@ CNfcConfig& CNfcConfig::GetInstance() {
         ALOGI("config file used = %s\n",strPath.c_str());
         theInstance.readConfig(strPath.c_str(), true);
 #if(NXP_EXTNS == TRUE)
-        readOptionalConfig("brcm");
+
+        int rc = 0;
+        char nq_fw_ver[PROPERTY_VALUE_MAX] = {0};
+
+        rc = __system_property_get("sys.nfc.nq.fwver", nq_fw_ver);
+        if (rc <= 0)
+            ALOGE("get sys.nfc.nq.fwver fail, rc = %d\n", rc);
+        else
+            ALOGD("sys.nfc.nq.fwver = %s\n", nq_fw_ver);
+
+        if (!strncmp(nq_fw_ver, FW_MAJOR_NUM_NQ4xx, FW_MAJOR_NUM_LENGTH))
+           readOptionalConfig("brcm_NCI2_0");
+        else
+           readOptionalConfig("brcm");
+
         theInstance.readNxpTransitConfig("nxpTransit");
 #endif
     }
