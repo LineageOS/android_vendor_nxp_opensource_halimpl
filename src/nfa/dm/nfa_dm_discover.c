@@ -101,7 +101,7 @@ static nfa_dm_p2p_prio_logic_t p2p_prio_logic_data;
 
 static void nfa_dm_send_tag_deselect_cmd(tNFA_NFC_PROTOCOL protocol);
 #define TAG_DESELECT_CMD 0xC2
-uint8_t T2T_SLP_REQ[] ={0x05,0x00};
+uint8_t T2T_SLP_REQ[] ={0x50,0x00};
 
 int getListenTechValue(int listenTechMask);
 #define P2P_RESUME_POLL_TIMEOUT 16 /*mili second timeout value*/
@@ -1153,6 +1153,7 @@ void nfa_dm_start_rf_discover(void) {
   unsigned long fwdEnable = 0x00;
   unsigned long hostListenMask = 0x00;
   unsigned long uiccListenMask = 0x00;
+  unsigned long eseListenMask  = 0x00;
   unsigned long p2pListenMask = 0x00;
 
   NFA_TRACE_DEBUG0("nfa_dm_start_rf_discover (): enter");
@@ -1304,6 +1305,11 @@ void nfa_dm_start_rf_discover(void) {
       NFA_TRACE_DEBUG2("%s:UICC_LISTEN_TECH_MASK = 0x0%X;", __func__,
                        uiccListenMask);
     }
+    if (GetNumValue(NAME_NXP_ESE_LISTEN_TECH_MASK, &eseListenMask,
+                    sizeof(eseListenMask))) {
+      NFA_TRACE_DEBUG2("%s:NXP_ESE_LISTEN_TECH_MASK = 0x0%X;", __func__,
+                       eseListenMask);
+    }
     if (GetNumValue(NAME_P2P_LISTEN_TECH_MASK, &p2pListenMask,
                     sizeof(p2pListenMask))) {
       NFA_TRACE_DEBUG2("%s:P2P_LISTEN_TECH_MASK = 0x0%X;", __func__,
@@ -1356,19 +1362,19 @@ void nfa_dm_start_rf_discover(void) {
   }
 #if (NXP_EXTNS == TRUE)
   NFA_TRACE_DEBUG1("dm_disc_mask before masking = 0x%x", dm_disc_mask);
-  if (((hostListenMask & 0x1) == 0x0) && ((uiccListenMask & 0x1) == 0x0)) {
+  if (((hostListenMask & 0x1) == 0x0) && ((uiccListenMask & 0x1) == 0x0) && ((eseListenMask & 0x1) == 0x0)) {
     NFA_TRACE_DEBUG0(
         "nfa_dm_start_rf_discover (): try removing A passive listen for "
         "ISO-DEP");
     dm_disc_mask &= ~(NFA_DM_DISC_MASK_LA_ISO_DEP);
   }
-  if (((hostListenMask & 0x2) == 0x0) && ((uiccListenMask & 0x2) == 0x0)) {
+  if (((hostListenMask & 0x2) == 0x0) && ((uiccListenMask & 0x2) == 0x0) && ((eseListenMask & 0x2) == 0x0)) {
     NFA_TRACE_DEBUG0(
         "nfa_dm_start_rf_discover (): try removing B passive listen for "
         "ISO-DEP");
     dm_disc_mask &= ~(NFA_DM_DISC_MASK_LB_ISO_DEP);
   }
-  if (((hostListenMask & 0x4) == 0x0) && ((uiccListenMask & 0x4) == 0x0)) {
+  if (((hostListenMask & 0x4) == 0x0) && ((uiccListenMask & 0x4) == 0x0) && ((eseListenMask & 0x4) == 0x0)) {
     NFA_TRACE_DEBUG0(
         "nfa_dm_start_rf_discover (): try removing F passive listen for T3T");
     dm_disc_mask &= ~(NFA_DM_DISC_MASK_LF_T3T);

@@ -51,7 +51,8 @@
 
 #if(NXP_EXTNS == TRUE)
 static phNxpNci_getCfg_info_t* mGetCfg_info_main = NULL;
-extern void nfa_dm_init_cfgs (phNxpNci_getCfg_info_t* mGetCfg_info_main);
+extern void nfa_dm_init_cfgs(phNxpNci_getCfg_info_t* mGetCfg_info_main);
+extern nfa_ee_max_ee_cfg;
 #endif
 
 /* NFC mandates support for at least one logical connection;
@@ -682,6 +683,8 @@ static void nfc_main_hal_cback(uint8_t event, tHAL_NFC_STATUS status) {
         } else {
           nfc_main_post_hal_evt(event, status);
         }
+        nfa_ee_max_ee_cfg = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
+        NFC_TRACE_DEBUG1("NFA_EE_MAX_EE_SUPPORTED to use %d", nfa_ee_max_ee_cfg);
       }
       break;
 
@@ -797,23 +800,6 @@ tNFC_STATUS NFC_Enable(tNFC_RESPONSE_CBACK* p_cback) {
   }
 #endif
   nfc_cb.p_hal->open(nfc_main_hal_cback, nfc_main_hal_data_cback);
-
-  if(nfcFL.nfcNxpEse) {
-      /*Access to ESE from SPI & I2C is managed by sending signals from I2C
-     drivers to NFC service. This requires NFC Service PID to be registered
-     Assumption: This functions is invoked by NFC Service*/
-      tNFC_STATUS setPidStatus = NFC_STATUS_OK;
-      nfc_nci_IoctlInOutData_t inpOutData;
-      inpOutData.inp.data.nfcServicePid = getpid();
-      setPidStatus = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_NFC_SERVICE_PID,(void*)&inpOutData);
-      if (setPidStatus == NFC_STATUS_OK) {
-          NFC_TRACE_API0("nfc service set pid done");
-      } else {
-          NFC_TRACE_API0("nfc service set pid failed");
-      }
-  }
-
-
   return (NFC_STATUS_OK);
 }
 
@@ -1838,6 +1824,54 @@ void NFC_EnableDisableHalLog(uint8_t type) {
     inpOutData.inp.data.halType = type;
     nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_DISABLE_HAL_LOG, &inpOutData);
   }
+}
+
+/*******************************************************************************
+**
+** Function         NFC_SetNfcServicePid
+**
+** Description      This function request to pn54x driver to
+**                  update NFC service process ID for signalling.
+**
+** Returns          0 if api call success, else -1
+**
+*******************************************************************************/
+int32_t NFC_SetNfcServicePid() {
+    tNFC_STATUS setPidStatus = NFC_STATUS_OK;
+    nfc_nci_IoctlInOutData_t inpOutData;
+    inpOutData.inp.data.nfcServicePid = getpid();
+    setPidStatus = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_NFC_SERVICE_PID,
+                                       (void*)&inpOutData);
+    if (setPidStatus == NFC_STATUS_OK) {
+      NFC_TRACE_API0("nfc service set pid done");
+    } else {
+      NFC_TRACE_API0("nfc service set pid failed");
+    }
+  return setPidStatus;
+}
+/*******************************************************************************
+**
+** Function         NFC_ResetNfcServicePid
+**
+** Description      This function request to pn54x driver to
+**                  update NFC service process ID for signalling.
+**
+** Returns          0 if api call success, else -1
+**
+*******************************************************************************/
+int32_t NFC_ResetNfcServicePid()
+{
+    tNFC_STATUS setPidStatus = NFC_STATUS_OK;
+    nfc_nci_IoctlInOutData_t inpOutData;
+    inpOutData.inp.data.nfcServicePid = 0;
+    setPidStatus = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_NFC_SERVICE_PID,
+                                       (void*)&inpOutData);
+    if (setPidStatus == NFC_STATUS_OK) {
+      NFC_TRACE_API0("nfc service set pid done");
+    } else {
+      NFC_TRACE_API0("nfc service set pid failed");
+    }
+    return setPidStatus;
 }
 #endif
 /*******************************************************************************

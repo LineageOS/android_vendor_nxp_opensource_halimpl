@@ -90,6 +90,7 @@ const tNFA_EE_SM_ACT nfa_ee_actions[] = {
     nfa_ee_nci_mode_set_rsp,  /* NFA_EE_NCI_MODE_SET_RSP_EVT  */
 #if (NXP_EXTNS == TRUE)
     nfa_ee_nci_set_mode_info, /* NFA_EE_NCI_MODE_SET_INFO*/
+	nfa_ee_api_power_link_set, /* NFA_EE_NCI_PWR_LNK_CTRL_SET_EVT */
     nfa_ee_nci_pwr_link_ctrl_rsp, /*NFA_EE_NCI_PWR_LNK_CTRL_RSP_EVT*/
 #endif
     nfa_ee_nci_conn,         /* NFA_EE_NCI_CONN_EVT          */
@@ -101,7 +102,8 @@ const tNFA_EE_SM_ACT nfa_ee_actions[] = {
     nfa_ee_discv_timeout,    /* NFA_EE_DISCV_TIMEOUT_EVT     */
     nfa_ee_lmrt_to_nfcc,      /* NFA_EE_CFG_TO_NFCC_EVT       */
     nfa_ee_api_add_apdu,       /* NFA_EE_API_ADD_AID_EVT       */
-    nfa_ee_api_remove_apdu    /* NFA_EE_API_REMOVE_AID_EVT    */
+    nfa_ee_api_remove_apdu,    /* NFA_EE_API_REMOVE_AID_EVT    */
+    nfa_ee_nci_nfcee_status_ntf        /*NFA_EE_NCI_NFCEE_STATUS_NTF_EVT*/
 };
 
 /*******************************************************************************
@@ -161,7 +163,7 @@ void nfa_ee_sys_enable(void) {
                        nfa_ee_cb.route_block_control);
     }
   }
-
+  nfa_ee_get_num_nfcee_configured(nfa_ee_read_num_nfcee_config_cb);
   if (nfa_ee_max_ee_cfg) {
     /* collect NFCEE information */
     NFC_NfceeDiscover(true);
@@ -386,6 +388,10 @@ void nfa_ee_proc_evt(tNFC_RESPONSE_EVT event, void* p_data) {
         }
       break;
 #endif
+
+    case NFC_NFCEE_STATUS_REVT:
+      int_event = NFA_EE_NCI_NFCEE_STATUS_NTF_EVT;
+      break;
   }
 
   NFA_TRACE_DEBUG2("nfa_ee_proc_evt: event=0x%02x int_event:0x%x", event,
@@ -663,6 +669,8 @@ static char* nfa_ee_sm_evt_2_str(uint16_t event) {
 #if (NXP_EXTNS == TRUE)
     case NFA_EE_NCI_MODE_SET_INFO:
       return "NFA_EE_NCI_MODE_SET_INFO";
+	case NFA_EE_NCI_PWR_LNK_CTRL_SET_EVT:
+      return "NFA_EE_NCI_PWR_LNK_CTRL_SET_EVT,";
     case NFA_EE_NCI_PWR_LNK_CTRL_RSP_EVT:
         if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
             return "NCI_PWR_LNK_CTRL";

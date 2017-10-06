@@ -63,15 +63,15 @@ extern "C" void delete_stack_non_volatile_store(bool forceDelete);
 
 NfcAdaptation* NfcAdaptation::mpInstance = NULL;
 ThreadMutex NfcAdaptation::sLock;
+ThreadMutex NfcAdaptation::sIoctlLock;
 sp<INfc> NfcAdaptation::mHal;
 sp<INqNfc> NfcAdaptation::mNqHal;
 INfcClientCallback* NfcAdaptation::mCallback;
-nfc_nci_device_t* NfcAdaptation::mHalDeviceContext = NULL;
 tHAL_NFC_CBACK* NfcAdaptation::mHalCallback = NULL;
 tHAL_NFC_DATA_CBACK* NfcAdaptation::mHalDataCallback = NULL;
 ThreadCondVar NfcAdaptation::mHalOpenCompletedEvent;
 ThreadCondVar NfcAdaptation::mHalCloseCompletedEvent;
-ThreadCondVar NfcAdaptation::mHalIoctlEvent;
+
 #if (NXP_EXTNS == TRUE)
 ThreadCondVar NfcAdaptation::mHalCoreResetCompletedEvent;
 ThreadCondVar NfcAdaptation::mHalCoreInitCompletedEvent;
@@ -198,9 +198,6 @@ void NfcAdaptation::Initialize() {
 
   if (GetStrValue(NAME_NFA_DM_CFG, (char*)nfa_dm_cfg, sizeof(nfa_dm_cfg)))
     p_nfa_dm_cfg = (tNFA_DM_CFG*)((void*)&nfa_dm_cfg[0]);
-
-  nfa_ee_max_ee_cfg = NFA_EE_MAX_EE_SUPPORTED;
-  ALOGD("%s: NFA_EE_MAX_EE_SUPPORTED to use %d", func, nfa_ee_max_ee_cfg);
 
   if (GetNumValue(NAME_NFA_POLL_BAIL_OUT_MODE, &num, sizeof(num))) {
     nfa_poll_bail_out_mode = num;
@@ -574,17 +571,17 @@ void IoctlCallback(::android::hardware::nfc::V1_0::NfcData outputData) {
 *******************************************************************************/
 int NfcAdaptation::HalIoctl(long arg, void* p_data) {
   const char* func = "NfcAdaptation::HalIoctl";
-  mHalIoctlEvent.lock();
   ::android::hardware::nfc::V1_0::NfcData data;
+  AutoThreadMutex a(sIoctlLock);
   nfc_nci_IoctlInOutData_t* pInpOutData = (nfc_nci_IoctlInOutData_t*)p_data;
   int status = 0;
   ALOGD("%s arg=%ld", func, arg);
   pInpOutData->inp.context = &NfcAdaptation::GetInstance();
   NfcAdaptation::GetInstance().mCurrentIoctlData = pInpOutData;
   data.setToExternal((uint8_t*)pInpOutData, sizeof(nfc_nci_IoctlInOutData_t));
-  mNqHal->ioctl(arg, data, IoctlCallback);
+  if(mNqHal != nullptr)
+      mNqHal->ioctl(arg, data, IoctlCallback);
   ALOGD("%s Ioctl Completed for Type=%llu", func, pInpOutData->out.ioctlType);
-  mHalIoctlEvent.unlock();
   return (pInpOutData->out.result);
 }
 
@@ -716,7 +713,6 @@ uint8_t NfcAdaptation::HalGetMaxNfcee() {
   ALOGD("%s", func);
   return nfa_ee_max_ee_cfg;
 }
-
 
 /*******************************************************************************
 **

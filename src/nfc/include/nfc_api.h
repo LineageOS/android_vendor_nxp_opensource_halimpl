@@ -118,8 +118,8 @@
 #define NXP_EN_PN557     1
 #define NXP_EN_PN81T     1
 #define NXP_ANDROID_VER (8U)        /* NXP android version */
-#define NFC_NXP_MW_VERSION_MAJ (0x00) /* MW Major Version */
-#define NFC_NXP_MW_VERSION_MIN (0x13) /* MW Minor Version */
+#define NFC_NXP_MW_VERSION_MAJ (0x02) /* MW Major Version */
+#define NFC_NXP_MW_VERSION_MIN (0x00) /* MW Minor Version */
 #endif
 /* 0xE0 ~0xFF are proprietary status codes */
 /* Command started successfully                     */
@@ -175,6 +175,8 @@ typedef uint8_t tNFC_STATUS;
 #define NXP_NFC_PROP_MAX_CMD_BUF_SIZE ((unsigned char)0x40)
 #define NXP_NFC_SET_MSB(x) (x |= 0x80)
 #define NXP_NFC_RESET_MSB(x) (x &= 0x7F)
+#define NXP_NFC_ESE_CONN_PIPE_STATUS  ((unsigned char)0x22)
+#define NXP_NFC_ESE_APDU_PIPE_STATUS  ((unsigned char)0x23)
 /**********************************************
  * NFC Config Parameter IDs defined by NXP NFC
  **********************************************/
@@ -448,6 +450,10 @@ typedef struct {
   uint8_t info[NFC_MAX_EE_INFO];
 } tNFC_NFCEE_TLV;
 
+#define NFC_NFCEE_STS_UNRECOVERABLE_ERROR   NCI_NFCEE_STS_UNRECOVERABLE_ERROR
+#define NFC_NFCEE_STS_INIT_STARTED          NCI_NFCEE_STS_INIT_STARTED
+#define NFC_NFCEE_STS_INIT_COMPLETED        NCI_NFCEE_STS_INIT_COMPLETED
+
 /* NFCEE connected and inactive */
 #define NFC_NFCEE_STATUS_INACTIVE NCI_NFCEE_STS_CONN_INACTIVE
 /* NFCEE connected and active   */
@@ -459,6 +465,7 @@ typedef struct {
 #define NFC_NFCEE_STS_TRANSMISSION_ERROR     NCI_NFCEE_STS_TRANSMISSION_ERROR
 #define NFC_NFCEE_STS_PROTOCOL_ERROR         NCI_NFCEE_STS_PROTOCOL_ERROR
 #define NFC_NFCEE_STS_TIMEOUT_ERROR          NCI_NFCEE_STS_TIMEOUT_ERROR
+
 typedef struct {
   tNFC_STATUS status;    /* The event status - place holder  */
   uint8_t nfcee_id;      /* NFCEE ID                         */
@@ -570,7 +577,6 @@ extern uint8_t NFC_GetNCIVersion();
 #if (NXP_EXTNS == TRUE)
 #define NFC_PROTOCOL_ISO7816 \
   NCI_PROTOCOL_ISO7816 /*ISO7816 -AID default Routing */
-#define NFC_PROTOCOL_ISO7816 NCI_PROTOCOL_ISO7816
 #define NFC_PROTOCOL_T3BT NCI_PROTOCOL_T3BT
 #endif
 #define NFC_PROTOCOL_B_PRIME NCI_PROTOCOL_B_PRIME
@@ -975,10 +981,6 @@ typedef union {
 
 #define NFC_RF_PARAM_SOS_REQUIRED 0x00     /* SoS required */
 #define NFC_RF_PARAM_SOS_NOT_REQUIRED 0x01 /* SoS not required */
-
-#if (NXP_EXTNS == TRUE)
-#define NFA_EE_MAX_EE_SUPPORTED_DEFAULT 0x04
-#endif
 
 typedef struct {
   bool include_rf_tech_mode; /* true if including RF Tech and Mode update    */
@@ -1685,7 +1687,28 @@ int32_t NFC_eSEChipReset(void* pdata);
 **
 *******************************************************************************/
 int32_t NFC_EnableWired(void* pdata);
-
+/*******************************************************************************
+**
+** Function         NFC_SetNfcServicePid
+**
+** Description      This function request to pn54x driver to
+**                  update NFC service process ID for signalling.
+**
+** Returns          0 if api call success, else -1
+**
+*******************************************************************************/
+int32_t NFC_SetNfcServicePid();
+/*******************************************************************************
+**
+** Function         NFC_ResetNfcServicePid
+**
+** Description      This function request to pn54x driver to
+**                  reset NFC service process ID for signalling.
+**
+** Returns          0 if api call success, else -1
+**
+*******************************************************************************/
+int32_t NFC_ResetNfcServicePid();
 /*******************************************************************************
 **
 ** Function         NFC_GetEseAccess

@@ -110,6 +110,7 @@ bool MW_RCVRY_FW_DNLD_ALLOWED;
 #if (NXP_EXTNS == TRUE)
 /* HCI is waiting for NFCEE initialization */
 #define NFA_HCI_STATE_NFCEE_ENABLE 0x09
+#define NFA_HCI_STATE_EE_RECOVERY 0x0A
 #endif
 
 #if (NXP_EXTNS == TRUE)
@@ -613,6 +614,7 @@ extern void nfa_hciu_set_nfceeid_config_mask(uint8_t event, uint8_t host_id);
 extern void nfa_hciu_set_nfceeid_poll_mask(uint8_t event, uint8_t host_id);
 extern bool nfa_hciu_check_any_host_reset_pending();
 extern tNFA_STATUS nfa_hci_api_config_nfcee(uint8_t hostId);
+extern tNFA_STATUS nfa_hci_getApduAndConnectivity_PipeStatus();
 void nfa_hci_handle_clear_all_pipes_evt(uint8_t source_host);
 #endif
 

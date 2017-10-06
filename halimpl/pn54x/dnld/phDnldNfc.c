@@ -985,6 +985,8 @@ NFCSTATUS phDnldNfc_LoadFW(const char* pathName, uint8_t** pImgInfo,
           pathName = "/vendor/firmware/libpn551_fw.so";
       } else if(nfcFL.chipType == pn553) {
           pathName = "/vendor/firmware/libpn553_fw.so";
+      } else if(nfcFL.chipType == pn557) {
+          pathName = "/vendor/firmware/libpn557_fw.so";
       } else {
           pathName = "/vendor/firmware/libpn547_fw.so";
       }
@@ -1057,6 +1059,8 @@ NFCSTATUS phDnldNfc_LoadRecoveryFW(const char* pathName, uint8_t** pImgInfo,
           pathName = "/vendor/firmware/libpn551_fw.so";
       } else if(nfcFL.chipType == pn553) {
           pathName = "/vendor/firmware/libpn553_fw.so";
+      }else if(nfcFL.chipType == pn557) {
+          pathName = "/vendor/firmware/libpn557_fw.so";
       } else {
           pathName = "/vendor/firmware/libpn547_fw.so";
       }

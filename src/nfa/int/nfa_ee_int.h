@@ -85,6 +85,7 @@ enum {
   NFA_EE_NCI_MODE_SET_RSP_EVT,
 #if (NXP_EXTNS == TRUE)
   NFA_EE_NCI_MODE_SET_INFO,
+  NFA_EE_NCI_PWR_LNK_CTRL_SET_EVT,
   NFA_EE_NCI_PWR_LNK_CTRL_RSP_EVT,
 #endif
   NFA_EE_NCI_CONN_EVT,
@@ -98,6 +99,7 @@ enum {
   NFA_EE_CFG_TO_NFCC_EVT,
   NFA_EE_API_ADD_APDU_EVT,
   NFA_EE_API_REMOVE_APDU_EVT,
+  NFA_EE_NCI_NFCEE_STATUS_NTF_EVT,
   NFA_EE_MAX_EVT
 };
 
@@ -212,6 +214,7 @@ typedef uint16_t tNFA_EE_ECB_FLAGS;
 /* part of tNFA_EE_STATUS; for internal use only  */
 /* waiting for restore to full power mode to complete */
 #define NFA_EE_STATUS_RESTORING 0x20
+
 /* this bit is in ee_status for internal use only */
 #define NFA_EE_STATUS_INT_MASK 0x20
 
@@ -340,6 +343,12 @@ typedef struct {
   uint8_t nfcee_id;
   uint8_t mode;
 } tNFA_EE_API_MODE_SET;
+/* data type for NFA_EE_API_POWER_LINK_EVT */
+typedef struct {
+  NFC_HDR hdr;
+  uint8_t nfcee_id;
+  uint8_t cfg_value;
+} tNFA_EE_API_POWER_LINK_EVT;
 
 /* data type for NFA_EE_API_SET_TECH_CFG_EVT */
 typedef struct {
@@ -480,6 +489,7 @@ typedef struct {
   NFC_HDR hdr;
   tNFC_NFCEE_MODE_SET_INFO* p_data;
 } tNFA_EE_NCI_SET_MODE_INFO;
+
 /* data type for NFA_EE_NCI_MODE_SET_RSP_EVT */
 typedef struct {
   NFC_HDR hdr;
@@ -514,6 +524,12 @@ typedef struct {
   tNFC_EE_DISCOVER_REQ_REVT* p_data;
 } tNFA_EE_NCI_DISC_REQ;
 
+/* data type for NFA_EE_NCI_NFCEE_STATUS_EVT */
+typedef struct {
+  NFC_HDR hdr;
+  tNFC_NFCEE_STATUS_REVT* p_data;
+} tNFA_EE_NCI_NFCEE_STATUS_NTF;
+
 /* union of all event data types */
 typedef union {
   NFC_HDR hdr;
@@ -537,12 +553,14 @@ typedef union {
   tNFA_EE_NCI_MODE_SET mode_set_rsp;
 #if (NXP_EXTNS == TRUE)
   tNFA_EE_NCI_SET_MODE_INFO mode_set_info;
+  tNFA_EE_API_POWER_LINK_EVT pwr_lnk_ctrl_set;
   tNFA_EE_NCI_PWR_LNK_CTRL pwr_lnk_ctrl_rsp;
 #endif
   tNFA_EE_NCI_WAIT_RSP wait_rsp;
   tNFA_EE_NCI_CONN conn;
   tNFA_EE_NCI_ACTION act;
   tNFA_EE_NCI_DISC_REQ disc_req;
+  tNFA_EE_NCI_NFCEE_STATUS_NTF nfcee_status_ntf;
 } tNFA_EE_MSG;
 
 /* type for State Machine (SM) action functions */
@@ -598,7 +616,9 @@ typedef uint8_t tNFA_EE_FLAGS;
 #if (NXP_EXTNS == TRUE)
 /* received NFCEE_MODE_SET NTF  */
 #define NFA_EE_MODE_SET_NTF 0x04
+#define NFA_EE_RECOVERY 0x05
 #endif
+
 typedef uint8_t tNFA_EE_DISC_STS;
 
 typedef void(tNFA_EE_ENABLE_DONE_CBACK)(tNFA_EE_DISC_STS status);
@@ -685,6 +705,7 @@ void nfa_ee_api_discover(tNFA_EE_MSG* p_data);
 void nfa_ee_api_register(tNFA_EE_MSG* p_data);
 void nfa_ee_api_deregister(tNFA_EE_MSG* p_data);
 void nfa_ee_api_mode_set(tNFA_EE_MSG* p_data);
+void nfa_ee_api_power_link_set(tNFA_EE_MSG* p_data);
 void nfa_ee_api_set_tech_cfg(tNFA_EE_MSG* p_data);
 void nfa_ee_api_set_proto_cfg(tNFA_EE_MSG* p_data);
 void nfa_ee_api_add_aid(tNFA_EE_MSG* p_data);
@@ -698,12 +719,16 @@ void nfa_ee_report_disc_done(bool notify_sys);
 void nfa_ee_nci_disc_rsp(tNFA_EE_MSG* p_data);
 void nfa_ee_nci_disc_ntf(tNFA_EE_MSG* p_data);
 void nfa_ee_nci_mode_set_rsp(tNFA_EE_MSG* p_data);
+tNFA_STATUS nfa_ee_get_num_nfcee_configured(tNFA_VSC_CBACK* p_cback);
+ void nfa_ee_read_num_nfcee_config_cb(uint8_t event, uint16_t param_len,
+         uint8_t* p_param);
 #if (NXP_EXTNS == TRUE)
 extern void nfa_hci_conn_cback(uint8_t conn_id, tNFC_CONN_EVT event,
                                tNFC_CONN* p_data);
 void nfa_ee_nci_set_mode_info(tNFA_EE_MSG* p_data);
 void nfa_ee_nci_pwr_link_ctrl_rsp(tNFA_EE_MSG* p_data);
 #endif
+void nfa_ee_nci_nfcee_status_ntf(tNFA_EE_MSG* p_data);
 void nfa_ee_nci_wait_rsp(tNFA_EE_MSG* p_data);
 void nfa_ee_nci_conn(tNFA_EE_MSG* p_data);
 void nfa_ee_nci_action_ntf(tNFA_EE_MSG* p_data);

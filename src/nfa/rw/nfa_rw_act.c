@@ -951,7 +951,11 @@ static void nfa_rw_handle_t3t_evt(tRW_EVENT event, tRW_DATA* p_rw_data) {
         tag_params.t3t.p_system_codes = NULL;
       }
 
+#if(NXP_EXTNS == TRUE)
+      nfa_dm_notify_activation_status(p_rw_data->status, &tag_params);
+#else
       nfa_dm_notify_activation_status(NFA_STATUS_OK, &tag_params);
+#endif
       break;
 
     case RW_T3T_FORMAT_CPLT_EVT: /* Format completed */
@@ -2614,10 +2618,12 @@ bool nfa_rw_activate_ntf(tNFA_RW_MSG* p_data) {
            NFA_T1T_HR_LEN);
     memcpy(tag_params.t1t.uid, p_activate_params->rf_tech_param.param.pa.nfcid1,
            p_activate_params->rf_tech_param.param.pa.nfcid1_len);
+    if(NFC_GetNCIVersion() == NCI_VERSION_1_0) {
     msg.op = NFA_RW_OP_T1T_RID;
     nfa_rw_handle_op_req((void*)&msg);
     activate_notify = false; /* Delay notifying upper layer of NFA_ACTIVATED_EVT
                                 until HR0/HR1 is received */
+   }
   } else if (NFC_PROTOCOL_T2T == nfa_rw_cb.protocol) {
     /* Retrieve UID fields from activation notification */
     memcpy(tag_params.t2t.uid, p_activate_params->rf_tech_param.param.pa.nfcid1,
