@@ -23,7 +23,7 @@
  ******************************************************************************/
 #include "_OverrideLog.h"
 
-#include <android/hardware/nfc/1.0/INfc.h>
+#include <android/hardware/nfc/1.1/INfc.h>
 #include <vendor/nxp/hardware/nfc/1.0/INqNfc.h>
 #include <android/hardware/nfc/1.0/INfcClientCallback.h>
 #include <android/hardware/nfc/1.0/types.h>
@@ -53,6 +53,7 @@ using android::hardware::Return;
 using android::hardware::Void;
 using android::hardware::nfc::V1_0::INfc;
 using vendor::nxp::hardware::nfc::V1_0::INqNfc;
+using INfcV1_1 = android::hardware::nfc::V1_1::INfc;
 using android::hardware::nfc::V1_0::INfcClientCallback;
 using android::hardware::hidl_vec;
 
@@ -65,6 +66,7 @@ NfcAdaptation* NfcAdaptation::mpInstance = NULL;
 ThreadMutex NfcAdaptation::sLock;
 ThreadMutex NfcAdaptation::sIoctlLock;
 sp<INfc> NfcAdaptation::mHal;
+sp<INfcV1_1> NfcAdaptation::mHal_1_1;
 sp<INqNfc> NfcAdaptation::mNqHal;
 INfcClientCallback* NfcAdaptation::mCallback;
 tHAL_NFC_CBACK* NfcAdaptation::mHalCallback = NULL;
@@ -163,7 +165,10 @@ NfcAdaptation::~NfcAdaptation() { mpInstance = NULL; }
 NfcAdaptation& NfcAdaptation::GetInstance() {
   AutoThreadMutex a(sLock);
 
-  if (!mpInstance) mpInstance = new NfcAdaptation;
+  if (!mpInstance) {
+    mpInstance = new NfcAdaptation;
+    mpInstance->InitializeHalDeviceContext();
+  }
   return *mpInstance;
 }
 
@@ -245,9 +250,6 @@ void NfcAdaptation::Initialize() {
     mCondVar.wait();
   }
 
-  mHalCallback = NULL;
-  memset(&mHalEntryFuncs, 0, sizeof(mHalEntryFuncs));
-  InitializeHalDeviceContext();
   ALOGD("%s: exit", func);
 }
 #if (NXP_EXTNS == TRUE)
@@ -273,7 +275,6 @@ void NfcAdaptation::MinInitialize() {
                     (pthread_cond_t*)NULL, NULL);
     mCondVar.wait();
   }
-
   mHalCallback = NULL;
   memset(&mHalEntryFuncs, 0, sizeof(mHalEntryFuncs));
   InitializeHalDeviceContext();
@@ -298,11 +299,14 @@ void NfcAdaptation::Finalize() {
 
   resetConfig();
 
-  mCallback = NULL;
-  memset(&mHalEntryFuncs, 0, sizeof(mHalEntryFuncs));
-
   ALOGD("%s: exit", func);
   delete this;
+}
+
+void NfcAdaptation::FactoryReset() {
+  if (mHal_1_1 != nullptr) {
+    mHal_1_1->factoryReset();
+  }
 }
 
 /*******************************************************************************
@@ -400,7 +404,10 @@ void NfcAdaptation::InitializeHalDeviceContext() {
     mHalEntryFuncs.power_cycle = HalPowerCycle;
     mHalEntryFuncs.get_max_ee = HalGetMaxNfcee;
     ALOGI("%s: INfc::getService()", func);
-    mHal = INfc::getService();
+    mHal = mHal_1_1 = INfcV1_1::getService();
+    if (mHal_1_1 == nullptr) {
+      mHal = INfc::getService();
+    }
     LOG_FATAL_IF(mHal == nullptr, "Failed to retrieve the NFC HAL!");
     ALOGI("%s: INfc::getService() returned %p (%s)", func,
           mHal.get(), (mHal->isRemote() ? "remote" : "local"));
