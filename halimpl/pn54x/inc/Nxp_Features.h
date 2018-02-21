@@ -24,7 +24,7 @@
 
 #define STRMAX_1 40
 #define STRMAX_2 100
-#define FW_DLL_ROOT_DIR "/vendor/firmware/"
+#define FW_DLL_ROOT_DIR "/vendor/lib/"
 #define FW_DLL_EXTENSION ".so"
 
 #define FW_MOBILE_MAJOR_NUMBER_PN553 0x01
