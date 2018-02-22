@@ -412,11 +412,11 @@ CNfcConfig& CNfcConfig::GetInstance() {
     int rc = 0;
     char nq_fw_ver[PROPERTY_VALUE_MAX] = {0};
 
-    rc = __system_property_get("sys.nfc.nq.fwver", nq_fw_ver);
+    rc = __system_property_get("vendor.qti.nfc.fwver", nq_fw_ver);
     if (rc <= 0)
-        ALOGE("get sys.nfc.nq.fwver fail, rc = %d\n", rc);
+        ALOGE("get vendor.qti.nfc.fwver fail, rc = %d\n", rc);
     else
-        ALOGD("sys.nfc.nq.fwver = %s\n", nq_fw_ver);
+        ALOGD("vendor.qti.nfc.fwver = %s\n", nq_fw_ver);
 
     if (!strncmp(nq_fw_ver, FW_MAJOR_NUM_NQ4xx, FW_MAJOR_NUM_LENGTH))
         findConfigFilePathFromTransportConfigPaths(config_name_NCI2, strPath);

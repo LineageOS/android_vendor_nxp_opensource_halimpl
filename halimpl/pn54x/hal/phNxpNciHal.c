@@ -1721,12 +1721,12 @@ int phNxpNciHal_core_initialized(uint8_t* p_core_init_rsp_params) {
         int rc = 0;
         NFCSTATUS status = NFCSTATUS_FAILED;
         phNxpNci_EEPROM_info_t swp_intf_info;
-        rc = __system_property_get("sys.nfc.nq.chipid", nq_chipid);
+        rc = __system_property_get("vendor.qti.nfc.chipid", nq_chipid);
         if (rc <= 0) {
-            NXPLOG_NCIHAL_E("get sys.nfc.nq.chipid fail, rc = %d\n", rc);
+            NXPLOG_NCIHAL_E("get vendor.qti.nfc.chipid fail, rc = %d\n", rc);
         }
         else {
-            NXPLOG_NCIHAL_D("sys.nfc.nq.chipid = %s\n", nq_chipid);
+            NXPLOG_NCIHAL_D("vendor.qti.nfc.chipid = %s\n", nq_chipid);
         }
         memset(swp_info_buff, 0, sizeof(swp_info_buff));
         /*Read SWP1 data*/
