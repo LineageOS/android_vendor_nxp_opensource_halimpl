@@ -20,31 +20,20 @@
 #ifndef DATA_TYPES_H
 #define DATA_TYPES_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifndef NULL
 #define NULL 0
-#endif
-
-#ifndef false
-#define false 0
 #endif
 
 #ifndef FALSE
 #define FALSE 0
 #endif
 
-typedef uint32_t TIME_STAMP;
-
-#ifndef true
-#define true (!false)
-#endif
-
 #ifndef TRUE
 #define TRUE (!FALSE)
 #endif
-typedef unsigned char UBYTE;
 
 #ifdef __arm
 #define PACKED __packed
@@ -55,11 +44,8 @@ typedef unsigned char UBYTE;
 #endif
 
 #ifndef BIG_ENDIAN
-#define BIG_ENDIAN false
+#define BIG_ENDIAN FALSE
 #endif
-
-#define UINT16_LOW_BYTE(x) ((x)&0xff)
-#define UINT16_HI_BYTE(x) ((x) >> 8)
 
 /* MACRO definitions for safe string functions */
 /* Replace standard string functions with safe functions if available */
