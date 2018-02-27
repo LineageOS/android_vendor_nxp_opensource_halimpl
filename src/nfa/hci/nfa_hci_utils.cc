@@ -1475,20 +1475,20 @@ char* nfa_hciu_get_type_inst_names(uint8_t pipe, uint8_t type, uint8_t inst,
                                    char* p_buff) {
   int xx;
 
-  xx = snprintf(p_buff, VERBOSE_BUFF_SIZE, "Type: %s [0x%02x] ", nfa_hciu_type_2_str(type), type);
+  xx = snprintf(p_buff, VERBOSE_BUFF_SIZE, "Type: %s [0x%02x] ", nfa_hciu_type_2_str(type).c_str(), type);
 
   switch (type) {
     case NFA_HCI_COMMAND_TYPE:
-      snprintf(&p_buff[xx], VERBOSE_BUFF_SIZE, "Inst: %s [0x%02x] ", nfa_hciu_instr_2_str(inst),
+      snprintf(&p_buff[xx], VERBOSE_BUFF_SIZE, "Inst: %s [0x%02x] ", nfa_hciu_instr_2_str(inst).c_str(),
               inst);
       break;
     case NFA_HCI_EVENT_TYPE:
-      snprintf(&p_buff[xx], VERBOSE_BUFF_SIZE, "Evt: %s [0x%02x] ", nfa_hciu_evt_2_str(pipe, inst),
+      snprintf(&p_buff[xx], VERBOSE_BUFF_SIZE, "Evt: %s [0x%02x] ", nfa_hciu_evt_2_str(pipe, inst).c_str(),
               inst);
       break;
     case NFA_HCI_RESPONSE_TYPE:
       snprintf(&p_buff[xx], VERBOSE_BUFF_SIZE, "Resp: %s [0x%02x] ",
-              nfa_hciu_get_response_name(inst), inst);
+              nfa_hciu_get_response_name(inst).c_str(), inst);
       break;
     default:
       snprintf(&p_buff[xx], VERBOSE_BUFF_SIZE, "Inst: %u ", inst);

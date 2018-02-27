@@ -761,4 +761,5 @@ extern void nfa_hciu_clear_host_resetting(uint8_t host_id, uint8_t reset_cfg);
 extern void nfa_hci_handle_pending_host_reset();
 
 #endif
+#define VERBOSE_BUFF_SIZE 100
 #endif /* NFA_HCI_INT_H */

@@ -4,7 +4,7 @@ cc_library_shared {
             instruction_set: "arm",
         },
     },
-    name: "libnfc-nci",
+    name: "libnqnfc-nci",
     shared_libs: [
         "libcutils",
         "liblog",
@@ -23,9 +23,10 @@ cc_library_shared {
         "libutils",
         "android.hardware.nfc@1.0",
         "android.hardware.nfc@1.1",
+        "vendor.nxp.hardware.nfc@1.0",
     ],
     static_libs: [
-        "libnfcutils",
+        "libnqnfcutils",
     ],
     cflags: [
         "-DBUILDCFG=1",
@@ -58,7 +59,7 @@ cc_library_shared {
         "gki/ulinux/*.cc",
     ],
     include_dirs: [
-        "hardware/nxp/nfc/extns/impl/",
+        "vendor/nxp/opensource/external/libnfc-nci/extns/impl/",
     ],
     product_variables: {
         debuggable: {

@@ -17,6 +17,7 @@
  ******************************************************************************/
 #include <android-base/stringprintf.h>
 #include <android/hardware/nfc/1.1/INfc.h>
+#include <vendor/nxp/hardware/nfc/1.0/INqNfc.h>
 #include <base/command_line.h>
 #include <base/logging.h>
 #include <cutils/properties.h>
@@ -41,6 +42,7 @@ using android::hardware::Return;
 using android::hardware::Void;
 using android::hardware::nfc::V1_0::INfc;
 using INfcV1_1 = android::hardware::nfc::V1_1::INfc;
+using vendor::nxp::hardware::nfc::V1_0::INqNfc;
 using android::hardware::nfc::V1_0::INfcClientCallback;
 using android::hardware::hidl_vec;
 
