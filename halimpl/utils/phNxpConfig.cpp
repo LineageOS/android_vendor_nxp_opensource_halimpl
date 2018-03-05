@@ -139,7 +139,6 @@ typedef enum
 } TARGETTYPE;
 
 void readOptionalConfig(const char* optional);
-void findConfigFilePathFromTransportConfigPaths(const string& configName, string& filePath);
 
 namespace {
 
@@ -167,6 +166,8 @@ size_t readConfigFile(const char* fileName, uint8_t** p_data) {
 }  // namespace
 
 using namespace ::std;
+
+void findConfigFilePathFromTransportConfigPaths(const string& configName, string& filePath);
 
 class CNfcParam : public string {
  public:

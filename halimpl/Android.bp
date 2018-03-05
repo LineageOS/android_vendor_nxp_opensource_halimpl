@@ -15,7 +15,8 @@
 //
 
 cc_library_shared {
-    name: "nfc_nci_nxp",
+    name: "nfc_nci.nqx.default",
+    relative_install_path: "hw",
     defaults: ["hidl_defaults"],
     proprietary: true,
 
@@ -62,14 +63,11 @@ cc_library_shared {
     ],
 
     include_dirs: [
-        "hardware/nxp/nfc/extns/impl",
-        "hardware/nxp/secure_element/extns/impl",
+        "vendor/nxp/opensource/external/libnfc-nci/extns/impl",
     ],
 
     shared_libs: [
         "android.hardware.nfc@1.0",
-        "android.hardware.nfc@1.1",
-        "android.hardware.secure_element@1.0",
         "libbase",
         "libcutils",
         "libdl",
@@ -79,7 +77,6 @@ cc_library_shared {
         "libhidltransport",
         "liblog",
         "libutils",
-        "vendor.nxp.nxpese@1.0",
 
     ],
 }

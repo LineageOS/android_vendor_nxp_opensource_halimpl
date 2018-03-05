@@ -69,6 +69,7 @@ tNFC_chipType capability::processChipType(uint8_t* msg, uint16_t msg_len) {
                 break;
             case 0xA0 :
             case 0xA2 :
+            case 0xA3 :
                 chipType = sn100u;
                 break;
             default :

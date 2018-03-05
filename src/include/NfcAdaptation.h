@@ -29,6 +29,9 @@ namespace nfc {
 namespace V1_0 {
 struct INfc;
 struct INfcClientCallback;
+}
+namespace V1_1 {
+struct INfc;
 } } } }
 
 namespace vendor {
