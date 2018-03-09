@@ -964,17 +964,17 @@ NFCSTATUS phDnldNfc_LoadFW(const char* pathName, uint8_t** pImgInfo,
   void* pImageInfoLen = NULL;
   if (pathName == NULL) {
       if(nfcFL.chipType == pn548C2) {
-          pathName = "/vendor/firmware/libpn548ad_fw.so";
+          pathName = "/vendor/lib/libpn548ad_fw.so";
       } else if(nfcFL.chipType == pn551) {
-          pathName = "/vendor/firmware/libpn551_fw.so";
+          pathName = "/vendor/lib/libpn551_fw.so";
       } else if(nfcFL.chipType == pn553) {
-          pathName = "/vendor/firmware/libpn553_fw.so";
+          pathName = "/vendor/lib/libpn553_fw.so";
       } else if(nfcFL.chipType == pn557) {
-          pathName = "/vendor/firmware/libpn557_fw.so";
+          pathName = "/vendor/lib/libpn557_fw.so";
       } else if(nfcFL.chipType == sn100u) {
-          pathName = "/vendor/firmware/libsn100u_fw.so";
+          pathName = "/vendor/lib/libsn100u_fw.so";
       } else {
-          pathName = "/vendor/firmware/libpn547_fw.so";
+          pathName = "/vendor/lib/libpn547_fw.so";
       }
   }
 
@@ -1040,17 +1040,17 @@ NFCSTATUS phDnldNfc_LoadRecoveryFW(const char* pathName, uint8_t** pImgInfo,
   /* check for path name */
   if (pathName == NULL) {
       if(nfcFL.chipType == pn548C2) {
-          pathName = "/vendor/firmware/libpn548ad_fw.so";
+          pathName = "/vendor/lib/libpn548ad_fw.so";
       } else if(nfcFL.chipType == pn551) {
-          pathName = "/vendor/firmware/libpn551_fw.so";
+          pathName = "/vendor/lib/libpn551_fw.so";
       } else if(nfcFL.chipType == pn553) {
-          pathName = "/vendor/firmware/libpn553_fw.so";
+          pathName = "/vendor/lib/libpn553_fw.so";
       } else if(nfcFL.chipType == pn557) {
-          pathName = "/vendor/firmware/libpn557_fw.so";
+          pathName = "/vendor/lib/libpn557_fw.so";
       } else if(nfcFL.chipType == sn100u) {
-          pathName = "/vendor/firmware/libsn100u_fw.so";
+          pathName = "/vendor/lib/libsn100u_fw.so";
       } else {
-          pathName = "/vendor/firmware/libpn547_fw.so";
+          pathName = "/vendor/lib/libpn547_fw.so";
       }
   }
 
