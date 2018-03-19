@@ -1,8 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
- * Not a Contribution.
- *
- * Copyright (C) 2015 NXP Semiconductors
+ * Copyright (C) 2010-2014 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,46 +19,19 @@
 #include <hardware/nfc.h>
 #include <phNxpNciHal_utils.h>
 #include "NxpNfcCapability.h"
+#include "hal_nxpnfc.h"
 
 /********************* Definitions and structures *****************************/
 #define MAX_RETRY_COUNT 5
 #define NCI_MAX_DATA_LEN 300
 #define NCI_POLL_DURATION 500
+#define HAL_NFC_ENABLE_I2C_FRAGMENTATION_EVT 0x07
 #define NXP_STAG_TIMEOUT_BUF_LEN 0x04 /*FIXME:TODO:remove*/
 #define NXP_WIREDMODE_RESUME_TIMEOUT_LEN 0x04
 #define NFCC_DECIDES 00
 #define POWER_ALWAYS_ON 01
 #define LINK_ALWAYS_ON 02
 #undef P2P_PRIO_LOGIC_HAL_IMP
-
-enum {
-    HAL_NFC_ENABLE_I2C_FRAGMENTATION_EVT = 0x07,
-    HAL_NFC_POST_MIN_INIT_CPLT_EVT  = 0x08
-};
-
-enum {
-    HAL_NFC_IOCTL_P61_IDLE_MODE = 0,
-    HAL_NFC_IOCTL_P61_WIRED_MODE,
-    HAL_NFC_IOCTL_P61_PWR_MODE,
-    HAL_NFC_IOCTL_P61_DISABLE_MODE,
-    HAL_NFC_IOCTL_P61_ENABLE_MODE,
-    HAL_NFC_IOCTL_SET_BOOT_MODE,
-    HAL_NFC_IOCTL_GET_CONFIG_INFO,
-    HAL_NFC_IOCTL_CHECK_FLASH_REQ,
-    HAL_NFC_IOCTL_FW_DWNLD,
-    HAL_NFC_IOCTL_FW_MW_VER_CHECK,
-    HAL_NFC_IOCTL_DISABLE_HAL_LOG,
-    HAL_NFC_IOCTL_NCI_TRANSCEIVE,
-    HAL_NFC_IOCTL_P61_GET_ACCESS,
-    HAL_NFC_IOCTL_P61_REL_ACCESS,
-    HAL_NFC_IOCTL_ESE_CHIP_RST,
-    HAL_NFC_IOCTL_REL_SVDD_WAIT,
-    HAL_NFC_IOCTL_SET_JCP_DWNLD_ENABLE,
-    HAL_NFC_IOCTL_SET_JCP_DWNLD_DISABLE,
-    HAL_NFC_IOCTL_SET_NFC_SERVICE_PID,
-    HAL_NFC_IOCTL_GET_FEATURE_LIST
-};
-
 #define NCI_VERSION_2_0 0x20
 #define NCI_VERSION_1_1 0x11
 #define NCI_VERSION_1_0 0x10
@@ -82,11 +52,16 @@ typedef void(phNxpNciHal_control_granted_callback_t)();
 
 #define FW_DBG_REASON_AVAILABLE     (0xA3)
 
-
+#define HOST_ID  0x00
+#define ESE_ID   0x01
+#define UICC1_ID 0x02
+#define UICC2_ID 0x04
+#define UICC3_ID 0x08
 /* NCI Data */
-#define NCI_MT_CMD  0x20
-#define NCI_MT_RSP  0x40
-#define NCI_MT_NTF  0x60
+
+#define NCI_MT_CMD 0x20
+#define NCI_MT_RSP 0x40
+#define NCI_MT_NTF 0x60
 
 #define CORE_RESET_TRIGGER_TYPE_CORE_RESET_CMD_RECEIVED 0x02
 #define CORE_RESET_TRIGGER_TYPE_POWERED_ON              0x01
@@ -94,6 +69,10 @@ typedef void(phNxpNciHal_control_granted_callback_t)();
 #define NCI_MSG_CORE_INIT            0x01
 #define NCI_MT_MASK                  0xE0
 #define NCI_OID_MASK                 0x3F
+#define NXP_PROPCMD_GID              0x2F
+#define NXP_FLUSH_SRAM_AO_TO_FLASH   0x21
+#define NXP_CORE_GET_CONFIG_CMD      0x03
+#define NXP_CORE_SET_CONFIG_CMD      0x02
 typedef struct nci_data {
   uint16_t len;
   uint8_t p_data[NCI_MAX_DATA_LEN];
@@ -104,7 +83,6 @@ typedef enum { HAL_STATUS_CLOSE = 0, HAL_STATUS_OPEN } phNxpNci_HalStatus;
 /* Macros to enable and disable extensions */
 #define HAL_ENABLE_EXT() (nxpncihal_ctrl.hal_ext_enabled = 1)
 #define HAL_DISABLE_EXT() (nxpncihal_ctrl.hal_ext_enabled = 0)
-
 typedef struct phNxpNciInfo {
   uint8_t   nci_version;
   bool_t    wait_for_ntf;
@@ -150,6 +128,7 @@ typedef struct phNxpNciHal_Control {
   phNxpNciInfo_t nci_info;
   uint8_t hal_boot_mode;
   tNFC_chipType chipType;
+  bool_t    fwdnld_mode_reqd;
 } phNxpNciHal_Control_t;
 
 typedef struct {
@@ -160,12 +139,18 @@ typedef struct {
 typedef struct phNxpNciClock {
   bool_t isClockSet;
   uint8_t p_rx_data[20];
+  bool_t issetConfig;
 } phNxpNciClock_t;
 
 typedef struct phNxpNciRfSetting {
   bool_t isGetRfSetting;
   uint8_t p_rx_data[20];
 } phNxpNciRfSetting_t;
+
+typedef struct phNxpNciMwEepromArea {
+  bool_t isGetEepromArea;
+  uint8_t p_rx_data[32];
+} phNxpNciMwEepromArea_t;
 
 /*set config management*/
 
@@ -179,6 +164,9 @@ typedef struct phNxpNciRfSetting {
 static const uint8_t get_cfg_arr[] = {TOTAL_DURATION, ATR_REQ_GEN_BYTES_POLL,
                                       ATR_REQ_GEN_BYTES_LIS, LEN_WT};
 
+#define NXP_NFC_SET_CONFIG_PARAM_EXT 0xA0
+#define NXP_NFC_PARAM_ID_SWP2        0xD4
+#define NXP_NFC_PARAM_ID_SWPUICC3    0xDC
 typedef enum {
   EEPROM_RF_CFG,
   EEPROM_FW_DWNLD,
@@ -189,7 +177,8 @@ typedef enum {
   EEPROM_ESE_SESSION_ID,
   EEPROM_SWP1_INTF,
   EEPROM_SWP1A_INTF,
-  EEPROM_SWP2_INTF
+  EEPROM_SWP2_INTF,
+  EEPROM_FLASH_UPDATE
 } phNxpNci_EEPROM_request_type_t;
 
 typedef struct phNxpNci_EEPROM_info {
@@ -211,18 +200,11 @@ typedef struct phNxpNci_getCfg_info {
   uint8_t pmid_wt[3];
   uint8_t pmid_wt_len;
 } phNxpNci_getCfg_info_t;
-
 typedef enum {
   NFC_FORUM_PROFILE,
   EMV_CO_PROFILE,
   INVALID_PROFILe
 } phNxpNciProfile_t;
-
-typedef enum {
-  NFC_NORMAL_BOOT_MODE,
-  NFC_FAST_BOOT_MODE,
-  NFC_OSU_BOOT_MODE
-} phNxpNciBootMode;
 /* NXP Poll Profile control structure */
 typedef struct phNxpNciProfile_Control {
   phNxpNciProfile_t profile_type;
@@ -230,6 +212,7 @@ typedef struct phNxpNciProfile_Control {
   uint8_t
       bClkFreqVal;  /* Holds the System clock frequency read from config file */
   uint8_t bTimeout; /* Holds the Timeout Value */
+  uint8_t clkReqDelay; /* Holds default delay time before start clock request*/
 } phNxpNciProfile_Control_t;
 
 /* Internal messages to handle callbacks */
@@ -239,7 +222,7 @@ typedef struct phNxpNciProfile_Control {
 #define NCI_HAL_PRE_DISCOVER_CPLT_MSG 0x414
 #define NCI_HAL_ERROR_MSG 0x415
 #define NCI_HAL_RX_MSG 0xF01
-#define NCI_HAL_POST_MIN_INIT_CPLT_MSG 0xF02
+
 #define NCIHAL_CMD_CODE_LEN_BYTE_OFFSET (2U)
 #define NCIHAL_CMD_CODE_BYTE_LEN (3U)
 
@@ -249,7 +232,7 @@ void phNxpNciHal_request_control(void);
 void phNxpNciHal_release_control(void);
 NFCSTATUS phNxpNciHal_send_get_cfgs();
 int phNxpNciHal_write_unlocked(uint16_t data_len, const uint8_t* p_data);
-static int phNxpNciHal_fw_mw_ver_check();
+//static int phNxpNciHal_fw_mw_ver_check();
 NFCSTATUS request_EEPROM(phNxpNci_EEPROM_info_t* mEEPROM_info);
 NFCSTATUS phNxpNciHal_send_nfcee_pwr_cntl_cmd(uint8_t type);
 
@@ -279,4 +262,8 @@ void phNxpNciHal_configFeatureList(uint8_t* init_rsp, uint16_t rsp_len);
 ** Returns          chipType
 *******************************************************************************/
 tNFC_chipType phNxpNciHal_getChipType();
+#if (NFC_NXP_CHIP_TYPE == PN548C2)
+NFCSTATUS phNxpNciHal_core_reset_recovery();
+void phNxpNciHal_discovery_cmd_ext(uint8_t* p_cmd_data, uint16_t cmd_len);
+#endif
 #endif /* _PHNXPNCIHAL_H_ */

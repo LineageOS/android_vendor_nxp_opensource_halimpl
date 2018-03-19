@@ -48,18 +48,18 @@
   * a configuration file will be selected dynamically and the device will be configured.
   */
 
-#include <phNxpConfig.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <list>
 #include <string>
 #include <vector>
-#include <list>
-#include <sys/stat.h>
-#include <stdlib.h>
 
+#include <phNxpConfig.h>
 #include <phNxpLog.h>
 #include <cutils/log.h>
 #include <cutils/properties.h>
 #include <errno.h>
+#include "sparse_crc32.h"
 
 #if GENERIC_TARGET
 const char alternative_config_path[] = "/data/vendor/nfc/";
@@ -75,12 +75,9 @@ const char* transport_config_paths[] = {"res/"};
 #endif
 const int transport_config_path_size =
     (sizeof(transport_config_paths) / sizeof(transport_config_paths[0]));
+
 #define config_name "libnfc-nxp.conf"
-#if (NXP_EXTNS == TRUE)
 #define extra_config_base "libnfc-"
-#else
-#define extra_config_base "libnfc-nxp-"
-#endif
 #define extra_config_ext ".conf"
 #define IsStringValue 0x80000000
 
@@ -90,8 +87,8 @@ const char tr_config_timestamp_path[] =
     "/data/vendor/nfc/libnfc-nxpTransitConfigState.bin";
 const char config_timestamp_path[] =
         "/data/vendor/nfc/libnfc-nxpConfigState.bin";
-const char default_nxp_config_path[] =
-        "/etc/libnfc-nxp.conf";
+/*const char default_nxp_config_path[] =
+        "/vendor/etc/libnfc-nxp.conf";*/
 const char nxp_rf_config_path[] =
         "/system/vendor/libnfc-nxp_RF.conf";
 
@@ -141,12 +138,35 @@ typedef enum
   TARGET_INVALID                       = 0xFF
 } TARGETTYPE;
 
-using namespace::std;
-
-namespace nxp {
-
 void readOptionalConfig(const char* optional);
 void findConfigFilePathFromTransportConfigPaths(const string& configName, string& filePath);
+
+namespace {
+
+size_t readConfigFile(const char* fileName, uint8_t** p_data) {
+  FILE* fd = fopen(fileName, "rb");
+  if (fd == nullptr) return 0;
+
+  fseek(fd, 0L, SEEK_END);
+  const size_t file_size = ftell(fd);
+  rewind(fd);
+
+  uint8_t* buffer = new uint8_t[file_size];
+  size_t read = fread(buffer, file_size, 1, fd);
+  fclose(fd);
+
+  if (read == 1) {
+    *p_data = buffer;
+    return file_size;
+  }
+
+  delete[] buffer;
+  return 0;
+}
+
+}  // namespace
+
+using namespace ::std;
 
 class CNfcParam : public string {
  public:
@@ -168,6 +188,8 @@ class CNfcConfig : public vector<const CNfcParam*> {
   virtual ~CNfcConfig();
   static CNfcConfig& GetInstance();
   friend void readOptionalConfig(const char* optional);
+  bool isModified();
+  void resetModified();
   int updateTimestamp();
   int checkTimestamp(const char* fileName, const char* fileTimeStamp);
 
@@ -183,8 +205,8 @@ class CNfcConfig : public vector<const CNfcParam*> {
  private:
   CNfcConfig();
   bool readConfig(const char* name, bool bResetContent);
-  int     file_exist (const char* filename);
-  int     getconfiguration_id (char * config_file);
+  int file_exist (const char* filename);
+  int getconfiguration_id (char * config_file);
   void moveFromList();
   void moveToList();
   void add(const CNfcParam* pParam);
@@ -192,13 +214,15 @@ class CNfcConfig : public vector<const CNfcParam*> {
   bool isAllowed(const char* name);
   list<const CNfcParam*> m_list;
   bool mValidFile;
-  bool    mDynamConfig;
+  bool mDynamConfig;
+  uint32_t config_crc32_;
   unsigned long m_timeStamp;
   unsigned long m_timeStampRF;
   unsigned long m_timeStampTransit;
   string mCurrentFile;
 
   unsigned long state;
+
   inline bool Is(unsigned long f) { return (state & f) == f; }
   inline void Set(unsigned long f) { state |= f; }
   inline void Reset(unsigned long f) { state &= ~f; }
@@ -554,8 +578,17 @@ bool CNfcConfig::readConfig(const char* name, bool bResetContent) {
     END_LINE
   };
 
-  FILE* fd;
-  struct stat buf;
+  uint8_t* p_config = nullptr;
+  size_t config_size = readConfigFile(name, &p_config);
+  if (p_config == nullptr) {
+    ALOGE("%s Cannot open config file %s\n", __func__, name);
+    if (bResetContent) {
+      ALOGE("%s Using default value for all settings\n", __func__);
+      mValidFile = false;
+    }
+    return false;
+  }
+
   string token;
   string strValue;
   unsigned long numValue = 0;
@@ -564,33 +597,9 @@ bool CNfcConfig::readConfig(const char* name, bool bResetContent) {
   int base = 0;
   char c;
   int bflag = 0;
-  mCurrentFile = name;
-
   state = BEGIN_LINE;
-  /* open config file, read it into a buffer */
-  if ((fd = fopen(name, "rb")) == NULL) {
-    ALOGE("%s Cannot open config file %s\n", __func__, name);
-    if (bResetContent) {
-      ALOGE("%s Using default value for all settings\n", __func__);
-      mValidFile = false;
-    }
-    return false;
-  }
-  ALOGD("%s Opened %s config %s\n", __func__,
-        (bResetContent ? "base" : "optional"), name);
-  stat(name, &buf);
-  if(mDynamConfig)
-        m_timeStamp = (unsigned long)buf.st_mtime;
-    else {
-        if(strcmp(default_nxp_config_path, name) == 0)
-            m_timeStamp = (unsigned long)buf.st_mtime;
-    }
-  if (strcmp(nxp_rf_config_path, name) == 0) {
-    m_timeStampRF = (unsigned long)buf.st_mtime;
-  }
-  if (strcmp(transit_config_path, name) == 0) {
-    m_timeStampTransit = (unsigned long)buf.st_mtime;
-  }
+
+  config_crc32_ = sparse_crc32(0, p_config, config_size);
   mValidFile = true;
   if (size() > 0) {
     if (bResetContent)
@@ -599,16 +608,8 @@ bool CNfcConfig::readConfig(const char* name, bool bResetContent) {
       moveToList();
   }
 
-  for (;;) {
-    if (feof(fd) || fread(&c, 1, 1, fd) != 1) {
-      if (state == BEGIN_LINE) break;
-
-      // got to the EOF but not in BEGIN_LINE state so the file
-      // probably does not end with a newline, so the parser has
-      // not processed current line, simulate a newline in the file
-      c = '\n';
-    }
-
+  for (size_t offset = 0; offset != config_size; ++offset) {
+    c = p_config[offset];
     switch (state & 0xff) {
       case BEGIN_LINE:
         if (c == '#')
@@ -733,7 +734,7 @@ bool CNfcConfig::readConfig(const char* name, bool bResetContent) {
     }
   }
 
-  fclose(fd);
+  delete[] p_config;
 
   moveFromList();
   return size() > 0;
@@ -797,60 +798,59 @@ CNfcConfig& CNfcConfig::GetInstance() {
   int gconfigpathid=0;
   char config_name_generic[MAX_DATA_CONFIG_PATH_LEN] = {'\0'};
 
-    if (theInstance.size() == 0 && theInstance.mValidFile)
-    {
-        string strPath;
-        if (alternative_config_path[0] != '\0')
-        {
-            strPath.assign(alternative_config_path);
-            strPath += config_name;
-            theInstance.readConfig(strPath.c_str(), true);
-            if (!theInstance.empty())
-            {
-                return theInstance;
-            }
-        }
-        findConfigFilePathFromTransportConfigPaths(config_name, strPath);
-        //checks whether the default config file is present in th target
-        if (theInstance.file_exist(strPath.c_str())) {
-            ALOGI("default config file exists = %s, disables dynamic selection", strPath.c_str());
-            theInstance.mDynamConfig = false;
-            theInstance.readConfig(strPath.c_str(), true);
-            /*
-             * if libnfc-nxp.conf exists then dynamic selection will
-             * be turned off by default we will not have this file.
-             */
-            return theInstance;
-        }
-
-        gconfigpathid = theInstance.getconfiguration_id(config_name_generic);
-        findConfigFilePathFromTransportConfigPaths(config_name_generic, strPath);
-        if (!(theInstance.file_exist(strPath.c_str()))) {
-            ALOGI("no matching file found, using default file for stability\n");
-            findConfigFilePathFromTransportConfigPaths(config_name_default, strPath);
-        }
-        ALOGI("config file used = %s\n",strPath.c_str());
+  if (theInstance.size() == 0 && theInstance.mValidFile) {
+    string strPath;
+    if (alternative_config_path[0] != '\0') {
+      strPath.assign(alternative_config_path);
+      strPath += config_name;
+      theInstance.readConfig(strPath.c_str(), true);
+      if (!theInstance.empty()) {
+        return theInstance;
+      }
+    }
+    findConfigFilePathFromTransportConfigPaths(config_name, strPath);
+    //checks whether the default config file is present in th target
+    if (theInstance.file_exist(strPath.c_str())) {
+        ALOGI("default config file exists = %s, disables dynamic selection", strPath.c_str());
+        theInstance.mDynamConfig = false;
         theInstance.readConfig(strPath.c_str(), true);
+        /*
+         * if libnfc-nxp.conf exists then dynamic selection will
+         * be turned off by default we will not have this file.
+         */
+        return theInstance;
+    }
+
+    gconfigpathid = theInstance.getconfiguration_id(config_name_generic);
+    findConfigFilePathFromTransportConfigPaths(config_name_generic, strPath);
+    if (!(theInstance.file_exist(strPath.c_str()))) {
+        ALOGI("no matching file found, using default file for stability\n");
+        findConfigFilePathFromTransportConfigPaths(config_name_default, strPath);
+    }
+    ALOGI("config file used = %s\n",strPath.c_str());
+    theInstance.readConfig(strPath.c_str(), true);
 #if(NXP_EXTNS == TRUE)
 
-        int rc = 0;
-        char nq_fw_ver[PROPERTY_VALUE_MAX] = {0};
+    int rc = 0;
+    char nq_fw_ver[PROPERTY_VALUE_MAX] = {0};
 
-        rc = __system_property_get("sys.nfc.nq.fwver", nq_fw_ver);
-        if (rc <= 0)
-            ALOGE("get sys.nfc.nq.fwver fail, rc = %d\n", rc);
-        else
-            ALOGD("sys.nfc.nq.fwver = %s\n", nq_fw_ver);
+    rc = __system_property_get("sys.nfc.nq.fwver", nq_fw_ver);
+    if (rc <= 0)
+        ALOGE("get sys.nfc.nq.fwver fail, rc = %d\n", rc);
+    else
+        ALOGD("sys.nfc.nq.fwver = %s\n", nq_fw_ver);
 
-        if (!strncmp(nq_fw_ver, FW_MAJOR_NUM_NQ4xx, FW_MAJOR_NUM_LENGTH))
-           readOptionalConfig("brcm_NCI2_0");
-        else
-           readOptionalConfig("brcm");
+    if (!strncmp(nq_fw_ver, FW_MAJOR_NUM_NQ4xx, FW_MAJOR_NUM_LENGTH))
+        readOptionalConfig("brcm_NCI2_0");
+    else
+        readOptionalConfig("brcm");
 
-        theInstance.readNxpTransitConfig("nxpTransit");
+    theInstance.readNxpTransitConfig(transit_config_path);
+    theInstance.readNxpRFConfig(nxp_rf_config_path);
 #endif
-    }
-    return theInstance;
+  }
+
+  return theInstance;
 }
 
 /*******************************************************************************
@@ -1103,8 +1103,8 @@ bool CNfcConfig::isAllowed(const char* name) {
 void CNfcConfig::moveFromList() {
   if (m_list.size() == 0) return;
 
-  for (list<const CNfcParam*>::iterator it = m_list.begin(),
-                                        itEnd = m_list.end();
+  for (list<const CNfcParam *>::iterator it = m_list.begin(),
+                                         itEnd = m_list.end();
        it != itEnd; ++it)
     push_back(*it);
   m_list.clear();
@@ -1126,7 +1126,6 @@ void CNfcConfig::moveToList() {
     m_list.push_back(*it);
   clear();
 }
-
 /*******************************************************************************
 **
 ** Function:    CNfcConfig::checkTimestamp(const char* fileName,const char*
@@ -1161,7 +1160,7 @@ int CNfcConfig::checkTimestamp(const char* fileName, const char* fileNameTime) {
   } else {
     fd = fopen(fileNameTime, "r+");
     if (fd == NULL) {
-      ALOGE("%s Cannot open file %s\n", __func__, fileNameTime);
+      ALOGE("%s Cannot open file %s\n", __func__, fileName);
       return 1;
     }
     fread(&value, sizeof(unsigned long), 1, fd);
@@ -1175,7 +1174,6 @@ int CNfcConfig::checkTimestamp(const char* fileName, const char* fileNameTime) {
   }
   return ret;
 }
-
 /*******************************************************************************
 **
 ** Function:    CNfcConfig::updateTimestamp()
@@ -1215,6 +1213,33 @@ int CNfcConfig::updateTimestamp() {
     fclose(fd);
   }
   return ret;
+}
+
+bool CNfcConfig::isModified() {
+  FILE* fd = fopen(config_timestamp_path, "r+");
+  if (fd == nullptr) {
+    ALOGE("%s Unable to open file '%s' - assuming modified", __func__,
+          config_timestamp_path);
+    return true;
+  }
+
+  uint32_t stored_crc32 = 0;
+  fread(&stored_crc32, sizeof(uint32_t), 1, fd);
+  fclose(fd);
+
+  return stored_crc32 != config_crc32_;
+}
+
+void CNfcConfig::resetModified() {
+  FILE* fd = fopen(config_timestamp_path, "w+");
+  if (fd == nullptr) {
+    ALOGE("%s Unable to open file '%s' for writing", __func__,
+          config_timestamp_path);
+    return;
+  }
+
+  fwrite(&config_crc32_, sizeof(uint32_t), 1, fd);
+  fclose(fd);
 }
 
 /*******************************************************************************
@@ -1288,7 +1313,6 @@ void readOptionalConfig(const char* extra) {
   CNfcConfig::GetInstance().readConfig(strPath.c_str(), false);
 }
 
-}  // namespace nxp
 /*******************************************************************************
 **
 ** Function:    GetStrValue
@@ -1300,7 +1324,7 @@ void readOptionalConfig(const char* extra) {
 *******************************************************************************/
 extern "C" int GetNxpStrValue(const char* name, char* pValue,
                               unsigned long len) {
-  nxp::CNfcConfig& rConfig = nxp::CNfcConfig::GetInstance();
+  CNfcConfig& rConfig = CNfcConfig::GetInstance();
 
   return rConfig.getValue(name, pValue, len);
 }
@@ -1318,13 +1342,13 @@ extern "C" int GetNxpStrValue(const char* name, char* pValue,
 **              len - out parameter to return the number of bytes read from
 **                    config file, return -1 in case bufflen is not enough.
 **
-** Returns:     true[1] if config param name is found in the config file, else
-**              false[0]
+** Returns:     TRUE[1] if config param name is found in the config file, else
+**              FALSE[0]
 **
 *******************************************************************************/
 extern "C" int GetNxpByteArrayValue(const char* name, char* pValue,
                                     long bufflen, long* len) {
-  nxp::CNfcConfig& rConfig = nxp::CNfcConfig::GetInstance();
+  CNfcConfig& rConfig = CNfcConfig::GetInstance();
 
   return rConfig.getValue(name, pValue, bufflen, len);
 }
@@ -1342,8 +1366,8 @@ extern "C" int GetNxpNumValue(const char* name, void* pValue,
                               unsigned long len) {
   if (!pValue) return false;
 
-  nxp::CNfcConfig& rConfig = nxp::CNfcConfig::GetInstance();
-  const nxp::CNfcParam* pParam = rConfig.find(name);
+  CNfcConfig& rConfig = CNfcConfig::GetInstance();
+  const CNfcParam* pParam = rConfig.find(name);
 
   if (pParam == NULL) return false;
   unsigned long v = pParam->numValue();
@@ -1382,7 +1406,7 @@ extern "C" int GetNxpNumValue(const char* name, void* pValue,
 extern "C" void resetNxpConfig()
 
 {
-  nxp::CNfcConfig& rConfig = nxp::CNfcConfig::GetInstance();
+  CNfcConfig& rConfig = CNfcConfig::GetInstance();
 
   rConfig.clean();
 }
@@ -1397,9 +1421,10 @@ extern "C" void resetNxpConfig()
 **
 *******************************************************************************/
 extern "C" int isNxpConfigModified() {
-  nxp::CNfcConfig& rConfig = nxp::CNfcConfig::GetInstance();
-  return rConfig.checkTimestamp(default_nxp_config_path, config_timestamp_path);
+  CNfcConfig& rConfig = CNfcConfig::GetInstance();
+  return rConfig.isModified();
 }
+
 /*******************************************************************************
 **
 ** Function:    isNxpRFConfigModified()
@@ -1411,7 +1436,7 @@ extern "C" int isNxpConfigModified() {
 *******************************************************************************/
 extern "C" int isNxpRFConfigModified() {
   int retRF = 0, rettransit = 0, ret = 0;
-  nxp::CNfcConfig& rConfig = nxp::CNfcConfig::GetInstance();
+  CNfcConfig& rConfig = CNfcConfig::GetInstance();
   retRF = rConfig.checkTimestamp(nxp_rf_config_path, rf_config_timestamp_path);
   rettransit =
       rConfig.checkTimestamp(transit_config_path, tr_config_timestamp_path);
@@ -1430,6 +1455,7 @@ extern "C" int isNxpRFConfigModified() {
 **
 *******************************************************************************/
 extern "C" int updateNxpConfigTimestamp() {
-  nxp::CNfcConfig& rConfig = nxp::CNfcConfig::GetInstance();
-  return rConfig.updateTimestamp();
+  CNfcConfig& rConfig = CNfcConfig::GetInstance();
+  rConfig.resetModified();
+  return 0;
 }

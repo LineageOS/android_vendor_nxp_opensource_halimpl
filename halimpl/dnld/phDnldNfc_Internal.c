@@ -24,12 +24,13 @@
 
 #include <phDnldNfc_Internal.h>
 #include <phDnldNfc_Utils.h>
-#include <phTmlNfc.h>
 #include <phNxpLog.h>
 #include <phNxpNciHal_utils.h>
+#include <phTmlNfc.h>
 
 /* Minimum length of payload including 1 byte CmdId */
 #define PHDNLDNFC_MIN_PLD_LEN (0x04U)
+
 /* Offset of Length byte within the frame */
 #define PHDNLDNFC_FRAME_HDR_OFFSET (0x00)
 /* Offset of FrameId within the frame */
@@ -42,6 +43,7 @@
 #define PHDNLDNFC_FRAME_RDDATA_OFFSET \
   ((PHDNLDNFC_FRAME_HDR_LEN) +        \
    (PHDNLDNFC_MIN_PLD_LEN)) /* recvd frame offset where data starts */
+
 /* Size of first secure write frame Signature */
 #define PHDNLDNFC_FRAME_SIGNATURE_SIZE (0xC0U)
 /* Size of first secure write frame payload */
@@ -75,6 +77,27 @@
 #define PHDNLDNFC_USERDATA_EEPROM_OFFSET (0x003CU)
 /* 16 bits length of user data area */
 #define PHDNLDNFC_USERDATA_EEPROM_LEN (0x0DC0U)
+#else
+
+#if (NFC_NXP_CHIP_TYPE == PN548C2)
+/* EEPROM offset and length value for PN548AD */
+/* 16 bits offset indicating user data area start location */
+#define PHDNLDNFC_USERDATA_EEPROM_OFFSET (0x02BCU)
+/* 16 bits length of user data area */
+#define PHDNLDNFC_USERDATA_EEPROM_LEN (0x0C00U)
+#elif (NFC_NXP_CHIP_TYPE == PN551)
+/* EEPROM offset and length value for PN551 */
+/* 16 bits offset indicating user data area start location */
+#define PHDNLDNFC_USERDATA_EEPROM_OFFSET (0x02BCU)
+/* 16 bits length of user data area */
+#define PHDNLDNFC_USERDATA_EEPROM_LEN (0x0C00U)
+#else
+/* EEPROM offset and length value for PN547C2 */
+/* 16 bits offset indicating user data area start location */
+#define PHDNLDNFC_USERDATA_EEPROM_OFFSET (0x023CU)
+/* 16 bits length of user data area */
+#define PHDNLDNFC_USERDATA_EEPROM_LEN (0x0C80U)
+#endif
 
 #endif
 #define PH_LIBNFC_VEN_RESET_ON_DOWNLOAD_TIMEOUT (1)
@@ -564,7 +587,7 @@ static NFCSTATUS phDnldNfc_BuildFramePkt(pphDnldNfc_DlContext_t pDlContext) {
       } else {
         if (false == (pDlContext->tRWInfo.bFramesSegmented)) {
           NXPLOG_FWDNLD_D("Verifying RspBuffInfo for Read Request..");
-          wFrameLen = (pDlContext->tRspBuffInfo.wLen) + PHDNLDNFC_MIN_PLD_LEN;
+          wFrameLen = (uint16_t)(pDlContext->tRspBuffInfo.wLen) + PHDNLDNFC_MIN_PLD_LEN;
 
           (pDlContext->tRWInfo.wRWPldSize) =
               (PHDNLDNFC_CMDRESP_MAX_PLD_SIZE - PHDNLDNFC_MIN_PLD_LEN);
@@ -675,8 +698,7 @@ static NFCSTATUS phDnldNfc_BuildFramePkt(pphDnldNfc_DlContext_t pDlContext) {
 *******************************************************************************/
 static NFCSTATUS phDnldNfc_CreateFramePld(pphDnldNfc_DlContext_t pDlContext) {
   NFCSTATUS wStatus = NFCSTATUS_SUCCESS;
-  uint16_t wBuffIdx = 0;
-  uint16_t wChkIntgVal = 0;
+  uint32_t wBuffIdx = 0;
   uint16_t wFrameLen = 0;
 
   if (NULL == pDlContext) {
@@ -691,21 +713,13 @@ static NFCSTATUS phDnldNfc_CreateFramePld(pphDnldNfc_DlContext_t pDlContext) {
       (pDlContext->tCmdRspFrameInfo.dwSendlength) += PHDNLDNFC_MIN_PLD_LEN;
     } else if (phDnldNfc_ChkIntg == (pDlContext->FrameInp.Type)) {
       (pDlContext->tCmdRspFrameInfo.dwSendlength) += PHDNLDNFC_MIN_PLD_LEN;
-#ifdef NXP_PN547C1_DOWNLOAD
+#if 0 /*Commented for SN100*/
       wChkIntgVal = PHDNLDNFC_USERDATA_EEPROM_OFFSET;
-#else
-      wChkIntgVal = nfcFL.nfcMwFL._PHDNLDNFC_USERDATA_EEPROM_OFFSET;
-#endif
-
       memcpy(&(pDlContext->tCmdRspFrameInfo
                    .aFrameBuff[PHDNLDNFC_FRAME_RDDATA_OFFSET]),
              &wChkIntgVal, sizeof(wChkIntgVal));
 
-#ifdef NXP_PN547C1_DOWNLOAD
       wChkIntgVal = PHDNLDNFC_USERDATA_EEPROM_LEN;
-#else
-      wChkIntgVal = nfcFL.nfcMwFL._PHDNLDNFC_USERDATA_EEPROM_LEN;
-#endif
       memcpy(&(pDlContext->tCmdRspFrameInfo
                    .aFrameBuff[PHDNLDNFC_FRAME_RDDATA_OFFSET +
                                PHDNLDNFC_USERDATA_EEPROM_OFFSIZE]),
@@ -715,6 +729,7 @@ static NFCSTATUS phDnldNfc_CreateFramePld(pphDnldNfc_DlContext_t pDlContext) {
           PHDNLDNFC_USERDATA_EEPROM_LENSIZE;
       (pDlContext->tCmdRspFrameInfo.dwSendlength) +=
           PHDNLDNFC_USERDATA_EEPROM_OFFSIZE;
+#endif
     } else if (phDnldNfc_FTWrite == (pDlContext->FrameInp.Type)) {
       wBuffIdx = (pDlContext->tRWInfo.wOffset);
 
@@ -763,7 +778,7 @@ static NFCSTATUS phDnldNfc_CreateFramePld(pphDnldNfc_DlContext_t pDlContext) {
       (pDlContext->tRWInfo.wBytesToSendRecv) =
           ((pDlContext->tRWInfo.wRemBytes) > (pDlContext->tRWInfo.wRWPldSize))
               ? (pDlContext->tRWInfo.wRWPldSize)
-              : (pDlContext->tRWInfo.wRemBytes);
+              : (uint16_t)(pDlContext->tRWInfo.wRemBytes);
 
       wBuffIdx = (PHDNLDNFC_PLD_OFFSET +
                   ((sizeof(pDlContext->tRWInfo.wBytesToSendRecv)) %
@@ -790,7 +805,7 @@ static NFCSTATUS phDnldNfc_CreateFramePld(pphDnldNfc_DlContext_t pDlContext) {
              (pDlContext->tUserData.pBuff), (pDlContext->tUserData.wLen));
 
       (pDlContext->tCmdRspFrameInfo.dwSendlength) +=
-          (pDlContext->tUserData.wLen);
+              (uint16_t)(pDlContext->tUserData.wLen);
     } else if (phDnldNfc_FTForce == (pDlContext->FrameInp.Type)) {
       (pDlContext->tCmdRspFrameInfo.dwSendlength) += PHDNLDNFC_MIN_PLD_LEN;
 
@@ -808,7 +823,7 @@ static NFCSTATUS phDnldNfc_CreateFramePld(pphDnldNfc_DlContext_t pDlContext) {
                (pDlContext->tUserData.pBuff), (pDlContext->tUserData.wLen));
 
         (pDlContext->tCmdRspFrameInfo.dwSendlength) +=
-            (pDlContext->tUserData.wLen);
+                (uint16_t)(pDlContext->tUserData.wLen);
       }
     } else {
     }
@@ -990,7 +1005,7 @@ static void phDnldNfc_RspTimeOutCb(uint32_t TimerId, void* pContext) {
 
       NXPLOG_FWDNLD_D("%x", pDlCtxt->tLastStatus);
 
-#if (PH_LIBNFC_VEN_RESET_ON_DOWNLOAD_TIMEOUT == true)
+#if (PH_LIBNFC_VEN_RESET_ON_DOWNLOAD_TIMEOUT == TRUE)
       if (PH_DL_STATUS_SIGNATURE_ERROR == pDlCtxt->tLastStatus) {
         /* Do a VEN Reset of the chip. */
         NXPLOG_FWDNLD_E("Performing a VEN Reset");

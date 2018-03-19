@@ -21,21 +21,18 @@
  * TML Implementation.
  */
 
-#include <phTmlNfc.h>
-#include <phOsalNfc_Timer.h>
-#include <phNxpLog.h>
 #include <phDal4Nfc_messageQueueLib.h>
-#include <phTmlNfc_i2c.h>
+#include <phNxpLog.h>
 #include <phNxpNciHal_utils.h>
-#include <errno.h>
+#include <phOsalNfc_Timer.h>
+#include <phTmlNfc.h>
+#include <phTmlNfc_i2c.h>
 
 /*
  * Duration of Timer to wait after sending an Nci packet
  */
 #define PHTMLNFC_MAXTIME_RETRANSMIT (200U)
 #define MAX_WRITE_RETRY_COUNT 0x03
-#define MAX_READ_RETRY_COUNT 0x05
-
 /* Retry Count = Standby Recovery time of NFCC / Retransmission time + 1 */
 static uint8_t bCurrentRetryCount = (2000 / PHTMLNFC_MAXTIME_RETRANSMIT) + 1;
 
@@ -47,7 +44,7 @@ static uint8_t bCurrentRetryCount = (2000 / PHTMLNFC_MAXTIME_RETRANSMIT) + 1;
 
 /* Initialize Context structure pointer used to access context structure */
 phTmlNfc_Context_t* gpphTmlNfc_Context = NULL;
-extern phTmlNfc_i2cfragmentation_t fragmentation_enabled;
+phTmlNfc_i2cfragmentation_t fragmentation_enabled = I2C_FRAGMENATATION_DISABLED;
 /* Local Function prototypes */
 static NFCSTATUS phTmlNfc_StartThread(void);
 static void phTmlNfc_CleanUp(void);
@@ -222,7 +219,6 @@ void phTmlNfc_ConfigNciPktReTx(phTmlNfc_ConfigRetrans_t eConfiguration,
 static NFCSTATUS phTmlNfc_StartThread(void) {
   NFCSTATUS wStartStatus = NFCSTATUS_SUCCESS;
   void* h_threadsEvent = 0x00;
-  uint32_t dwEvent;
   int pthread_create_status = 0;
 
   /* Create Reader and Writer threads */
@@ -311,8 +307,6 @@ static void phTmlNfc_TmlThread(void* pParam) {
   NFCSTATUS wStatus = NFCSTATUS_SUCCESS;
   int32_t dwNoBytesWrRd = PH_TMLNFC_RESET_VALUE;
   uint8_t temp[260];
-  static uint8_t read_count = 0;
-
   /* Transaction info buffer to be passed to Callback Thread */
   static phTmlNfc_TransactInfo_t tTransactionInfo;
   /* Structure containing Tml callback function and parameters to be invoked
@@ -340,54 +334,21 @@ static void phTmlNfc_TmlThread(void* pParam) {
       dwNoBytesWrRd = PH_TMLNFC_RESET_VALUE;
 
       /* Read the data from the file onto the buffer */
-      if (((uintptr_t)gpphTmlNfc_Context->pDevHandle) > 0) {
+      if (NULL != gpphTmlNfc_Context->pDevHandle) {
         NXPLOG_TML_D("PN54X - Invoking I2C Read.....\n");
         dwNoBytesWrRd =
             phTmlNfc_i2c_read(gpphTmlNfc_Context->pDevHandle, temp, 260);
 
         if (-1 == dwNoBytesWrRd) {
-            NXPLOG_TML_E("PN54X - Error in I2C Read.....\n");
-            if(nfcFL.nfccFL._NFCC_I2C_READ_WRITE_IMPROVEMENT) {
-                if (read_count <= MAX_READ_RETRY_COUNT) {
-                    read_count++;
-                    /*sleep for 30/60/90/120/150 msec between each read trial incase of
-                     * read error*/
-                    usleep(read_count * 30 * 1000);
-                } else {
-                    /* Fill the Transaction info structure to be passed to Callback
-                     * Function */
-                    tTransactionInfo.wStatus = NFCSTATUS_READ_FAILED;
-                    // tTransactionInfo.pBuff = gpphTmlNfc_Context->tReadInfo.pBuffer;
-                    /* Actual number of bytes read is filled in the structure */
-                    // tTransactionInfo.wLength = gpphTmlNfc_Context->tReadInfo.wLength;
-
-                    /* Read operation Failed. Post a Message onto Callback Thread*/
-                    /* Prepare the message to be posted on User thread */
-                    tDeferredInfo.pCallback = &phTmlNfc_ReadDeferredCb;
-                    tDeferredInfo.pParameter = &tTransactionInfo;
-                    tMsg.eMsgType = PH_LIBNFC_DEFERREDCALL_MSG;
-                    tMsg.pMsgData = &tDeferredInfo;
-                    tMsg.Size = sizeof(tDeferredInfo);
-                    NXPLOG_TML_D("PN54X - Posting read failure message.....\n");
-                    phTmlNfc_DeferredCall(gpphTmlNfc_Context->dwCallbackThreadId,
-                            &tMsg);
-                    return;
-                }
-            }
+          NXPLOG_TML_E("PN54X - Error in I2C Read.....\n");
           sem_post(&gpphTmlNfc_Context->rxSemaphore);
         } else if (dwNoBytesWrRd > 260) {
           NXPLOG_TML_E("Numer of bytes read exceeds the limit 260.....\n");
-          if(nfcFL.nfccFL._NFCC_I2C_READ_WRITE_IMPROVEMENT) {
-              read_count = 0;
-          }
           sem_post(&gpphTmlNfc_Context->rxSemaphore);
         } else {
           memcpy(gpphTmlNfc_Context->tReadInfo.pBuffer, temp, dwNoBytesWrRd);
-          if(nfcFL.nfccFL._NFCC_I2C_READ_WRITE_IMPROVEMENT) {
-              read_count = 0;
-          }
-          NXPLOG_TML_D("PN54X - I2C Read successful.....len = %d\n",
-                       dwNoBytesWrRd);
+
+          NXPLOG_TML_D("PN54X - I2C Read successful.....\n");
           /* This has to be reset only after a successful read */
           gpphTmlNfc_Context->tReadInfo.bEnable = 0;
           if ((phTmlNfc_e_EnableRetrans == gpphTmlNfc_Context->eConfig) &&
@@ -408,7 +369,12 @@ static void phTmlNfc_TmlThread(void* pParam) {
           }
           /* Update the actual number of bytes read including header */
           gpphTmlNfc_Context->tReadInfo.wLength = (uint16_t)(dwNoBytesWrRd);
+          phNxpNciHal_print_packet("RECV",
+                                   gpphTmlNfc_Context->tReadInfo.pBuffer,
+                                   gpphTmlNfc_Context->tReadInfo.wLength);
+
           dwNoBytesWrRd = PH_TMLNFC_RESET_VALUE;
+
           /* Fill the Transaction info structure to be passed to Callback
            * Function */
           tTransactionInfo.wStatus = wStatus;
@@ -435,15 +401,10 @@ static void phTmlNfc_TmlThread(void* pParam) {
           /*TML reader writer callback syncronization-- END*/
           pthread_mutex_unlock(&gpphTmlNfc_Context->wait_busy_lock);
           NXPLOG_TML_D("PN54X - Posting read message.....\n");
-          phNxpNciHal_print_packet("RECV",
-                                   gpphTmlNfc_Context->tReadInfo.pBuffer,
-                                   gpphTmlNfc_Context->tReadInfo.wLength);
           phTmlNfc_DeferredCall(gpphTmlNfc_Context->dwCallbackThreadId, &tMsg);
         }
       } else {
-        NXPLOG_TML_D(
-            "PN54X - NFCSTATUS_INVALID_DEVICE == "
-            "gpphTmlNfc_Context->pDevHandle");
+        NXPLOG_TML_D("PN54X -gpphTmlNfc_Context->pDevHandle is NULL");
       }
     } else {
       NXPLOG_TML_D("PN54X - read request NOT enabled");
@@ -489,9 +450,8 @@ static void phTmlNfc_TmlWriterThread(void* pParam) {
       NXPLOG_TML_D("PN54X - Write requested.....\n");
       /* Set the variable to success initially */
       wStatus = NFCSTATUS_SUCCESS;
-      if (((uintptr_t)gpphTmlNfc_Context->pDevHandle) > 0) {
+      if (NULL != gpphTmlNfc_Context->pDevHandle) {
       retry:
-
         gpphTmlNfc_Context->tWriteInfo.bEnable = 0;
         /* Variable to fetch the actual number of bytes written */
         dwNoBytesWrRd = PH_TMLNFC_RESET_VALUE;
@@ -509,6 +469,8 @@ static void phTmlNfc_TmlWriterThread(void* pParam) {
             if (retry_cnt++ < MAX_WRITE_RETRY_COUNT) {
               NXPLOG_NCIHAL_E("PN54X - Error in I2C Write  - Retry 0x%x",
                               retry_cnt);
+              // Add a 10 ms delay to ensure NFCC is not still in stand by mode.
+              usleep(10 * 1000);
               goto retry;
             }
           }
@@ -569,9 +531,7 @@ static void phTmlNfc_TmlWriterThread(void* pParam) {
           }
         }
       } else {
-        NXPLOG_TML_D(
-            "PN54X - NFCSTATUS_INVALID_DEVICE == "
-            "gpphTmlNfc_Context->pDevHandle");
+        NXPLOG_TML_D("PN54X - gpphTmlNfc_Context->pDevHandle is NULL");
       }
 
       /* If Data packet is sent, then NO retransmission */
@@ -608,8 +568,6 @@ static void phTmlNfc_TmlWriterThread(void* pParam) {
 **
 *******************************************************************************/
 static void phTmlNfc_CleanUp(void) {
-  NFCSTATUS wRetval = NFCSTATUS_SUCCESS;
-
   if (NULL == gpphTmlNfc_Context) {
     return;
   }
@@ -650,6 +608,7 @@ static void phTmlNfc_CleanUp(void) {
 *******************************************************************************/
 NFCSTATUS phTmlNfc_Shutdown(void) {
   NFCSTATUS wShutdownStatus = NFCSTATUS_SUCCESS;
+
   /* Check whether TML is Initialized */
   if (NULL != gpphTmlNfc_Context) {
     /* Reset thread variable to terminate the thread */
@@ -906,7 +865,6 @@ NFCSTATUS phTmlNfc_IoCtl(phTmlNfc_ControlCode_t eControlCode) {
     switch (eControlCode) {
       case phTmlNfc_e_ResetDevice:
       case phTmlNfc_e_EnableNormalMode: {
-        /*Block reader thread until VEN Toggling is completed*/
         /*Reset PN54X*/
         uint8_t read_flag = false;
         if (gpphTmlNfc_Context->tReadInfo.bEnable) {
@@ -914,10 +872,18 @@ NFCSTATUS phTmlNfc_IoCtl(phTmlNfc_ControlCode_t eControlCode) {
           read_flag = true;
         }
         gpphTmlNfc_Context->tReadInfo.bEnable = 0;
-        phTmlNfc_i2c_reset(gpphTmlNfc_Context->pDevHandle, 0);
-        usleep(10 * 1000);
-        phTmlNfc_i2c_reset(gpphTmlNfc_Context->pDevHandle, 1);
-        usleep(100 * 1000);
+        if(nfcFL.nfccFL._NFCC_DWNLD_MODE == nfcFL.nfccFL._NFCC_DWNLD_WITH_VEN_RESET) {
+            NXPLOG_TML_D(" phTmlNfc_e_EnableNormalMode complete with VEN RESET ");
+          phTmlNfc_i2c_reset(gpphTmlNfc_Context->pDevHandle, 0);
+          usleep(10 * 1000);
+          phTmlNfc_i2c_reset(gpphTmlNfc_Context->pDevHandle, 1);
+          usleep(100 * 1000);
+        }
+        else if(nfcFL.nfccFL._NFCC_DWNLD_MODE == nfcFL.nfccFL._NFCC_DWNLD_WITH_NCI_CMD) {
+          NXPLOG_TML_D(" phTmlNfc_e_EnableNormalMode complete with NCI CMD ");
+          phTmlNfc_i2c_reset(gpphTmlNfc_Context->pDevHandle, 1);
+          usleep(100 * 1000);
+        }
         if (read_flag) {
           gpphTmlNfc_Context->tReadInfo.bEnable = 1;
           sem_post(&gpphTmlNfc_Context->rxSemaphore);
@@ -927,104 +893,19 @@ NFCSTATUS phTmlNfc_IoCtl(phTmlNfc_ControlCode_t eControlCode) {
       case phTmlNfc_e_EnableDownloadMode: {
         phTmlNfc_ConfigNciPktReTx(phTmlNfc_e_DisableRetrans, 0);
         gpphTmlNfc_Context->tReadInfo.bEnable = 0;
-        wStatus = phTmlNfc_i2c_reset(gpphTmlNfc_Context->pDevHandle, 2);
+        if(nfcFL.nfccFL._NFCC_DWNLD_MODE == nfcFL.nfccFL._NFCC_DWNLD_WITH_VEN_RESET) {
+            NXPLOG_TML_D(" phTmlNfc_e_EnableDownloadMode complete with VEN RESET ");
+          wStatus = phTmlNfc_i2c_reset(gpphTmlNfc_Context->pDevHandle, 2);
+        }
+        else if(nfcFL.nfccFL._NFCC_DWNLD_MODE == nfcFL.nfccFL._NFCC_DWNLD_WITH_NCI_CMD) {
+            NXPLOG_TML_D(" phTmlNfc_e_EnableDownloadMode complete with NCI CMD ");
+          wStatus = phTmlNfc_i2c_reset(gpphTmlNfc_Context->pDevHandle, 4);
+        }
         usleep(100 * 1000);
         gpphTmlNfc_Context->tReadInfo.bEnable = 1;
         sem_post(&gpphTmlNfc_Context->rxSemaphore);
         break;
       }
-      case phTmlNfc_e_SetJcopDwnldEnable: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_i2c_set_Jcop_dwnld_state(
-                      gpphTmlNfc_Context->pDevHandle, JCP_DWNLD_START);
-          }
-          break;
-      }
-      case phTmlNfc_e_SetJcopDwnldDisable: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_i2c_set_Jcop_dwnld_state(
-                      gpphTmlNfc_Context->pDevHandle, JCP_DWP_DWNLD_COMPLETE);
-          }
-          break;
-      }
-      case phTmlNfc_e_SetNfcServicePid: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_set_pid(gpphTmlNfc_Context->pDevHandle,
-                      gpphTmlNfc_Context->nfc_service_pid);
-          }
-          break;
-      }
-      case phTmlNfc_e_GetP61PwrMode: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_i2c_get_p61_power_state(
-                      gpphTmlNfc_Context->pDevHandle);
-          }
-          break;
-      }
-      case phTmlNfc_e_SetP61WiredMode: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_i2c_set_p61_power_state(
-                              gpphTmlNfc_Context->pDevHandle, 1);
-          }
-          break;
-      }
-      case phTmlNfc_e_SetP61IdleMode: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_i2c_set_p61_power_state(
-                              gpphTmlNfc_Context->pDevHandle, 0);
-          }
-          break;
-      }
-      case phTmlNfc_e_SetP61DisableMode: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_i2c_set_p61_power_state(
-                              gpphTmlNfc_Context->pDevHandle, 2);
-          }
-          break;
-      }
-      case phTmlNfc_e_SetP61EnableMode: {
-          {
-              wStatus = phTmlNfc_i2c_set_p61_power_state(
-                      gpphTmlNfc_Context->pDevHandle, 3);
-          }
-          break;
-      }
-      case phTmlNfc_e_RelP61Access: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_i2c_set_p61_power_state(
-                      gpphTmlNfc_Context->pDevHandle, 4);
-          }
-          break;
-      }
-      case phTmlNfc_e_eSEChipRstMode: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_i2c_reset(
-                      gpphTmlNfc_Context->pDevHandle, 3);
-          }
-          break;
-      }
-      case phTmlNfc_e_SetLegacyPowerScheme: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_set_power_scheme(
-                      gpphTmlNfc_Context->pDevHandle, 2);
-          }
-          break;
-      }
-      case phTmlNfc_e_SetExtPMUPowerScheme: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_set_power_scheme(
-                      gpphTmlNfc_Context->pDevHandle, 3);
-          }
-          break;
-      }
-      case phTmlNfc_e_SetPN67TPowerScheme: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_set_power_scheme(
-                      gpphTmlNfc_Context->pDevHandle, 1);
-          }
-          break;
-      }
-
       default: {
         wStatus = NFCSTATUS_INVALID_PARAMETER;
         break;

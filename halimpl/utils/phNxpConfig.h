@@ -20,7 +20,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2015 NXP Semiconductors
+ *  Copyright (C) 2013-2014 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@
 
 #ifndef __CONFIG_H
 #define __CONFIG_H
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -71,6 +72,7 @@ int updateNxpConfigTimestamp();
 #define NAME_NXP_SYS_CLK_SRC_SEL "NXP_SYS_CLK_SRC_SEL"
 #define NAME_NXP_SYS_CLK_FREQ_SEL "NXP_SYS_CLK_FREQ_SEL"
 #define NAME_NXP_SYS_CLOCK_TO_CFG "NXP_SYS_CLOCK_TO_CFG"
+#define NAME_NXP_CLOCK_REQ_DELAY "NXP_CLOCK_REQ_DELAY"
 #define NAME_NXP_ACT_PROP_EXTN "NXP_ACT_PROP_EXTN"
 #define NAME_NXP_EXT_TVDD_CFG "NXP_EXT_TVDD_CFG"
 #define NAME_NXP_EXT_TVDD_CFG_1 "NXP_EXT_TVDD_CFG_1"
@@ -109,6 +111,8 @@ int updateNxpConfigTimestamp();
 #define NAME_NXP_SVDD_SYNC_OFF_DELAY "NXP_SVDD_SYNC_OFF_DELAY"
 #define NAME_NXP_CORE_PROP_SYSTEM_DEBUG "NXP_CORE_PROP_SYSTEM_DEBUG"
 #define NAME_NXP_NCI_PARSER_LIBRARY "NXP_NCI_PARSER_LIBRARY"
+#define NAME_NXP_DEFAULT_UICC2_SELECT "NXP_DEFAULT_UICC2_SELECT"
+#define NAME_NXP_ALWAYS_FW_UPDATE   "NXP_ALWAYS_FW_UPDATE"
 
 /**
  *  @brief defines the different config files used.
