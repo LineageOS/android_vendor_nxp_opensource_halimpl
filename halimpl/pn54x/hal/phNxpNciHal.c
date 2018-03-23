@@ -60,7 +60,6 @@ static uint8_t config_access = false;
 static uint8_t config_success = true;
 static NFCSTATUS phNxpNciHal_FwDwnld(uint16_t aType);
 static NFCSTATUS phNxpNciHal_SendCmd(uint8_t cmd_len, uint8_t* pcmd_buff);
-static void phNxpNciHal_check_delete_nfaStorage_DHArea();
 /* NCI HAL Control structure */
 phNxpNciHal_Control_t nxpncihal_ctrl;
 
@@ -1159,29 +1158,6 @@ void read_retry() {
   }
 }
 /*******************************************************************************
-**
-** Function         phNxpNciHal_check_delete_nfaStorage_DHArea
-**
-** Description      check the file and delete if present.
-**
-**
-** Returns          void
-**
-*******************************************************************************/
-void phNxpNciHal_check_delete_nfaStorage_DHArea() {
-  struct stat st;
-  int ret = 0;
-  const char config_eseinfo_path[] = "/data/nfc/nfaStorage.bin1";
-  if (stat(config_eseinfo_path, &st) == -1) {
-    ALOGD("%s: file not found %s", __func__, config_eseinfo_path);
-  } else {
-    ALOGD("%s: file found %s, delete it", __func__, config_eseinfo_path);
-    ret = remove(config_eseinfo_path);
-    if(ret!=0)
-      ALOGE("%s: error deleting file %s", __func__, config_eseinfo_path);
-  }
-}
-/*******************************************************************************
  **
  ** Function:        phNxpNciHal_lastResetNtfReason()
  **
@@ -1482,10 +1458,6 @@ int phNxpNciHal_core_initialized(uint8_t* p_core_init_rsp_params) {
   }
   NXPLOG_NCIHAL_D("EEPROM_fw_dwnld_flag : 0x%02x SetConfigAlways flag : 0x%02x",
                   fw_dwnld_flag, setConfigAlways);
-
-  if (fw_dwnld_flag == 0x01) {
-    phNxpNciHal_check_delete_nfaStorage_DHArea();
-  }
 
   if ((true == fw_dwnld_flag) || (true == setConfigAlways) ||
       isNxpRFConfigModified() || isNxpConfigModified()) {
@@ -2194,7 +2166,6 @@ static NFCSTATUS phNxpNciHal_check_eSE_Session_Identity(void) {
   struct stat st;
   int ret = 0;
   NFCSTATUS status = NFCSTATUS_FAILED;
-  const char config_eseinfo_path[] = "/data/nfc/nfaStorage.bin1";
   static uint8_t session_identity[8] = {0x00};
   uint8_t default_session[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
   uint8_t swp2_intf_status = 0x00;
@@ -2219,10 +2190,6 @@ static NFCSTATUS phNxpNciHal_check_eSE_Session_Identity(void) {
     return NFCSTATUS_SUCCESS;
   }
 
-  if (stat(config_eseinfo_path, &st) == -1) {
-    status = NFCSTATUS_FAILED;
-    NXPLOG_NCIHAL_D("%s file not present = %s", __func__, config_eseinfo_path);
-  } else {
     phNxpNci_EEPROM_info_t mEEPROM_info = {.request_mode = 0};
     mEEPROM_info.request_mode = GET_EEPROM_DATA;
     mEEPROM_info.request_type = EEPROM_ESE_SESSION_ID;
@@ -2237,7 +2204,6 @@ static NFCSTATUS phNxpNciHal_check_eSE_Session_Identity(void) {
         status = NFCSTATUS_OK;
       }
     }
-  }
 
   if (status == NFCSTATUS_FAILED) {
     /*Disable SWP1 and 1A interfaces*/
@@ -3704,7 +3670,6 @@ static void phNxpNciHal_check_factory_reset(void) {
   struct stat st;
   int ret = 0;
   NFCSTATUS status = NFCSTATUS_FAILED;
-  const char config_eseinfo_path[] = "/data/nfc/nfaStorage.bin1";
   uint8_t *reset_ese_session_identity_set;
   uint8_t ese_session_dyn_uicc_nv[] = {
             0x20, 0x02, 0x17, 0x02,0xA0, 0xEA, 0x08, 0xFF, 0xFF, 0xFF,
@@ -3744,14 +3709,7 @@ static void phNxpNciHal_check_factory_reset(void) {
   static uint8_t reset_session_identity[] = {0x20, 0x03, 0x05, 0x02,
                                                  0xA0, 0xEA, 0xA0, 0xEB};
 #endif
-  if (stat(config_eseinfo_path, &st) == -1) {
-    NXPLOG_NCIHAL_D("%s file not present = %s", __func__, config_eseinfo_path);
-    ret = -1;
-  } else {
-    ret = 0;
-  }
 
-  if (ret == -1) {
 #ifdef PN547C2_FACTORY_RESET_DEBUG
     /* NXP ACT Proprietary Ext */
     status = phNxpNciHal_send_ext_cmd(sizeof(reset_session_identity),
@@ -3776,7 +3734,6 @@ static void phNxpNciHal_check_factory_reset(void) {
       NXPLOG_NCIHAL_E("NXP reset_ese_session_identity command failed");
     }
 #endif
-  }
 }
 
 /******************************************************************************
