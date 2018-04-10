@@ -879,11 +879,11 @@ static NFCSTATUS phNxpNciHal_fw_dnld_log_read(void* pContext, NFCSTATUS status,
   UNUSED(pContext);
   UNUSED(status);
   UNUSED(pInfo);
-  if ((((true == (gphNxpNciHal_fw_IoctlCtx.bSkipSeq)) ||
+  if (((((true == (gphNxpNciHal_fw_IoctlCtx.bSkipSeq)) ||
         (true == (gphNxpNciHal_fw_IoctlCtx.bForceDnld))) &&
        (false == (gphNxpNciHal_fw_IoctlCtx.bPrevSessnOpen))) ||
       (((true == (gphNxpNciHal_fw_IoctlCtx.bPrevSessnOpen))) &&
-       (true == (gphNxpNciHal_fw_IoctlCtx.bRetryDnld))))
+       (true == (gphNxpNciHal_fw_IoctlCtx.bRetryDnld)))) || (nfcFL.chipType == sn100u))
 
   {
     return NFCSTATUS_SUCCESS;
