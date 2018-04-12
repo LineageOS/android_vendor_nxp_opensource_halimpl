@@ -20,7 +20,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013-2014 NXP Semiconductors
+ *  Copyright (C) 2013-2018 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -78,12 +78,7 @@ int updateNxpConfigTimestamp();
 #define NAME_NXP_EXT_TVDD_CFG_1 "NXP_EXT_TVDD_CFG_1"
 #define NAME_NXP_EXT_TVDD_CFG_2 "NXP_EXT_TVDD_CFG_2"
 #define NAME_NXP_EXT_TVDD_CFG_3 "NXP_EXT_TVDD_CFG_3"
-#define NAME_NXP_RF_CONF_BLK_1 "NXP_RF_CONF_BLK_1"
-#define NAME_NXP_RF_CONF_BLK_2 "NXP_RF_CONF_BLK_2"
-#define NAME_NXP_RF_CONF_BLK_3 "NXP_RF_CONF_BLK_3"
-#define NAME_NXP_RF_CONF_BLK_4 "NXP_RF_CONF_BLK_4"
-#define NAME_NXP_RF_CONF_BLK_5 "NXP_RF_CONF_BLK_5"
-#define NAME_NXP_RF_CONF_BLK_6 "NXP_RF_CONF_BLK_6"
+#define NAME_NXP_RF_CONF_BLK_MAX "NXP_RF_CONF_MAX_NUM"
 #define NAME_NXP_CORE_CONF_EXTN "NXP_CORE_CONF_EXTN"
 #define NAME_NXP_CORE_CONF "NXP_CORE_CONF"
 #define NAME_NXP_CORE_MFCKEY_SETTING "NXP_CORE_MFCKEY_SETTING"
