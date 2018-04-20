@@ -1,8 +1,7 @@
 subdirs = ["src"]
 cc_library_shared {
-    name: "nfc_nci.pn54x",
+    name: "nfc_nci.nqx.default",
     proprietary: true,
-    relative_install_path: "hw",
     srcs: [
         "halimpl/pn54x/common/*.c",
         "halimpl/pn54x/dnld/*.c",
@@ -21,6 +20,11 @@ cc_library_shared {
         "libhwbinder",
         "libhardware",
     ],
+
+    header_libs: [
+        "libhardware_headers",
+    ],
+
     local_include_dirs: [
         "halimpl/pn54x/inc",
         "halimpl/pn54x/common",
@@ -40,9 +44,11 @@ cc_library_shared {
         "src/gki/ulinux/",
         "src/gki/common/",
     ],
-    include_dirs: [
-        "vendor/nxp/opensource/hardware/interfaces/nxpnfc/1.0/default/",
+
+     export_include_dirs: [
+        "halimpl/pn54x/inc",
     ],
+
     cflags: [
         "-DBUILDCFG=1",
         "-Wno-deprecated-register",
