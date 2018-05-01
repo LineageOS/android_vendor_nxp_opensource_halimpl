@@ -84,3 +84,73 @@ cc_library_shared {
 
     ],
 }
+
+cc_library_shared {
+    name: "nfc_nci.nqx.default.hw",
+    defaults: ["hidl_defaults"],
+    proprietary: true,
+
+    cflags: [
+        "-DNFC_NXP_CHIP_TYPE=PN553",
+        "-DPN553=1",
+        "-Wall",
+        "-Werror",
+        "-Wextra",
+    ],
+
+    srcs: [
+        "dnld/phDnldNfc.c",
+        "dnld/phDnldNfc_Internal.c",
+        "dnld/phDnldNfc_Utils.c",
+        "dnld/phNxpNciHal_Dnld.c",
+        "hal/phNxpNciHal.c",
+        "hal/phNxpNciHal_NfcDepSWPrio.c",
+        "hal/phNxpNciHal_dta.c",
+        "hal/phNxpNciHal_ext.c",
+        "log/phNxpLog.c",
+        "nfc_nci.c",
+        "self-test/phNxpNciHal_SelfTest.c",
+        "tml/phDal4Nfc_messageQueueLib.c",
+        "tml/phOsalNfc_Timer.c",
+        "tml/phTmlNfc.c",
+        "tml/phTmlNfc_i2c.c",
+        "utils/phNxpConfig.cpp",
+        "utils/phNxpNciHal_utils.c",
+        "utils/sparse_crc32.c",
+        "configs/NxpNfcCapability.cpp",
+    ],
+
+    local_include_dirs: [
+        "common",
+        "configs",
+        "dnld",
+        "hal",
+        "inc",
+        "log",
+        "self-test",
+        "tml",
+        "utils",
+    ],
+
+    include_dirs: [
+        "vendor/nxp/opensource/external/libnfc-nci/extns/impl",
+    ],
+
+    export_include_dirs: [
+        "inc",
+    ],
+
+    shared_libs: [
+        "android.hardware.nfc@1.0",
+        "libbase",
+        "libcutils",
+        "libdl",
+        "libhardware",
+        "libhardware_legacy",
+        "libhidlbase",
+        "libhidltransport",
+        "liblog",
+        "libutils",
+
+    ],
+}
