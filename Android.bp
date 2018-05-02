@@ -36,14 +36,6 @@ cc_library_shared {
         "halimpl/pn54x/tml",
         "halimpl/pn54x/utils",
         "halimpl/pn54x/configs",
-        "src/hal/include",
-        "src/hal/int",
-        "src/nfc/include",
-        "src/nfa/include",
-        "src/udrv/include",
-        "src/include",
-        "src/gki/ulinux/",
-        "src/gki/common/",
     ],
 
      export_include_dirs: [
@@ -103,14 +95,6 @@ cc_library_shared {
         "halimpl/pn54x/tml",
         "halimpl/pn54x/utils",
         "halimpl/pn54x/configs",
-        "src/hal/include",
-        "src/hal/int",
-        "src/nfc/include",
-        "src/nfa/include",
-        "src/udrv/include",
-        "src/include",
-        "src/gki/ulinux/",
-        "src/gki/common/",
     ],
 
      export_include_dirs: [
