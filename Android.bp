@@ -1,7 +1,7 @@
 subdirs = ["src"]
 cc_library_shared {
     name: "nfc_nci.nqx.default",
-    proprietary: true,
+    vendor: true,
     relative_install_path: "hw",
     srcs: [
         "halimpl/pn54x/common/*.c",
@@ -69,7 +69,7 @@ cc_library_shared {
 
 cc_library_shared {
     name: "nfc_nci.nqx.default.hw",
-    proprietary: true,
+    vendor: true,
     srcs: [
         "halimpl/pn54x/common/*.c",
         "halimpl/pn54x/dnld/*.c",
