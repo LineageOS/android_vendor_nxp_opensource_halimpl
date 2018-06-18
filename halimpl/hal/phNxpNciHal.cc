@@ -32,9 +32,11 @@
 #endif
 
 #include <sys/stat.h>
+#ifdef ENABLE_ESE_CLIENT
 #include <EseAdaptation.h>
-#include "hal_nxpnfc.h"
 #include "hal_nxpese.h"
+#endif
+#include "hal_nxpnfc.h"
 #include "spi_spm.h"
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
@@ -81,7 +83,9 @@ bool_t force_fw_download_req = false;
 bool_t gParserCreated = FALSE;
 /* global variable to get FW version from NCI response*/
 uint32_t wFwVerRsp;
+#ifdef ENABLE_ESE_CLIENT
 EseAdaptation *gpEseAdapt = NULL;
+#endif
 /* External global variable to get FW version */
 extern uint16_t wFwVer;
 extern uint16_t fw_maj_ver;
@@ -591,8 +595,10 @@ int phNxpNciHal_MinOpen (){
 
   /* By default HAL status is HAL_STATUS_OPEN */
   nxpncihal_ctrl.halStatus = HAL_STATUS_OPEN;
+#ifdef ENABLE_ESE_CLIENT
   gpEseAdapt = &EseAdaptation::GetInstance();
   gpEseAdapt->Initialize();
+#endif
 
   /*nci version NCI_VERSION_UNKNOWN version by default*/
   nxpncihal_ctrl.nci_info.nci_version = NCI_VERSION_UNKNOWN;
@@ -605,8 +611,8 @@ int phNxpNciHal_MinOpen (){
                              sizeof(nfc_dev_node))) {
     NXPLOG_NCIHAL_E(
         "Invalid nfc device node name keeping the default device node "
-        "/dev/pn54x");
-    strcpy(nfc_dev_node, "/dev/pn54x");
+        "/dev/nq-nci");
+    strlcpy((char*)nfc_dev_node, "/dev/nq-nci", max_len);
   }
   isfound = GetNxpNumValue(NAME_NXP_ALWAYS_FW_UPDATE, &num, sizeof(num));
   if (isfound > 0) {
@@ -2547,8 +2553,10 @@ int phNxpNciHal_ioctl(long arg, void* p_data) {
         break;
     case HAL_NFC_IOCTL_NFC_JCOP_DWNLD :
         NXPLOG_NCIHAL_D("HAL_NFC_IOCTL_NFC_JCOP_DWNLD Enter value is %d: \n",pInpOutData->inp.data.nciCmd.p_cmd[0]);
+#ifdef ENABLE_ESE_CLIENT
         if(gpEseAdapt !=  NULL)
         ret = gpEseAdapt->HalIoctl(HAL_NFC_IOCTL_NFC_JCOP_DWNLD,pInpOutData);
+#endif
         break;
     case HAL_NFC_IOCTL_SPI_DWP_SYNC:
            {
@@ -2603,8 +2611,10 @@ int phNxpNciHal_ioctl(long arg, void* p_data) {
          break;
     case HAL_NFC_IOCTL_RF_STATUS_UPDATE:
         NXPLOG_NCIHAL_D("HAL_NFC_IOCTL_RF_STATUS_UPDATE Enter value is %d: \n",pInpOutData->inp.data.nciCmd.p_cmd[0]);
+#ifdef ENABLE_ESE_CLIENT
         if(gpEseAdapt !=  NULL)
         ret = gpEseAdapt->HalIoctl(HAL_NFC_IOCTL_RF_STATUS_UPDATE,pInpOutData);
+#endif
         break;
     default:
       NXPLOG_NCIHAL_E("%s : Wrong arg = %ld", __func__, arg);

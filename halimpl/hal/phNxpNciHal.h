@@ -32,6 +32,10 @@
 #define NCI_VERSION_1_0 0x10
 #define NCI_VERSION_UNKNOWN 0x00
 
+/* Uncomment define ENABLE_ESE_CLIENT to
+enable eSE client */
+//#define ENABLE_ESE_CLIENT TRUE
+
 /*Mem alloc with 8 byte alignment*/
 #define size_align(sz) ((((sz)-1) | 7) + 1)
 #define nxp_malloc(size) malloc(size_align((size)))

@@ -39,7 +39,7 @@ extern phTmlNfc_i2cfragmentation_t fragmentation_enabled;
  * PN544_SET_PWR(1): power on
  * PN544_SET_PWR(2): reset and power on with firmware download enabled
  */
-#define PN544_SET_PWR _IOW(PN544_MAGIC, 0x01, long)
+#define PN544_SET_PWR _IOW(PN544_MAGIC, 0x01, unsigned int)
 NFCSTATUS phTmlNfc_i2c_get_p61_power_state(void* pDevHandle);
 NFCSTATUS phTmlNfc_i2c_set_p61_power_state(void* pDevHandle, long arg);
 NFCSTATUS phTmlNfc_set_pid(void* pDevHandle, long pid);
@@ -56,13 +56,13 @@ NFCSTATUS phTmlNfc_rel_dwpOnOff_wait(void* pDevHandle);
  * level 1 = Enable power
  * level 0 = Disable power
  */
-#define P61_SET_SPI_PWR _IOW(PN544_MAGIC, 0x02, long)
+#define P61_SET_SPI_PWR _IOW(PN544_MAGIC, 0x02, unsigned int)
 
 /* SPI or DWP can call this ioctl to get the current
  * power state of P61
  *
 */
-#define P61_GET_PWR_STATUS _IOR(PN544_MAGIC, 0x03, long)
+#define P61_GET_PWR_STATUS _IOR(PN544_MAGIC, 0x03, unsigned int)
 
 /* DWP side this ioctl will be called
  * level 1 = Wired access is enabled/ongoing

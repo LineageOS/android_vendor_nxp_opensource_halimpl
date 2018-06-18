@@ -64,10 +64,12 @@ cc_library_shared {
 
     include_dirs: [
         "vendor/nxp/opensource/external/libnfc-nci/extns/impl",
+        "vendor/nxp/opensource/external/libnfc-nci/src/include",
     ],
 
     export_include_dirs: [
         "inc",
+        "common",
     ],
 
     shared_libs: [
@@ -83,12 +85,7 @@ cc_library_shared {
         "libhidltransport",
         "liblog",
         "libutils",
-        "libicuuc",
         "libchrome"
-    ],
-
-    static_libs: [
-        "libnfcutils",
     ],
 }
 
@@ -141,10 +138,12 @@ cc_library_shared {
 
     include_dirs: [
         "vendor/nxp/opensource/external/libnfc-nci/extns/impl",
+        "vendor/nxp/opensource/external/libnfc-nci/src/include",
     ],
 
     export_include_dirs: [
         "inc",
+        "common",
     ],
 
     shared_libs: [
@@ -160,11 +159,6 @@ cc_library_shared {
         "libhidltransport",
         "liblog",
         "libutils",
-        "libicuuc",
         "libchrome"
-    ],
-
-    static_libs: [
-        "libnfcutils",
     ],
 }

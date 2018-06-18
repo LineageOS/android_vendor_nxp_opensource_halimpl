@@ -57,7 +57,7 @@
 
 #include <phNxpConfig.h>
 #include <phNxpLog.h>
-#include <cutils/log.h>
+#include <log/log.h>
 #include <cutils/properties.h>
 #include <errno.h>
 #include "sparse_crc32.h"
