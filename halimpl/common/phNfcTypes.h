@@ -22,7 +22,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if (NXP_EXTNS == FALSE)
 #include <unistd.h>
+#endif
 #include "Nxp_Features.h"
 
 #ifndef true
@@ -305,33 +307,23 @@ typedef struct phNfc_sTransceiveInfo {
   uint8_t bWordCount;  /* Number of words to be read or written */
 } phNfc_sTransceiveInfo_t;
 
-#define UNUSED(X) (void)(X);
+typedef enum p61_access_state {
+  P61_STATE_INVALID = 0x0000,
+  P61_STATE_IDLE = 0x0100,         /* p61 is free to use */
+  P61_STATE_WIRED = 0x0200,        /* p61 is being accessed by DWP (NFCC)*/
+  P61_STATE_SPI = 0x0400,          /* P61 is being accessed by SPI */
+  P61_STATE_DWNLD = 0x0800,        /* NFCC fw download is in progress */
+  P61_STATE_SPI_PRIO = 0x1000,     /*Start of p61 access by SPI on priority*/
+  P61_STATE_SPI_PRIO_END = 0x2000, /*End of p61 access by SPI on priority*/
+  P61_STATE_SPI_END = 0x4000,
+  P61_STATE_JCP_DWNLD = 0x8000,           /* JCOP downlad in progress */
+  P61_STATE_SECURE_MODE = 0x100000,       /* secure mode state*/
+  P61_STATE_SPI_SVDD_SYNC_START = 0x0001, /*ESE_VDD Low req by SPI*/
+  P61_STATE_SPI_SVDD_SYNC_END = 0x0002,   /*ESE_VDD is Low by SPI*/
+  P61_STATE_DWP_SVDD_SYNC_START = 0x0004, /*ESE_VDD  Low req by Nfc*/
+  P61_STATE_DWP_SVDD_SYNC_END = 0x0008    /*ESE_VDD is Low by Nfc*/
+} p61_access_state_t;
+#define UNUSED_PROP(X) (void)(X);
 
-/*****************************************************************************
-** Macros to get and put bytes to and from a stream (Little Endian format).
-*****************************************************************************/
-#define STREAM_TO_UINT8(u8, p) \
-  {                            \
-    u8 = (uint8_t)(*(p));      \
-    (p) += 1;                  \
-  }
-#define STREAM_TO_UINT16(u16, p)                                \
-  {                                                             \
-    u16 = ((uint16_t)(*(p)) + (((uint16_t)(*((p) + 1))) << 8)); \
-    (p) += 2;                                                   \
-  }
-#define STREAM_TO_UINT24(u32, p)                                    \
-  {                                                                 \
-    u32 = (((uint32_t)(*(p))) + ((((uint32_t)(*((p) + 1)))) << 8) + \
-           ((((uint32_t)(*((p) + 2)))) << 16));                     \
-    (p) += 3;                                                       \
-  }
-#define STREAM_TO_UINT32(u32, p)                                    \
-  {                                                                 \
-    u32 = (((uint32_t)(*(p))) + ((((uint32_t)(*((p) + 1)))) << 8) + \
-           ((((uint32_t)(*((p) + 2)))) << 16) +                     \
-           ((((uint32_t)(*((p) + 3)))) << 24));                     \
-    (p) += 4;                                                       \
-  }
 /* PHNFCTYPES_H */
 #endif

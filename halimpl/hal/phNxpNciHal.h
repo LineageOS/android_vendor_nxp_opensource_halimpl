@@ -26,11 +26,6 @@
 #define NCI_MAX_DATA_LEN 300
 #define NCI_POLL_DURATION 500
 #define HAL_NFC_ENABLE_I2C_FRAGMENTATION_EVT 0x07
-#define NXP_STAG_TIMEOUT_BUF_LEN 0x04 /*FIXME:TODO:remove*/
-#define NXP_WIREDMODE_RESUME_TIMEOUT_LEN 0x04
-#define NFCC_DECIDES 00
-#define POWER_ALWAYS_ON 01
-#define LINK_ALWAYS_ON 02
 #undef P2P_PRIO_LOGIC_HAL_IMP
 #define NCI_VERSION_2_0 0x20
 #define NCI_VERSION_1_1 0x11
@@ -46,8 +41,6 @@ typedef void(phNxpNciHal_control_granted_callback_t)();
 /*ROM CODE VERSION FW*/
 #define FW_MOBILE_ROM_VERSION_PN551 0x10
 #define FW_MOBILE_ROM_VERSION_PN553 0x11
-#define FW_MOBILE_ROM_VERSION_PN548AD 0x10
-#define FW_MOBILE_ROM_VERSION_PN547C2 0x08
 #define FW_MOBILE_ROM_VERSION_PN557 0x12
 
 #define FW_DBG_REASON_AVAILABLE     (0xA3)
@@ -59,26 +52,46 @@ typedef void(phNxpNciHal_control_granted_callback_t)();
 #define UICC3_ID 0x08
 /* NCI Data */
 
-#define NCI_MT_CMD 0x20
-#define NCI_MT_RSP 0x40
-#define NCI_MT_NTF 0x60
+//#define NCI_MT_CMD 0x20
+//#define NCI_MT_RSP 0x40
+//#define NCI_MT_NTF 0x60
 
 #define CORE_RESET_TRIGGER_TYPE_CORE_RESET_CMD_RECEIVED 0x02
 #define CORE_RESET_TRIGGER_TYPE_POWERED_ON              0x01
-#define NCI_MSG_CORE_RESET           0x00
-#define NCI_MSG_CORE_INIT            0x01
+//#define NCI_MSG_CORE_RESET           0x00
+//#define NCI_MSG_CORE_INIT            0x01
 #define NCI_MT_MASK                  0xE0
 #define NCI_OID_MASK                 0x3F
 #define NXP_PROPCMD_GID              0x2F
 #define NXP_FLUSH_SRAM_AO_TO_FLASH   0x21
 #define NXP_CORE_GET_CONFIG_CMD      0x03
 #define NXP_CORE_SET_CONFIG_CMD      0x02
+#define NXP_MAX_CONFIG_STRING_LEN 260
+
 typedef struct nci_data {
   uint16_t len;
   uint8_t p_data[NCI_MAX_DATA_LEN];
 } nci_data_t;
 
-typedef enum { HAL_STATUS_CLOSE = 0, HAL_STATUS_OPEN } phNxpNci_HalStatus;
+typedef enum {
+  HAL_STATUS_CLOSE = 0,
+  HAL_STATUS_OPEN,
+  HAL_STATUS_MIN_OPEN
+} phNxpNci_HalStatus;
+
+typedef enum {
+  GPIO_UNKNOWN = 0x00,
+  GPIO_STORE = 0x01,
+  GPIO_STORE_DONE = 0x02,
+  GPIO_RESTORE = 0x10,
+  GPIO_RESTORE_DONE = 0x20,
+  GPIO_CLEAR = 0xFF
+} phNxpNciHal_GpioInfoState;
+
+typedef struct phNxpNciGpioInfo {
+  phNxpNciHal_GpioInfoState state;
+  uint8_t values[2];
+} phNxpNciGpioInfo_t;
 
 /* Macros to enable and disable extensions */
 #define HAL_ENABLE_EXT() (nxpncihal_ctrl.hal_ext_enabled = 1)
@@ -99,6 +112,10 @@ typedef struct phNxpNciHal_Control {
   uint8_t* p_rx_data;
   uint16_t rx_data_len;
 
+  /* Rx data */
+  uint8_t* p_rx_ese_data;
+  uint16_t rx_ese_data_len;
+
   /* libnfc-nci callbacks */
   nfc_stack_callback_t* p_nfc_stack_cback;
   nfc_stack_data_callback_t* p_nfc_stack_data_cback;
@@ -109,13 +126,12 @@ typedef struct phNxpNciHal_Control {
   /* HAL open status */
   bool_t hal_open_status;
 
-  bool_t is_wait_for_ce_ntf;
-
   /* HAL extensions */
   uint8_t hal_ext_enabled;
 
   /* Waiting semaphore */
   phNxpNciHal_Sem_t ext_cb_data;
+  sem_t syncSpiNfc;
 
   uint16_t cmd_len;
   uint8_t p_cmd_data[NCI_MAX_DATA_LEN];
@@ -127,8 +143,10 @@ typedef struct phNxpNciHal_Control {
   uint8_t read_retry_cnt;
   phNxpNciInfo_t nci_info;
   uint8_t hal_boot_mode;
-  tNFC_chipType chipType;
   bool_t    fwdnld_mode_reqd;
+  /* to store and restore gpio values */
+  phNxpNciGpioInfo_t phNxpNciGpioInfo;
+  tNFC_chipType chipType;
 } phNxpNciHal_Control_t;
 
 typedef struct {
@@ -164,9 +182,9 @@ typedef struct phNxpNciMwEepromArea {
 static const uint8_t get_cfg_arr[] = {TOTAL_DURATION, ATR_REQ_GEN_BYTES_POLL,
                                       ATR_REQ_GEN_BYTES_LIS, LEN_WT};
 
-#define NXP_NFC_SET_CONFIG_PARAM_EXT 0xA0
-#define NXP_NFC_PARAM_ID_SWP2        0xD4
-#define NXP_NFC_PARAM_ID_SWPUICC3    0xDC
+//#define NXP_NFC_SET_CONFIG_PARAM_EXT 0xA0
+//#define NXP_NFC_PARAM_ID_SWP2        0xD4
+//#define NXP_NFC_PARAM_ID_SWPUICC3    0xDC
 typedef enum {
   EEPROM_RF_CFG,
   EEPROM_FW_DWNLD,
@@ -221,18 +239,18 @@ typedef struct phNxpNciProfile_Control {
 #define NCI_HAL_POST_INIT_CPLT_MSG 0x413
 #define NCI_HAL_PRE_DISCOVER_CPLT_MSG 0x414
 #define NCI_HAL_ERROR_MSG 0x415
+#define NCI_HAL_HCI_NETWORK_RESET_MSG 0x416
 #define NCI_HAL_RX_MSG 0xF01
 
 #define NCIHAL_CMD_CODE_LEN_BYTE_OFFSET (2U)
 #define NCIHAL_CMD_CODE_BYTE_LEN (3U)
 
 /******************** NCI HAL exposed functions *******************************/
-
+int phNxpNciHal_check_ncicmd_write_window(uint16_t cmd_len, uint8_t* p_cmd);
 void phNxpNciHal_request_control(void);
 void phNxpNciHal_release_control(void);
 NFCSTATUS phNxpNciHal_send_get_cfgs();
 int phNxpNciHal_write_unlocked(uint16_t data_len, const uint8_t* p_data);
-//static int phNxpNciHal_fw_mw_ver_check();
 NFCSTATUS request_EEPROM(phNxpNci_EEPROM_info_t* mEEPROM_info);
 NFCSTATUS phNxpNciHal_send_nfcee_pwr_cntl_cmd(uint8_t type);
 
@@ -262,8 +280,5 @@ void phNxpNciHal_configFeatureList(uint8_t* init_rsp, uint16_t rsp_len);
 ** Returns          chipType
 *******************************************************************************/
 tNFC_chipType phNxpNciHal_getChipType();
-#if (NFC_NXP_CHIP_TYPE == PN548C2)
-NFCSTATUS phNxpNciHal_core_reset_recovery();
-void phNxpNciHal_discovery_cmd_ext(uint8_t* p_cmd_data, uint16_t cmd_len);
-#endif
+
 #endif /* _PHNXPNCIHAL_H_ */

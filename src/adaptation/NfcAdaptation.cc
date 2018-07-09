@@ -17,6 +17,7 @@
  ******************************************************************************/
 #include <android-base/stringprintf.h>
 #include <android/hardware/nfc/1.1/INfc.h>
+#include <vendor/nxp/hardware/nfc/1.0/INqNfc.h>
 #include <base/command_line.h>
 #include <base/logging.h>
 #include <cutils/properties.h>
