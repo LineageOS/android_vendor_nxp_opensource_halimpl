@@ -71,6 +71,8 @@ enum {
   NFA_EE_API_SET_PROTO_CFG_EVT,
   NFA_EE_API_ADD_AID_EVT,
   NFA_EE_API_REMOVE_AID_EVT,
+  NFA_EE_API_ADD_SYSCODE_EVT,
+  NFA_EE_API_REMOVE_SYSCODE_EVT,
   NFA_EE_API_LMRT_SIZE_EVT,
   NFA_EE_API_UPDATE_NOW_EVT,
   NFA_EE_API_CONNECT_EVT,
@@ -126,6 +128,12 @@ typedef uint8_t tNFA_EE_CONN_ST;
 
 #define NFA_EE_MAX_AID_CFG_LEN (510)
 
+#define NFA_EE_SYSTEM_CODE_LEN 02
+#define NFA_EE_SYSTEM_CODE_TLV_SIZE 06
+#define NFA_EE_MAX_SYSTEM_CODE_ENTRIES 10
+#define NFA_EE_MAX_SYSTEM_CODE_CFG_LEN \
+  (NFA_EE_MAX_SYSTEM_CODE_ENTRIES * NFA_EE_SYSTEM_CODE_TLV_SIZE)
+
 /* NFA EE control block flags:
  * use to indicate an API function has changed the configuration of the
  * associated NFCEE
@@ -136,6 +144,8 @@ typedef uint8_t tNFA_EE_CONN_ST;
 #define NFA_EE_ECB_FLAGS_PROTO 0x04
 /* AID routing changed                */
 #define NFA_EE_ECB_FLAGS_AID 0x08
+/* System Code routing changed        */
+#define NFA_EE_ECB_FLAGS_SYSCODE 0xE0
 /* VS changed                         */
 #define NFA_EE_ECB_FLAGS_VS 0x10
 /* Restore related                    */
@@ -162,26 +172,24 @@ typedef struct {
       tech_switch_off; /* default routing - technologies switch_off */
   tNFA_TECHNOLOGY_MASK
       tech_battery_off; /* default routing - technologies battery_off*/
+  tNFA_TECHNOLOGY_MASK
+      tech_screen_lock; /* default routing - technologies screen_lock*/
+  tNFA_TECHNOLOGY_MASK
+      tech_screen_off; /* default routing - technologies screen_off*/
+  tNFA_TECHNOLOGY_MASK
+      tech_screen_off_lock; /* default routing - technologies screen_off_lock*/
   tNFA_PROTOCOL_MASK
       proto_switch_on; /* default routing - protocols switch_on     */
   tNFA_PROTOCOL_MASK
       proto_switch_off; /* default routing - protocols switch_off    */
   tNFA_PROTOCOL_MASK
       proto_battery_off;     /* default routing - protocols battery_off   */
-#if (NXP_EXTNS == TRUE)
   tNFA_PROTOCOL_MASK
       proto_screen_lock; /* default routing - protocols screen_lock    */
   tNFA_PROTOCOL_MASK
       proto_screen_off; /* default routing - protocols screen_off  */
   tNFA_PROTOCOL_MASK
-      proto_screen_off_lock; /* default routing - protocols screen_off  */
-  tNFA_TECHNOLOGY_MASK
-      tech_screen_lock; /* default routing - technologies screen_lock*/
-  tNFA_TECHNOLOGY_MASK
-      tech_screen_off; /* default routing - technologies screen_off*/
-  tNFA_TECHNOLOGY_MASK
-      tech_screen_off_lock; /* default routing - technologies screen_off*/
-#endif
+      proto_screen_off_lock; /* default routing - protocols screen_off_lock  */
   tNFA_EE_CONN_ST conn_st;   /* connection status */
   uint8_t conn_id;           /* connection id */
   tNFA_EE_CBACK* p_ee_cback; /* the callback function */
@@ -223,8 +231,18 @@ typedef struct {
   uint8_t size_mask; /* the size for technology and protocol routing */
   uint16_t size_aid; /* the size for aid routing */
   uint8_t aid_info[NFA_EE_MAX_AID_ENTRIES]; /* Aid Info Prefix/Suffix/Exact */
+  /*System Code Based Routing Variables*/
+  uint8_t sys_code_cfg[NFA_EE_MAX_SYSTEM_CODE_ENTRIES * NFA_EE_SYSTEM_CODE_LEN];
+  uint8_t sys_code_pwr_cfg[NFA_EE_MAX_SYSTEM_CODE_ENTRIES];
+  uint8_t sys_code_rt_loc[NFA_EE_MAX_SYSTEM_CODE_ENTRIES];
+  uint8_t sys_code_rt_loc_vs_info[NFA_EE_MAX_SYSTEM_CODE_ENTRIES];
+  /* The number of SC entries in sys_code_cfg buffer*/
+  uint8_t sys_code_cfg_entries;
+  uint16_t size_sys_code; /* The size for system code routing */
 #if (NXP_EXTNS == TRUE)
   uint8_t hci_enable_state;
+  tNFA_NFC_PROTOCOL pa_protocol; /* Passive poll A SWP Reader   */
+  tNFA_NFC_PROTOCOL pb_protocol; /* Passive poll B SWP Reader   */
   uint8_t ee_req_op;             /* add or remove req ntf*/
 #endif
 } tNFA_EE_ECB;
@@ -289,11 +307,9 @@ typedef struct {
   tNFA_TECHNOLOGY_MASK technologies_switch_on;
   tNFA_TECHNOLOGY_MASK technologies_switch_off;
   tNFA_TECHNOLOGY_MASK technologies_battery_off;
-#if (NXP_EXTNS == TRUE)
   tNFA_TECHNOLOGY_MASK technologies_screen_lock;
   tNFA_TECHNOLOGY_MASK technologies_screen_off;
   tNFA_TECHNOLOGY_MASK technologies_screen_off_lock;
-#endif
 } tNFA_EE_API_SET_TECH_CFG;
 
 /* data type for NFA_EE_API_SET_PROTO_CFG_EVT */
@@ -304,11 +320,9 @@ typedef struct {
   tNFA_PROTOCOL_MASK protocols_switch_on;
   tNFA_PROTOCOL_MASK protocols_switch_off;
   tNFA_PROTOCOL_MASK protocols_battery_off;
-#if (NXP_EXTNS == TRUE)
   tNFA_PROTOCOL_MASK protocols_screen_lock;
   tNFA_PROTOCOL_MASK protocols_screen_off;
   tNFA_PROTOCOL_MASK protocols_screen_off_lock;
-#endif
 } tNFA_EE_API_SET_PROTO_CFG;
 
 /* data type for NFA_EE_API_ADD_AID_EVT */
@@ -328,6 +342,21 @@ typedef struct {
   uint8_t aid_len;
   uint8_t* p_aid;
 } tNFA_EE_API_REMOVE_AID;
+
+/* data type for NFA_EE_API_ADD_SYSCODE_EVT */
+typedef struct {
+  NFC_HDR hdr;
+  tNFA_EE_ECB* p_cb;
+  uint8_t nfcee_id;
+  uint16_t syscode;
+  tNFA_EE_PWR_STATE power_state;
+} tNFA_EE_API_ADD_SYSCODE;
+
+/* data type for NFA_EE_API_REMOVE_SYSCODE_EVT */
+typedef struct {
+  NFC_HDR hdr;
+  uint16_t syscode;
+} tNFA_EE_API_REMOVE_SYSCODE;
 
 /* data type for NFA_EE_API_LMRT_SIZE_EVT */
 typedef NFC_HDR tNFA_EE_API_LMRT_SIZE;
@@ -421,6 +450,8 @@ typedef union {
   tNFA_EE_API_SET_PROTO_CFG set_proto;
   tNFA_EE_API_ADD_AID add_aid;
   tNFA_EE_API_REMOVE_AID rm_aid;
+  tNFA_EE_API_ADD_SYSCODE add_syscode;
+  tNFA_EE_API_REMOVE_SYSCODE rm_syscode;
   tNFA_EE_API_LMRT_SIZE lmrt_size;
   tNFA_EE_API_CONNECT connect;
   tNFA_EE_API_SEND_DATA send_data;
@@ -489,6 +520,7 @@ typedef uint8_t tNFA_EE_FLAGS;
 #if (NXP_EXTNS == TRUE)
 /* received NFCEE_MODE_SET NTF  */
 #define NFA_EE_UNRECOVERABLE_ERROR 0x05
+#define NFA_EE_STATUS_INIT_COMPLETED 0x07
 #define NFA_EE_STATUS_NFCEE_REMOVED 0x06
 #endif
 typedef uint8_t tNFA_EE_DISC_STS;
@@ -513,10 +545,15 @@ typedef struct {
   tNFA_EE_WAIT ee_wait_evt;    /* Pending event(s) to be reported  */
   tNFA_EE_FLAGS ee_flags;      /* flags                            */
   uint8_t route_block_control; /* controls route block feature   */
+#if (NXP_EXTNS == TRUE)
+  uint8_t nfcee_id;
+  uint8_t mode;
+#endif
 } tNFA_EE_CB;
 
 /* Order of Routing entries in Routing Table */
 #define NCI_ROUTE_ORDER_AID 0x01        /* AID routing order */
+#define NCI_ROUTE_ORDER_SYS_CODE 0x03   /* System Code routing order*/
 #define NCI_ROUTE_ORDER_PROTOCOL 0x04   /* Protocol routing order*/
 #define NCI_ROUTE_ORDER_TECHNOLOGY 0x05 /* Technology routing order*/
 
@@ -556,6 +593,8 @@ void nfa_ee_api_set_tech_cfg(tNFA_EE_MSG* p_data);
 void nfa_ee_api_set_proto_cfg(tNFA_EE_MSG* p_data);
 void nfa_ee_api_add_aid(tNFA_EE_MSG* p_data);
 void nfa_ee_api_remove_aid(tNFA_EE_MSG* p_data);
+void nfa_ee_api_add_sys_code(tNFA_EE_MSG* p_data);
+void nfa_ee_api_remove_sys_code(tNFA_EE_MSG* p_data);
 void nfa_ee_api_lmrt_size(tNFA_EE_MSG* p_data);
 void nfa_ee_api_update_now(tNFA_EE_MSG* p_data);
 void nfa_ee_api_connect(tNFA_EE_MSG* p_data);
@@ -577,7 +616,8 @@ void nfa_ee_report_event(tNFA_EE_CBACK* p_cback, tNFA_EE_EVT event,
                          tNFA_EE_CBACK_DATA* p_data);
 tNFA_EE_ECB* nfa_ee_find_aid_offset(uint8_t aid_len, uint8_t* p_aid,
                                     int* p_offset, int* p_entry);
-
+tNFA_EE_ECB* nfa_ee_find_sys_code_offset(uint16_t sys_code, int* p_offset,
+                                         int* p_entry);
 int nfa_ee_find_total_aid_len(tNFA_EE_ECB* p_cb, int start_entry);
 void nfa_ee_start_timer(void);
 void nfa_ee_reg_cback_enable_done(tNFA_EE_ENABLE_DONE_CBACK* p_cback);

@@ -359,16 +359,19 @@ static void nfa_dm_nfc_response_cback(tNFC_RESPONSE_EVT event,
     case NFC_NFCEE_MODE_SET_REVT: /* NFCEE Mode Set response */
 #if (NXP_EXTNS == TRUE)
     case NFC_NFCEE_PL_CONTROL_REVT:
+    case NFC_NFCEE_STATUS_REVT:
 #endif
     case NFC_SET_ROUTING_REVT:    /* Configure Routing response */
       nfa_ee_proc_evt(event, p_data);
       break;
 
     case NFC_EE_DISCOVER_REQ_REVT: /* EE Discover Req notification */
+#if(NXP_EXTNS != TRUE)
       if (nfa_dm_is_active() &&
           (nfa_dm_cb.disc_cb.disc_state == NFA_DM_RFST_DISCOVERY)) {
         nfa_dm_rf_deactivate(NFA_DEACTIVATE_TYPE_IDLE);
       }
+#endif
       nfa_ee_proc_evt(event, p_data);
       break;
 
@@ -623,6 +626,9 @@ bool nfa_dm_set_power_sub_state(tNFA_DM_MSG* p_data) {
         << StringPrintf("NFA_DM_RFST_LISTEN_ACTIVE");
     /* NFCC will give semantic error for power sub state command in Rf listen
      * active state */
+#if (NXP_EXTNS == TRUE)
+    nfa_dm_cb.nfa_pending_power_state = nfa_dm_cb.power_state;
+#endif
     status = NFC_STATUS_SEMANTIC_ERROR;
   } else {
     status = NFC_SetPowerSubState(p_data->set_power_state.screen_state);

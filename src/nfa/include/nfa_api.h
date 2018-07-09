@@ -68,6 +68,8 @@
 #define NFA_STATUS_BUFFER_FULL NCI_STATUS_BUFFER_FULL
 /* failed               */
 #define NFA_STATUS_FAILED NCI_STATUS_FAILED
+/* Optional feature of NCI Spec not supported */
+#define NFA_STATUS_NOT_SUPPORTED NCI_STATUS_NOT_SUPPORTED
 /* Semantic error       */
 #define NFA_STATUS_SEMANTIC_ERROR NCI_STATUS_SEMANTIC_ERROR
 /* Unknown NCI Group ID */
@@ -96,6 +98,7 @@
 #define NFA_STATUS_ALREADY_INITIALIZED NFC_STATUS_ALREADY_INITIALIZED
 /* API is called to perform illegal function */
 #define NFA_STATUS_REFUSED NFC_STATUS_REFUSED
+#define NFA_STATUS_HCI_WTX_TIMEOUT  0xE0
 #endif
 typedef uint8_t tNFA_STATUS;
 
@@ -245,6 +248,9 @@ typedef enum power_substate {
   SCREEN_STATE_OFF_UNLOCKED,
   SCREEN_STATE_ON_LOCKED,
   SCREEN_STATE_OFF_LOCKED,
+#if (NXP_EXTNS == TRUE)
+  SCREEN_STATE_INVALID = 0xFF
+#endif
 } epower_substate_t;
 
 #define NFA_SCREEN_STATE_MASK 0x0F
@@ -616,6 +622,10 @@ typedef struct {
   /* Maximum time to wait for EE DISC REQ NTF(s) after HOT PLUG EVT(s) */
   uint16_t hcp_response_timeout;
   /* Number of host in the whitelist of Terminal host */
+#if(NXP_EXTNS == TRUE)
+  /* Maximum  time to wait for HCI response */
+  uint8_t max_wtx_count;
+#endif
   uint8_t num_whitelist_host;
   /* Whitelist of Terminal Host */
   uint8_t* p_whitelist;

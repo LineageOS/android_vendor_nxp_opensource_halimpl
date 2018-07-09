@@ -45,6 +45,7 @@
 #include <string.h>
 
 #include <android-base/stringprintf.h>
+#include <android/hardware/nfc/1.1/types.h>
 #include <base/logging.h>
 
 #include "nfc_target.h"
@@ -75,8 +76,11 @@
 #endif /* NFC_RW_ONLY */
 
 using android::base::StringPrintf;
+using android::hardware::nfc::V1_1::NfcEvent;
 
 extern bool nfc_debug_enabled;
+extern void delete_stack_non_volatile_store(bool forceDelete);
+
 /****************************************************************************
 ** Declarations
 ****************************************************************************/
@@ -180,6 +184,8 @@ static std::string nfc_hal_event_name(uint8_t event) {
       return "HAL_NFC_RELEASE_CONTROL_EVT";
     case HAL_NFC_ERROR_EVT:
       return "HAL_NFC_ERROR_EVT";
+    case (uint32_t)NfcEvent::HCI_NETWORK_RESET:
+      return "HCI_NETWORK_RESET";
     default:
       return "???? UNKNOWN EVENT";
   }
@@ -517,6 +523,10 @@ void nfc_main_handle_hal_evt(tNFC_HAL_EVT_MSG* p_msg) {
           }
           break;
 
+        case (uint32_t)NfcEvent::HCI_NETWORK_RESET:
+          delete_stack_non_volatile_store(true);
+          break;
+
         default:
           break;
       }
@@ -648,6 +658,7 @@ static void nfc_main_hal_cback(uint8_t event, tHAL_NFC_STATUS status) {
     case HAL_NFC_REQUEST_CONTROL_EVT:
     case HAL_NFC_RELEASE_CONTROL_EVT:
     case HAL_NFC_ERROR_EVT:
+    case (uint32_t)NfcEvent::HCI_NETWORK_RESET:
       nfc_main_post_hal_evt(event, status);
       break;
 
@@ -671,7 +682,11 @@ static void nfc_main_hal_data_cback(uint16_t data_len, uint8_t* p_data) {
   NFC_HDR* p_msg;
 
   /* ignore all data while shutting down NFCC */
-  if (nfc_cb.nfc_state == NFC_STATE_W4_HAL_CLOSE || nfc_cb.nfc_state == NFC_STATE_W4_HAL_OPEN) {
+  if (nfc_cb.nfc_state == NFC_STATE_W4_HAL_CLOSE
+#if (NXP_EXTNS == TRUE)
+    || nfc_cb.nfc_state == NFC_STATE_W4_HAL_OPEN
+#endif
+    ) {
     return;
   }
 
@@ -877,7 +892,9 @@ tNFC_STATUS NFC_DiscoveryMap(uint8_t num, tNFC_DISCOVER_MAPS* p_maps,
   tNFC_DISCOVER_MAPS
       max_maps[NFC_NFCC_MAX_NUM_VS_INTERFACE + NCI_INTERFACE_MAX];
   bool is_supported;
-
+#if (NXP_EXTNS == TRUE)
+  nfc_cb.num_disc_maps = num;
+#endif
   nfc_cb.p_discv_cback = p_cback;
   num_intf = 0;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(

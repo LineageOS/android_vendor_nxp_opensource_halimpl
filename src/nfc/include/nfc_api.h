@@ -56,8 +56,9 @@
 #define NXP_EN_SN100U    1
 #define NXP_ANDROID_VER (9U)        /* NXP android version */
 #define NFC_NXP_MW_VERSION_MAJ (0x00) /* MW Major Version */
-#define NFC_NXP_MW_VERSION_MIN (0x03) /* MW Minor Version */
-#define NFC_NXP_MW_RC_VERSION (0x03) /* MW Minor Version */
+#define NFC_NXP_MW_VERSION_MIN (0x07) /* MW Minor Version */
+#define NFC_NXP_MW_RC_VERSION (0x01) /* MW Minor Version */
+#define NFC_EE_DISC_OP_REMOVE 1
 #endif
 /* NFC application return status codes */
 /* Command succeeded    */
@@ -223,6 +224,7 @@ typedef uint8_t tNFC_STATUS;
 /* Protocol based routing  */
 #define NFC_ROUTE_TAG_PROTO NCI_ROUTE_TAG_PROTO
 #define NFC_ROUTE_TAG_AID NCI_ROUTE_TAG_AID /* AID routing */
+#define NFC_ROUTE_TAG_SYSCODE NCI_ROUTE_TAG_SYSCODE /* System Code routing*/
 /* tag, len, 2 byte value for technology/protocol based routing */
 
 /* For routing */
@@ -911,13 +913,10 @@ typedef void(tNFC_CONN_CBACK)(uint8_t conn_id, tNFC_CONN_EVT event,
 #define NFC_ILLEGAL_CONN_ID 0xFF
 /* the static connection ID for RF traffic */
 #define NFC_RF_CONN_ID 0
-#if(NXP_EXTNS != TRUE)
 /* the static connection ID for HCI transport */
-#define NFC_HCI_CONN_ID 3
-#endif
+#define NFC_HCI_CONN_ID 1
 #if (NXP_EXTNS == TRUE)
 #define NFC_NFCEE_CONN_ID 0x03 /* the connection ID for NFCEE */
-#define NFC_HCI_CONN_ID   0x01
 #endif
 
 /*****************************************************************************

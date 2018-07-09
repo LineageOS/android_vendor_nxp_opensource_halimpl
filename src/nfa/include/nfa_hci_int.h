@@ -118,7 +118,7 @@ extern uint8_t HCI_LOOPBACK_DEBUG;
 #define NFCEE_UNRECOVERABLE_ERRROR              0x10
 #define NFCEE_REINIT                            0x02
 #define NFCEE_REMOVED_NTF                       0x04
-
+#define NFCEE_INIT_COMPLETED                    0x08
 #define NFA_HCI_MAX_RSP_WAIT_TIME 0x0C
 /* After the reception of WTX, maximum response timeout value is 30 sec */
 #define NFA_HCI_CHAIN_PKT_RSP_TIMEOUT 30000
@@ -559,9 +559,7 @@ typedef struct {
   uint8_t next_nfcee_idx;                          /* Index of NFCEE which is configured*/
   uint8_t active_host[NFA_HCI_MAX_HOST_IN_NETWORK]; /* active host in the
                                                          host network */
-  bool bIsHciResponseTimedout;
-  bool IsHciTimerChanged;
-  bool IsWiredSessionAborted;
+  uint8_t m_wtx_count;
 #else
   uint8_t inactive_host[NFA_HCI_MAX_HOST_IN_NETWORK]; /* Inactive host in the
                                                          host network */

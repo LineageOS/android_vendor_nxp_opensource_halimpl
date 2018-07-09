@@ -299,6 +299,7 @@ void nfc_ncif_check_cmd_queue(NFC_HDR* p_buf) {
 #endif
     }
   }
+
   /* If controller can accept another command, then send the next command */
   if (nfc_cb.nci_cmd_window > 0) {
     /* If no command was provided, or if older commands were in the queue, then
@@ -1085,6 +1086,19 @@ void nfc_ncif_proc_activate(uint8_t* p, uint8_t len) {
       p_pa->hr[1] = *p++;
     }
   }
+#if (NXP_EXTNS == TRUE)
+  /*
+   * Code to handle the Reader over SWP.
+   * 1. Do not activate tag for this NTF.
+   * 2. Pass this info to JNI as START_READER_EVT.
+   */
+  else if (evt_data.activate.intf_param.type == nfcFL.nfcMwFL._NCI_INTERFACE_UICC_DIRECT ||
+           evt_data.activate.intf_param.type == nfcFL.nfcMwFL._NCI_INTERFACE_ESE_DIRECT) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("nfc_ncif_proc_activate:interface type  %x",
+                     evt_data.activate.intf_param.type);
+  }
+#endif
 
   p_cb->act_protocol = evt_data.activate.protocol;
   p_cb->act_interface = evt_data.activate.intf_param.type;
@@ -1458,6 +1472,10 @@ void nfc_ncif_proc_init_rsp(NFC_HDR* p_msg) {
       nci_snd_core_reset(NCI_RESET_TYPE_RESET_CFG);
     } else {
       p_cb->id = NFC_RF_CONN_ID;
+      // check scbr bit as per NCI 2.0 spec
+      nfc_cb.isScbrSupported = p[5] & NCI_SCBR_MASK;
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("scbr support: 0x%x", nfc_cb.isScbrSupported);
       p_cb->act_protocol = NCI_PROTOCOL_UNKNOWN;
 
       nfc_set_state(NFC_STATE_W4_POST_INIT_CPLT);
@@ -1631,7 +1649,10 @@ void nfc_ncif_proc_data(NFC_HDR* p_msg) {
         << StringPrintf("nfc_ncif_proc_data len:%d", len);
 
     p_msg->layer_specific = 0;
-    if (pbf) p_msg->layer_specific = NFC_RAS_FRAGMENTED;
+    if (pbf) {
+      NFC_SetReassemblyFlag(true);
+      p_msg->layer_specific = NFC_RAS_FRAGMENTED;
+    }
     p_last = (NFC_HDR*)GKI_getlast(&p_cb->rx_q);
     if (p_last && (p_last->layer_specific & NFC_RAS_FRAGMENTED)) {
       /* last data buffer is not last fragment, append this new packet to the

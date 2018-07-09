@@ -18,6 +18,7 @@
 #pragma once
 #include <pthread.h>
 
+#include "config.h"
 #include "nfc_hal_api.h"
 #include "nfc_target.h"
 
@@ -32,7 +33,11 @@ struct INfcClientCallback;
 }
 namespace V1_1 {
 struct INfc;
-} } } }
+struct INfcClientCallback;
+}
+}
+}
+}
 
 namespace vendor {
 namespace nxp {
@@ -42,6 +47,7 @@ namespace V1_0 {
 struct INqNfc;
 } } } } }
 
+class NfcDeathRecipient;
 class ThreadMutex {
  public:
   ThreadMutex();
@@ -90,6 +96,7 @@ class NfcAdaptation {
   static NfcAdaptation& GetInstance();
   tHAL_NFC_ENTRY* GetHalEntryFuncs();
   void DownloadFirmware();
+  void GetVendorConfigs(std::map<std::string, ConfigValue>& configMap);
   void Dump(int fd);
 
  private:
@@ -102,11 +109,12 @@ class NfcAdaptation {
   static android::sp<android::hardware::nfc::V1_0::INfc> mHal;
   static android::sp<android::hardware::nfc::V1_1::INfc> mHal_1_1;
   static android::sp<vendor::nxp::hardware::nfc::V1_0::INqNfc> mNqHal;
-  static android::hardware::nfc::V1_0::INfcClientCallback* mCallback;
+  static android::hardware::nfc::V1_1::INfcClientCallback* mCallback;
   static tHAL_NFC_CBACK* mHalCallback;
   static tHAL_NFC_DATA_CBACK* mHalDataCallback;
   static ThreadCondVar mHalOpenCompletedEvent;
   static ThreadCondVar mHalCloseCompletedEvent;
+  static android::sp<NfcDeathRecipient> mDeathRecipient;
 
   static uint32_t NFCA_TASK(uint32_t arg);
   static uint32_t Thread(uint32_t arg);
