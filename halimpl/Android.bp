@@ -21,38 +21,37 @@ cc_library_shared {
     proprietary: true,
 
     cflags: [
-        "-DNFC_NXP_CHIP_TYPE=PN553",
-        "-DPN553=1",
+        "-DNXP_EXTNS=TRUE",
         "-Wall",
         "-Werror",
         "-Wextra",
     ],
 
     srcs: [
-        "dnld/phDnldNfc.c",
-        "dnld/phDnldNfc_Internal.c",
-        "dnld/phDnldNfc_Utils.c",
-        "dnld/phNxpNciHal_Dnld.c",
-        "hal/phNxpNciHal.c",
-        "hal/phNxpNciHal_NfcDepSWPrio.c",
-        "hal/phNxpNciHal_dta.c",
-        "hal/phNxpNciHal_ext.c",
-        "log/phNxpLog.c",
-        "nfc_nci.c",
-        "self-test/phNxpNciHal_SelfTest.c",
-        "tml/phDal4Nfc_messageQueueLib.c",
-        "tml/phOsalNfc_Timer.c",
-        "tml/phTmlNfc.c",
-        "tml/phTmlNfc_i2c.c",
-        "utils/phNxpConfig.cpp",
-        "utils/phNxpNciHal_utils.c",
-        "utils/sparse_crc32.c",
-        "configs/NxpNfcCapability.cpp",
+        "dnld/phDnldNfc.cc",
+        "dnld/phDnldNfc_Internal.cc",
+        "dnld/phDnldNfc_Utils.cc",
+        "dnld/phNxpNciHal_Dnld.cc",
+        "hal/phNxpNciHal.cc",
+        "hal/phNxpNciHal_NfcDepSWPrio.cc",
+        "hal/phNxpNciHal_dta.cc",
+        "hal/phNxpNciHal_ext.cc",
+        "hal/phNxpNciHal_nciParser.cc",
+        "log/phNxpLog.cc",
+        "self-test/phNxpNciHal_SelfTest.cc",
+        "tml/phDal4Nfc_messageQueueLib.cc",
+        "tml/phOsalNfc_Timer.cc",
+        "tml/phTmlNfc.cc",
+        "tml/phTmlNfc_i2c.cc",
+        "tml/spi_spm.cc",
+        "utils/NxpNfcCapability.cc",
+        "utils/phNxpConfig.cc",
+        "utils/phNxpNciHal_utils.cc",
+        "utils/sparse_crc32.cc",
     ],
 
     local_include_dirs: [
         "common",
-        "configs",
         "dnld",
         "hal",
         "inc",
@@ -60,6 +59,7 @@ cc_library_shared {
         "self-test",
         "tml",
         "utils",
+        "src/include"
     ],
 
     include_dirs: [
@@ -72,6 +72,8 @@ cc_library_shared {
 
     shared_libs: [
         "android.hardware.nfc@1.0",
+        "android.hardware.nfc@1.1",
+        "android.hardware.secure_element@1.0",
         "libbase",
         "libcutils",
         "libdl",
@@ -81,7 +83,12 @@ cc_library_shared {
         "libhidltransport",
         "liblog",
         "libutils",
+        "libicuuc",
+        "libchrome"
+    ],
 
+    static_libs: [
+        "libnfcutils",
     ],
 }
 
@@ -91,38 +98,37 @@ cc_library_shared {
     proprietary: true,
 
     cflags: [
-        "-DNFC_NXP_CHIP_TYPE=PN553",
-        "-DPN553=1",
+        "-DNXP_EXTNS=TRUE",
         "-Wall",
         "-Werror",
         "-Wextra",
     ],
 
     srcs: [
-        "dnld/phDnldNfc.c",
-        "dnld/phDnldNfc_Internal.c",
-        "dnld/phDnldNfc_Utils.c",
-        "dnld/phNxpNciHal_Dnld.c",
-        "hal/phNxpNciHal.c",
-        "hal/phNxpNciHal_NfcDepSWPrio.c",
-        "hal/phNxpNciHal_dta.c",
-        "hal/phNxpNciHal_ext.c",
-        "log/phNxpLog.c",
-        "nfc_nci.c",
-        "self-test/phNxpNciHal_SelfTest.c",
-        "tml/phDal4Nfc_messageQueueLib.c",
-        "tml/phOsalNfc_Timer.c",
-        "tml/phTmlNfc.c",
-        "tml/phTmlNfc_i2c.c",
-        "utils/phNxpConfig.cpp",
-        "utils/phNxpNciHal_utils.c",
-        "utils/sparse_crc32.c",
-        "configs/NxpNfcCapability.cpp",
+        "dnld/phDnldNfc.cc",
+        "dnld/phDnldNfc_Internal.cc",
+        "dnld/phDnldNfc_Utils.cc",
+        "dnld/phNxpNciHal_Dnld.cc",
+        "hal/phNxpNciHal.cc",
+        "hal/phNxpNciHal_NfcDepSWPrio.cc",
+        "hal/phNxpNciHal_dta.cc",
+        "hal/phNxpNciHal_ext.cc",
+        "hal/phNxpNciHal_nciParser.cc",
+        "log/phNxpLog.cc",
+        "self-test/phNxpNciHal_SelfTest.cc",
+        "tml/phDal4Nfc_messageQueueLib.cc",
+        "tml/phOsalNfc_Timer.cc",
+        "tml/phTmlNfc.cc",
+        "tml/phTmlNfc_i2c.cc",
+        "tml/spi_spm.cc",
+        "utils/NxpNfcCapability.cc",
+        "utils/phNxpConfig.cc",
+        "utils/phNxpNciHal_utils.cc",
+        "utils/sparse_crc32.cc",
     ],
 
     local_include_dirs: [
         "common",
-        "configs",
         "dnld",
         "hal",
         "inc",
@@ -130,6 +136,7 @@ cc_library_shared {
         "self-test",
         "tml",
         "utils",
+        "src/include"
     ],
 
     include_dirs: [
@@ -142,6 +149,8 @@ cc_library_shared {
 
     shared_libs: [
         "android.hardware.nfc@1.0",
+        "android.hardware.nfc@1.1",
+        "android.hardware.secure_element@1.0",
         "libbase",
         "libcutils",
         "libdl",
@@ -151,6 +160,11 @@ cc_library_shared {
         "libhidltransport",
         "liblog",
         "libutils",
+        "libicuuc",
+        "libchrome"
+    ],
 
+    static_libs: [
+        "libnfcutils",
     ],
 }
