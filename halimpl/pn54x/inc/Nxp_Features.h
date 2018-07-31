@@ -259,6 +259,7 @@ extern tNfc_featureList nfcFL;
             \
             nfcFL.eseFL._TRIPLE_MODE_PROTECTION = true;                     \
             nfcFL.eseFL._WIRED_MODE_STANDBY_PROP = true;                    \
+            nfcFL.eseFL._WIRED_MODE_STANDBY = true;                         \
             nfcFL.eseFL._ESE_FORCE_ENABLE = true;                           \
             nfcFL.eseFL._ESE_ETSI_READER_ENABLE = true;                     \
             nfcFL.eseFL._ESE_SVDD_SYNC = true;                              \
@@ -457,6 +458,7 @@ extern tNfc_featureList nfcFL;
             \
             \
             nfcFL.eseFL._ESE_FORCE_ENABLE = true;                           \
+            nfcFL.eseFL._ESE_ETSI12_PROP_INIT = true;                       \
             \
             \
             nfcFL.nfcMwFL._NCI_INTERFACE_UICC_DIRECT = 0x82;                \
