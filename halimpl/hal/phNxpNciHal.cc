@@ -29,9 +29,11 @@
 #include <phNxpNciHal_NfcDepSWPrio.h>
 #include <phTmlNfc_i2c.h>
 #include "phNxpNciHal_nciParser.h"
+#ifdef ENABLE_ESE_CLIENT
 #include <EseAdaptation.h>
-#include "hal_nxpnfc.h"
 #include "hal_nxpese.h"
+#endif
+#include "hal_nxpnfc.h"
 #include "spi_spm.h"
 
 using namespace android::hardware::nfc::V1_1;
@@ -99,7 +101,9 @@ bool_t gParserCreated = FALSE;
 bool nfc_debug_enabled = true;
 /* global variable to get FW version from NCI response*/
 uint32_t wFwVerRsp;
+#ifdef ENABLE_ESE_CLIENT
 EseAdaptation *gpEseAdapt = NULL;
+#endif
 /* External global variable to get FW version */
 extern uint16_t wFwVer;
 
@@ -451,16 +455,6 @@ static NFCSTATUS phNxpNciHal_fw_download(void) {
     return NFCSTATUS_REJECTED;
   }
 
-  nfc_nci_IoctlInOutData_t data;
-  memset(&data, 0x00, sizeof(nfc_nci_IoctlInOutData_t));
-  data.inp.level =
-      0x03; // ioctl call arg value to get eSE power GPIO value = 0x03
-  int spi_current_state = phNxpNciHal_ioctl(HAL_NFC_GET_SPM_STATUS, &data);
-  NXPLOG_NCIHAL_D("spi_current_state  = %4x ", spi_current_state);
-  if (spi_current_state != P61_STATE_IDLE) {
-    NXPLOG_NCIHAL_E("FW download denied while SPI in use, Continue NFC init");
-    return NFCSTATUS_REJECTED;
-  }
   nxpncihal_ctrl.phNxpNciGpioInfo.state = GPIO_UNKNOWN;
   phNxpNciHal_gpio_restore(GPIO_STORE);
 
@@ -783,8 +777,8 @@ int phNxpNciHal_MinInit(nfc_stack_callback_t* p_cback,
                              max_len * sizeof(uint8_t))) {
     NXPLOG_NCIHAL_E(
         "Invalid nfc device node name keeping the default device node "
-        "/dev/pn54x");
-    strcpy(nfc_dev_node, "/dev/pn54x");
+        "/dev/nq-nci");
+    strlcpy(nfc_dev_node, "/dev/nq-nci", max_len);
   }
 
   tTmlConfig.pDevName = (int8_t*)nfc_dev_node;
@@ -872,11 +866,11 @@ static NFCSTATUS phNxpNciHal_SendCmd(uint8_t cmd_len, uint8_t* pcmd_buff) {
 int phNxpNciHal_MinOpen() {
   phOsalNfc_Config_t tOsalConfig;
   phTmlNfc_Config_t tTmlConfig;
-  char* nfc_dev_node = NULL;
   const uint16_t max_len = 260;
   NFCSTATUS wConfigStatus = NFCSTATUS_SUCCESS;
   NFCSTATUS status = NFCSTATUS_SUCCESS;
   uint8_t boot_mode = nxpncihal_ctrl.hal_boot_mode;
+  uint8_t* nfc_dev_node = NULL;
   nxpncihal_ctrl.bIsForceFwDwnld = false;
   NXPLOG_NCIHAL_D("phNxpNci_MinOpen(): enter");
   /*NCI_INIT_CMD*/
@@ -925,10 +919,10 @@ int phNxpNciHal_MinOpen() {
   nxpncihal_ctrl.halStatus = HAL_STATUS_OPEN;
   nxpncihal_ctrl.is_wait_for_ce_ntf = false;
   nxpncihal_ctrl.hal_boot_mode = boot_mode;
-
-   gpEseAdapt = &EseAdaptation::GetInstance();
-   gpEseAdapt->Initialize();
-
+#ifdef ENABLE_ESE_CLIENT
+  gpEseAdapt = &EseAdaptation::GetInstance();
+  gpEseAdapt->Initialize();
+#endif
   /*nci version NCI_VERSION_UNKNOWN version by default*/
   nxpncihal_ctrl.nci_info.nci_version = NCI_VERSION_UNKNOWN;
 
@@ -940,17 +934,17 @@ int phNxpNciHal_MinOpen() {
   }
   memset(mGetCfg_info, 0x00, sizeof(phNxpNci_getCfg_info_t));
 
-  /* Read the nfc device node name */
-  nfc_dev_node = (char*)malloc(max_len * sizeof(char));
+  /*Read the nfc device node name*/
+  nfc_dev_node = (uint8_t*)nxp_malloc(max_len * sizeof(uint8_t));
   if (nfc_dev_node == NULL) {
     NXPLOG_NCIHAL_E("malloc of nfc_dev_node failed ");
     goto minCleanAndreturn;
-  } else if (!GetNxpStrValue(NAME_NXP_NFC_DEV_NODE, nfc_dev_node,
-                             sizeof(nfc_dev_node))) {
+  } else if (!GetNxpStrValue(NAME_NXP_NFC_DEV_NODE, (char*)nfc_dev_node,
+                             max_len)) {
     NXPLOG_NCIHAL_E(
         "Invalid nfc device node name keeping the default device node "
-        "/dev/pn54x");
-    strcpy(nfc_dev_node, "/dev/pn54x");
+        "/dev/nq-nci");
+    strlcpy((char*)nfc_dev_node, "/dev/nq-nci", max_len);
   }
 
   /* Configure hardware link */
@@ -2009,9 +2003,17 @@ int phNxpNciHal_core_initialized(uint8_t* p_core_init_rsp_params) {
       uint8_t swp_info_buff[2];
       uint8_t swp_intf_status = 0x00;
       uint8_t swp1A_intf_status = 0x00;
+      char nq_chipid[PROPERTY_VALUE_MAX] = {0};
+      int rc = 0;
       NFCSTATUS status = NFCSTATUS_FAILED;
       phNxpNci_EEPROM_info_t swp_intf_info;
-
+      rc = __system_property_get("vendor.qti.nfc.chipid", nq_chipid);
+      if (rc <= 0) {
+          NXPLOG_NCIHAL_E("get vendor.qti.nfc.chipid fail, rc = %d\n", rc);
+      }
+      else {
+          NXPLOG_NCIHAL_D("vendor.qti.nfc.chipid = %s\n", nq_chipid);
+      }
       memset(swp_info_buff, 0, sizeof(swp_info_buff));
       /*Read SWP1 data*/
       memset(&swp_intf_info, 0, sizeof(swp_intf_info));
@@ -2027,19 +2029,21 @@ int phNxpNciHal_core_initialized(uint8_t* p_core_init_rsp_params) {
         NXP_NCI_HAL_CORE_INIT_RECOVER(retry_core_init_cnt, retry_core_init);
       }
       if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
-        /*Read SWP1A data*/
-        memset(&swp_intf_info, 0, sizeof(swp_intf_info));
-        swp_intf_info.request_mode = GET_EEPROM_DATA;
-        swp_intf_info.request_type = EEPROM_SWP1A_INTF;
-        swp_intf_info.buffer = &swp1A_intf_status;
-        swp_intf_info.bufflen = sizeof(uint8_t);
-        status = request_EEPROM(&swp_intf_info);
-        if (status == NFCSTATUS_OK)
-          swp_info_buff[1] = swp1A_intf_status;
-        else {
-          NXPLOG_NCIHAL_E("request_EEPROM error occured %d", status);
-          NXP_NCI_HAL_CORE_INIT_RECOVER(retry_core_init_cnt, retry_core_init);
-        }
+            if ((rc > 0) && (strncmp(nq_chipid, NQ220, PROPERTY_VALUE_MAX) != 0) && (strncmp(nq_chipid, NQ210, PROPERTY_VALUE_MAX) != 0)) {
+              /*Read SWP1A data*/
+              memset(&swp_intf_info, 0, sizeof(swp_intf_info));
+              swp_intf_info.request_mode = GET_EEPROM_DATA;
+              swp_intf_info.request_type = EEPROM_SWP1A_INTF;
+              swp_intf_info.buffer = &swp1A_intf_status;
+              swp_intf_info.bufflen = sizeof(uint8_t);
+              status = request_EEPROM(&swp_intf_info);
+              if (status == NFCSTATUS_OK)
+                swp_info_buff[1] = swp1A_intf_status;
+              else {
+                NXPLOG_NCIHAL_E("request_EEPROM error occured %d", status);
+                NXP_NCI_HAL_CORE_INIT_RECOVER(retry_core_init_cnt, retry_core_init);
+              }
+            }
       }
       phNxpNci_EEPROM_info_t mEEPROM_info = { .request_mode = 0 };
       mEEPROM_info.buffer = swp_info_buff;
@@ -2466,9 +2470,7 @@ static void phNxpNciHal_hci_network_reset(void) {
  *
  ******************************************************************************/
 static NFCSTATUS phNxpNciHal_check_eSE_Session_Identity(void) {
-  struct stat st;
   NFCSTATUS status = NFCSTATUS_FAILED;
-  const char config_eseinfo_path[] = "/data/nfc/nfaStorage.bin1";
   static uint8_t session_identity[8] = {0x00};
   uint8_t default_session[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
   uint8_t swp2_intf_status = 0x00;
@@ -2491,10 +2493,6 @@ static NFCSTATUS phNxpNciHal_check_eSE_Session_Identity(void) {
     return NFCSTATUS_SUCCESS;
   }
 
-  if (stat(config_eseinfo_path, &st) == -1) {
-    status = NFCSTATUS_FAILED;
-    NXPLOG_NCIHAL_D("%s file not present = %s", __func__, config_eseinfo_path);
-  } else {
     phNxpNci_EEPROM_info_t mEEPROM_info = {.request_mode = 0};
     mEEPROM_info.request_mode = GET_EEPROM_DATA;
     mEEPROM_info.request_type = EEPROM_ESE_SESSION_ID;
@@ -2509,7 +2507,6 @@ static NFCSTATUS phNxpNciHal_check_eSE_Session_Identity(void) {
         status = NFCSTATUS_OK;
       }
     }
-  }
 
   if (status == NFCSTATUS_FAILED) {
     /*Disable SWP1 and 1A interfaces*/
@@ -3606,14 +3603,18 @@ int phNxpNciHal_ioctl(long arg, void* p_data) {
     case HAL_NFC_IOCTL_RF_STATUS_UPDATE:
       NXPLOG_NCIHAL_D("HAL_NFC_IOCTL_RF_STATUS_UPDATE Enter value is %d: \n",
                       pInpOutData->inp.data.nciCmd.p_cmd[0]);
+#ifdef ENABLE_ESE_CLIENT
       if (gpEseAdapt != NULL)
         gpEseAdapt->HalNfccNtf(HAL_NFC_IOCTL_RF_STATUS_UPDATE, pInpOutData);
+#endif
       ret = 0;
       break;
     case HAL_NFC_IOCTL_RF_ACTION_NTF:
       NXPLOG_NCIHAL_D("HAL_NFC_IOCTL_RF_ACTION_NTF");
+#ifdef ENABLE_ESE_CLIENT
       if (gpEseAdapt != NULL)
         gpEseAdapt->HalNfccNtf(HAL_NFC_IOCTL_RF_ACTION_NTF, pInpOutData);
+#endif
       ret = 0;
       break;
     case HAL_NFC_GET_NXP_CONFIG:

@@ -22,7 +22,6 @@
 #include <phNxpConfig.h>
 #include <phDnldNfc.h>
 #include "phNxpNciHal_nciParser.h"
-#include "hal_nxpese.h"
 #include <phNxpNciHal_Adaptation.h>
 /* Timeout value to wait for response from PN548AD */
 #define HAL_EXTNS_WRITE_RSP_TIMEOUT (2500)

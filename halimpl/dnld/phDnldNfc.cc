@@ -24,6 +24,7 @@
 #include <phNxpLog.h>
 #include <dlfcn.h>
 #include <phNxpConfig.h>
+#include <cutils/properties.h>
 
 static void*
     pFwLibHandle;    /* Global firmware lib handle used in this file only */
@@ -745,8 +746,8 @@ NFCSTATUS phDnldNfc_InitImgInfo(void) {
   /*Read Firmware file name from config file*/
   if (GetNxpStrValue(NAME_NXP_FW_NAME, (char*)fwFileName, sizeof(fwFileName)) ==
       true) {
-    strcpy(fwpathName, FW_DLL_ROOT_DIR);
-    strncat(fwpathName, fwFileName, strlen(fwFileName));
+    strlcpy(fwpathName, FW_DLL_ROOT_DIR, sizeof(fwpathName));
+    strlcat(fwpathName, fwFileName, sizeof(fwpathName));
     pathName = fwpathName;
   }
 
@@ -963,15 +964,15 @@ NFCSTATUS phDnldNfc_LoadFW(const char* pathName, uint8_t** pImgInfo,
   void* pImageInfoLen = NULL;
   if (pathName == NULL) {
       if(nfcFL.chipType == pn548C2) {
-          pathName = "/system/vendor/lib/libpn548ad_fw.so";
+          pathName = "/vendor/lib/libpn548ad_fw.so";
       } else if(nfcFL.chipType == pn551) {
-          pathName = "/system/vendor/lib/libpn551_fw.so";
+          pathName = "/vendor/lib/libpn551_fw.so";
       } else if(nfcFL.chipType == pn553) {
-          pathName = "/system/vendor/lib/libpn553_fw.so";
+          pathName = "/vendor/lib/libpn553_fw.so";
       } else if(nfcFL.chipType == pn557) {
-          pathName = "/system/vendor/lib/libpn557_fw.so";
+          pathName = "/vendor/lib/libpn557_fw.so";
       } else {
-          pathName = "/system/vendor/lib/libpn547_fw.so";
+          pathName = "/vendor/lib/libpn547_fw.so";
       }
   }
 
@@ -1037,15 +1038,15 @@ NFCSTATUS phDnldNfc_LoadRecoveryFW(const char* pathName, uint8_t** pImgInfo,
   /* check for path name */
   if (pathName == NULL) {
       if(nfcFL.chipType == pn548C2) {
-          pathName = "/system/vendor/lib/libpn548ad_fw.so";
+          pathName = "/vendor/lib/libpn548ad_fw.so";
       } else if(nfcFL.chipType == pn551) {
-          pathName = "/system/vendor/lib/libpn551_fw.so";
+          pathName = "/vendor/lib/libpn551_fw.so";
       } else if(nfcFL.chipType == pn553) {
-          pathName = "/system/vendor/lib/libpn553_fw.so";
+          pathName = "/vendor/lib/libpn553_fw.so";
       }else if(nfcFL.chipType == pn557) {
-          pathName = "/system/vendor/lib/libpn557_fw.so";
+          pathName = "/vendor/lib/libpn557_fw.so";
       } else {
-          pathName = "/system/vendor/lib/libpn547_fw.so";
+          pathName = "/vendor/lib/libpn547_fw.so";
       }
   }
   /* check if the handle is not NULL then free the library */

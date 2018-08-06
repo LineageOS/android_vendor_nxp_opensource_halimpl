@@ -57,6 +57,7 @@
 #include <stdlib.h>
 
 #include <phNxpLog.h>
+#include <cutils/properties.h>
 #include "sparse_crc32.h"
 
 #if GENERIC_TARGET
@@ -174,6 +175,7 @@ using namespace ::std;
 namespace nxp {
 
 void readOptionalConfig(const char* optional);
+void findConfigFilePathFromTransportConfigPaths(const string& configName, string& filePath);
 
 class CNfcParam : public string {
  public:
@@ -780,7 +782,7 @@ bool CNfcConfig::readConfig(const char* name, bool bResetContent) {
 ** Returns:     none
 **
 *******************************************************************************/
-CNfcConfig::CNfcConfig() : mValidFile(true), state(0) {}
+CNfcConfig::CNfcConfig() : mValidFile(true), mDynamConfig(true), state(0) {}
 
 /*******************************************************************************
 **
@@ -874,14 +876,8 @@ CNfcConfig& CNfcConfig::GetInstance() {
            readOptionalConfig("brcm");
 
         theInstance.readNxpTransitConfig("nxpTransit");
-#endif
-    }
-    findConfigFilePathFromTransportConfigPaths(config_name, strPath);
-    theInstance.readConfig(strPath.c_str(), true);
-#if (NXP_EXTNS == TRUE)
-    readOptionalConfig("brcm");
-    theInstance.readNxpTransitConfig(transit_config_path);
-    theInstance.readNxpRFConfig(nxp_rf_config_path);
+        theInstance.readNxpTransitConfig(transit_config_path);
+        theInstance.readNxpRFConfig(nxp_rf_config_path);
 #endif
   }
   return theInstance;

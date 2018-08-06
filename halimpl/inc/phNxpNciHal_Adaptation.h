@@ -19,10 +19,24 @@
 
 #include <hardware/hardware.h>
 #include <hardware/nfc.h>
+
 #include <android/hardware/nfc/1.1/INfc.h>
 #include <android/hardware/nfc/1.1/types.h>
 
 using ::android::hardware::nfc::V1_1::NfcConfig;
+
+#define NFC_NCI_NXP_PN54X_HARDWARE_MODULE_ID "nfc_nci.nqx"
+
+typedef struct
+{
+    struct nfc_nci_device nci_device;
+
+    /* Local definitions */
+    int (*ioctl)(const struct nfc_nci_device *p_dev, long arg, void *p_data);
+    int(*check_fw_dwnld_flag)(const struct nfc_nci_device *p_dev, uint8_t* param1);
+} pn547_dev_t;
+
+
 
 /* NXP HAL functions */
 
