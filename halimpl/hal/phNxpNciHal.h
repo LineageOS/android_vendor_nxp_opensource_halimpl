@@ -1,7 +1,4 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
- * Not a Contribution.
- *
  * Copyright (C) 2015 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,45 +19,19 @@
 #include <hardware/nfc.h>
 #include <phNxpNciHal_utils.h>
 #include "NxpNfcCapability.h"
+#include "hal_nxpnfc.h"
 
 /********************* Definitions and structures *****************************/
 #define MAX_RETRY_COUNT 5
 #define NCI_MAX_DATA_LEN 300
 #define NCI_POLL_DURATION 500
+#define HAL_NFC_ENABLE_I2C_FRAGMENTATION_EVT 0x07
 #define NXP_STAG_TIMEOUT_BUF_LEN 0x04 /*FIXME:TODO:remove*/
 #define NXP_WIREDMODE_RESUME_TIMEOUT_LEN 0x04
 #define NFCC_DECIDES 00
 #define POWER_ALWAYS_ON 01
 #define LINK_ALWAYS_ON 02
 #undef P2P_PRIO_LOGIC_HAL_IMP
-
-enum {
-    HAL_NFC_ENABLE_I2C_FRAGMENTATION_EVT = 0x07,
-    HAL_NFC_POST_MIN_INIT_CPLT_EVT  = 0x08
-};
-
-enum {
-    HAL_NFC_IOCTL_P61_IDLE_MODE = 0,
-    HAL_NFC_IOCTL_P61_WIRED_MODE,
-    HAL_NFC_IOCTL_P61_PWR_MODE,
-    HAL_NFC_IOCTL_P61_DISABLE_MODE,
-    HAL_NFC_IOCTL_P61_ENABLE_MODE,
-    HAL_NFC_IOCTL_SET_BOOT_MODE,
-    HAL_NFC_IOCTL_GET_CONFIG_INFO,
-    HAL_NFC_IOCTL_CHECK_FLASH_REQ,
-    HAL_NFC_IOCTL_FW_DWNLD,
-    HAL_NFC_IOCTL_FW_MW_VER_CHECK,
-    HAL_NFC_IOCTL_DISABLE_HAL_LOG,
-    HAL_NFC_IOCTL_NCI_TRANSCEIVE,
-    HAL_NFC_IOCTL_P61_GET_ACCESS,
-    HAL_NFC_IOCTL_P61_REL_ACCESS,
-    HAL_NFC_IOCTL_ESE_CHIP_RST,
-    HAL_NFC_IOCTL_REL_SVDD_WAIT,
-    HAL_NFC_IOCTL_SET_JCP_DWNLD_ENABLE,
-    HAL_NFC_IOCTL_SET_JCP_DWNLD_DISABLE,
-    HAL_NFC_IOCTL_SET_NFC_SERVICE_PID,
-    HAL_NFC_IOCTL_GET_FEATURE_LIST
-};
 
 #define NCI_VERSION_2_0 0x20
 #define NCI_VERSION_1_1 0x11
@@ -94,12 +65,32 @@ typedef void(phNxpNciHal_control_granted_callback_t)();
 #define NCI_MSG_CORE_INIT            0x01
 #define NCI_MT_MASK                  0xE0
 #define NCI_OID_MASK                 0x3F
+
+#define NXP_MAX_CONFIG_STRING_LEN 260
+
 typedef struct nci_data {
   uint16_t len;
   uint8_t p_data[NCI_MAX_DATA_LEN];
 } nci_data_t;
 
-typedef enum { HAL_STATUS_CLOSE = 0, HAL_STATUS_OPEN } phNxpNci_HalStatus;
+typedef enum {
+  HAL_STATUS_CLOSE = 0,
+  HAL_STATUS_OPEN,
+  HAL_STATUS_MIN_OPEN
+} phNxpNci_HalStatus;
+typedef enum {
+  GPIO_UNKNOWN = 0x00,
+  GPIO_STORE = 0x01,
+  GPIO_STORE_DONE = 0x02,
+  GPIO_RESTORE = 0x10,
+  GPIO_RESTORE_DONE = 0x20,
+  GPIO_CLEAR = 0xFF
+} phNxpNciHal_GpioInfoState;
+
+typedef struct phNxpNciGpioInfo {
+  phNxpNciHal_GpioInfoState state;
+  uint8_t values[2];
+} phNxpNciGpioInfo_t;
 
 /* Macros to enable and disable extensions */
 #define HAL_ENABLE_EXT() (nxpncihal_ctrl.hal_ext_enabled = 1)
@@ -121,6 +112,9 @@ typedef struct phNxpNciHal_Control {
   uint8_t* p_rx_data;
   uint16_t rx_data_len;
 
+  /* Rx data */
+  uint8_t* p_rx_ese_data;
+  uint16_t rx_ese_data_len;
   /* libnfc-nci callbacks */
   nfc_stack_callback_t* p_nfc_stack_cback;
   nfc_stack_data_callback_t* p_nfc_stack_data_cback;
@@ -138,6 +132,7 @@ typedef struct phNxpNciHal_Control {
 
   /* Waiting semaphore */
   phNxpNciHal_Sem_t ext_cb_data;
+  sem_t syncSpiNfc;
 
   uint16_t cmd_len;
   uint8_t p_cmd_data[NCI_MAX_DATA_LEN];
@@ -150,6 +145,9 @@ typedef struct phNxpNciHal_Control {
   phNxpNciInfo_t nci_info;
   uint8_t hal_boot_mode;
   tNFC_chipType chipType;
+  /* to store and restore gpio values */
+  phNxpNciGpioInfo_t phNxpNciGpioInfo;
+  bool bIsForceFwDwnld;
 } phNxpNciHal_Control_t;
 
 typedef struct {
@@ -238,6 +236,7 @@ typedef struct phNxpNciProfile_Control {
 #define NCI_HAL_POST_INIT_CPLT_MSG 0x413
 #define NCI_HAL_PRE_DISCOVER_CPLT_MSG 0x414
 #define NCI_HAL_ERROR_MSG 0x415
+#define NCI_HAL_HCI_NETWORK_RESET_MSG 0x416
 #define NCI_HAL_RX_MSG 0xF01
 #define NCI_HAL_POST_MIN_INIT_CPLT_MSG 0xF02
 #define NCIHAL_CMD_CODE_LEN_BYTE_OFFSET (2U)
@@ -245,11 +244,12 @@ typedef struct phNxpNciProfile_Control {
 
 /******************** NCI HAL exposed functions *******************************/
 
+int phNxpNciHal_check_ncicmd_write_window(uint16_t cmd_len, uint8_t* p_cmd);
 void phNxpNciHal_request_control(void);
 void phNxpNciHal_release_control(void);
 NFCSTATUS phNxpNciHal_send_get_cfgs();
 int phNxpNciHal_write_unlocked(uint16_t data_len, const uint8_t* p_data);
-static int phNxpNciHal_fw_mw_ver_check();
+static __attribute__((unused)) int phNxpNciHal_fw_mw_ver_check();
 NFCSTATUS request_EEPROM(phNxpNci_EEPROM_info_t* mEEPROM_info);
 NFCSTATUS phNxpNciHal_send_nfcee_pwr_cntl_cmd(uint8_t type);
 
@@ -279,4 +279,26 @@ void phNxpNciHal_configFeatureList(uint8_t* init_rsp, uint16_t rsp_len);
 ** Returns          chipType
 *******************************************************************************/
 tNFC_chipType phNxpNciHal_getChipType();
+
+/*******************************************************************************
+**
+** Function         phNxpNciHal_getNxpConfig
+**
+** Description      Read vendor configuration macro values
+**
+** Parameters       ioctl input/output struct.
+**
+** Returns          none
+*******************************************************************************/
+void phNxpNciHal_getNxpConfig(nfc_nci_IoctlInOutData_t *pInpOutData);
+/******************************************************************************
+ * Function         phNxpNciHal_getNxpTransitConfig
+ *
+ * Description      This function overwrite libnfc-nxpTransit.conf file
+ *                  with transitConfValue.
+ *
+ * Returns          void.
+ *
+ ******************************************************************************/
+void phNxpNciHal_setNxpTransitConfig(char *transitConfValue);
 #endif /* _PHNXPNCIHAL_H_ */

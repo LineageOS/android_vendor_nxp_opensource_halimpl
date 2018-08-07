@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 NXP Semiconductors
+ * Copyright (C) 2015-2018 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,6 +114,8 @@ typedef enum {
   phTmlNfc_e_SetP61IdleMode, /* Set the current P61 mode of operation to Idle*/
   phTmlNfc_e_SetP61DisableMode, /* Set the ese vdd gpio to low*/
   phTmlNfc_e_SetP61EnableMode,  /* Set the ese vdd gpio to high*/
+  phTmlNfc_e_RaiseEsePower,     /* Set the ese pwr gpio to high*/
+  phTmlNfc_e_ReleaseEsePower,   /* Set the ese pwr gpio to high*/
   phTmlNfc_e_eSEChipRstMode,    /* ISO RST of P73*/
   phTmlNfc_e_RelP61Access,      /*Release the P61 lock*/
   phTmlNfc_e_SetLegacyPowerScheme,
@@ -175,6 +177,7 @@ typedef struct phTmlNfc_Context {
   sem_t txSemaphore;      /* Lock/Aquire txRx Semaphore */
   sem_t postMsgSemaphore; /* Semaphore to post message atomically by Reader &
                              writer thread */
+  pthread_mutex_t readInfoUpdateMutex; /*Mutex to synchronize read Info update*/
   pthread_cond_t wait_busy_condition; /*Condition to wait reader thread*/
   pthread_mutex_t wait_busy_lock;     /*Condition lock to wait reader thread*/
   volatile uint8_t wait_busy_flag;    /*Condition flag to wait reader thread*/
@@ -239,6 +242,8 @@ NFCSTATUS phTmlNfc_Read(uint8_t* pBuffer, uint16_t wLength,
 NFCSTATUS phTmlNfc_WriteAbort(void);
 NFCSTATUS phTmlNfc_ReadAbort(void);
 NFCSTATUS phTmlNfc_IoCtl(phTmlNfc_ControlCode_t eControlCode);
+NFCSTATUS phTmlNfc_UpdateReadCompleteCallback (
+    pphTmlNfc_TransactCompletionCb_t pTmlReadComplete);
 NFCSTATUS phTmlNfc_get_ese_access(void* pDevHandle, long timeout);
 void phTmlNfc_DeferredCall(uintptr_t dwThreadId,
                            phLibNfc_Message_t* ptWorkerMsg);

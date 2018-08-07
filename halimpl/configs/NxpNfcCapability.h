@@ -19,9 +19,6 @@
 #ifndef __CAP_H__
 #define __CAP_H__
 #define pConfigFL       (capability::getInstance())
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*******************************************************************************
 **
@@ -48,22 +45,31 @@ tNFC_chipType getChipType ();
 ** Returns          chipType
 *******************************************************************************/
 tNFC_chipType configChipType(uint8_t* msg, uint16_t msg_len);
-#ifdef __cplusplus
-};
 
 class capability {
 private:
     static capability* instance;
-    const uint16_t offsetHwVersion = 24;
-    const uint16_t offsetFwVersion = 25;
+    /*Init Response*/
+    const uint16_t offsetInitHwVersion = 24;;
+    const uint16_t offsetInitFwVersion = 25;
+    /*Reset Notification*/
+    const uint16_t offsetRstHwVersion = 8;
+    const uint16_t offsetRstFwVersion = 9;
+    /*Propreitary Response*/
+    const uint16_t offsetPropHwVersion = 3;
+    const uint16_t offsetPropFwVersion = 4;
+
+    /*product[] will be used to print product version and
+    should be kept in accordance with tNFC_chipType*/
+    const char* product[11] = {"UNKNOWN","PN547C2","PN65T","PN548C2","PN66T",
+    "PN551","PN67T","PN553","PN80T","PN557","PN81T"};
     capability();
 public:
     static tNFC_chipType chipType;
     static capability* getInstance();
-    tNFC_chipType processChipType(uint8_t* msg, uint16_t msg_len);
+    tNFC_chipType getChipType(uint8_t* msg, uint16_t msg_len);
 };
 
-#endif
 
 #endif
 
