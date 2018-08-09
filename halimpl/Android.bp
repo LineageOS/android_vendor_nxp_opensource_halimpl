@@ -63,8 +63,8 @@ cc_library_shared {
     ],
 
     include_dirs: [
-        "vendor/nxp/opensource/external/libnfc-nci/extns/impl",
-        "vendor/nxp/opensource/external/libnfc-nci/src/include",
+        "vendor/nxp/opensource/commonsys/external/libnfc-nci/extns/impl",
+        "vendor/nxp/opensource/commonsys/external/libnfc-nci/src/include",
     ],
 
     export_include_dirs: [
@@ -137,8 +137,8 @@ cc_library_shared {
     ],
 
     include_dirs: [
-        "vendor/nxp/opensource/external/libnfc-nci/extns/impl",
-        "vendor/nxp/opensource/external/libnfc-nci/src/include",
+        "vendor/nxp/opensource/commonsys/external/libnfc-nci/extns/impl",
+        "vendor/nxp/opensource/commonsys/external/libnfc-nci/src/include",
     ],
 
     export_include_dirs: [
