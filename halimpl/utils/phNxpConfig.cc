@@ -1417,8 +1417,8 @@ extern "C" int GetNxpNumValue(const char* name, void* pValue,
 **
 *******************************************************************************/
 extern "C" void setNxpRfConfigPath(const char* name) {
-  memset(nxp_rf_config_path, 0, sizeof(nxp_rf_config_path));
-  strcpy(nxp_rf_config_path, name);
+  memset((void *)nxp_rf_config_path, 0, sizeof(nxp_rf_config_path));
+  strlcpy((char *)nxp_rf_config_path, name, sizeof(nxp_rf_config_path));
   ALOGD("nxp_rf_config_path=%s", nxp_rf_config_path);
 }
 
@@ -1432,8 +1432,8 @@ extern "C" void setNxpRfConfigPath(const char* name) {
 **
 *******************************************************************************/
 extern "C" void setNxpFwConfigPath(const char* name) {
-  memset(Fw_Lib_Path, 0, sizeof(Fw_Lib_Path));
-  strcpy(Fw_Lib_Path, name);
+  memset((void *)Fw_Lib_Path, 0, sizeof(Fw_Lib_Path));
+  strlcpy((char *)Fw_Lib_Path, name, sizeof(Fw_Lib_Path));
   ALOGD("Fw_Lib_Path=%s", Fw_Lib_Path);
 }
 

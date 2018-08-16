@@ -565,6 +565,8 @@ int phNxpNciHal_MinOpen (){
   phTmlNfc_Config_t tTmlConfig;
   char* nfc_dev_node = NULL;
   const uint16_t max_len = 260;
+  int isfound = 0;
+  unsigned long num = 0,fw_dwld_req = 0;
   NFCSTATUS wConfigStatus = NFCSTATUS_SUCCESS;
   NFCSTATUS status = NFCSTATUS_SUCCESS;
   NXPLOG_NCIHAL_D("phNxpNci_MinOpen(): enter");
@@ -579,7 +581,8 @@ int phNxpNciHal_MinOpen (){
     return NFCSTATUS_SUCCESS;
   }
   setNxpRfConfigPath("/system/vendor/libnfc-nxp_RF.conf");
-  setNxpFwConfigPath("/system/vendor/lib64/libsn100u_fw.so");
+  setNxpFwConfigPath("/system/vendor/lib/libsn100u_fw.so");
+
   phNxpNciHal_initializeRegRfFwDnld();
 
   /* reset config cache */
@@ -868,6 +871,7 @@ int phNxpNciHal_open(nfc_stack_callback_t* p_cback,
   NFCSTATUS status = NFCSTATUS_SUCCESS;
 
   NXPLOG_NCIHAL_E("phNxpNciHal_open NFC HAL OPEN");
+#ifdef ENABLE_ESE_CLIENT
   if(ese_update != ESE_UPDATE_COMPLETED)
   {
     ALOGD("BLOCK NFC HAL OPEN");
@@ -878,6 +882,7 @@ int phNxpNciHal_open(nfc_stack_callback_t* p_cback,
       }
     return NFCSTATUS_FAILED;
   }
+#endif
   if (nxpncihal_ctrl.halStatus == HAL_STATUS_OPEN) {
     NXPLOG_NCIHAL_E("phNxpNciHal_open already open");
     return NFCSTATUS_SUCCESS;
@@ -1772,9 +1777,7 @@ int phNxpNciHal_core_initialized(uint8_t* p_core_init_rsp_params) {
         NXPLOG_NCIHAL_E("NXP Update MW EEPROM Proprietary Ext failed");
       }
     }
-    fw_dwnld_flag = false;
-  }
-
+  fw_dwnld_flag = false;
   retlen = 0;
   config_access = false;
   // if recovery mode and length of last command is 0 then only reset the P2P
@@ -2538,9 +2541,12 @@ int phNxpNciHal_ioctl(long arg, void* p_data) {
   NFCSTATUS fm_mw_ver_check = NFCSTATUS_FAILED;
   long level;
   level=pInpOutData->inp.level;
-  if(nxpncihal_ctrl.halStatus == HAL_STATUS_CLOSE &&
-    (arg != HAL_NFC_IOCTL_ESE_JCOP_DWNLD && arg
-    != HAL_NFC_IOCTL_ESE_UPDATE_COMPLETE && arg != HAL_ESE_IOCTL_NFC_JCOP_DWNLD))
+  if(nxpncihal_ctrl.halStatus == HAL_STATUS_CLOSE
+#ifdef ENABLE_ESE_CLIENT
+    && (arg != HAL_NFC_IOCTL_ESE_JCOP_DWNLD && arg
+    != HAL_NFC_IOCTL_ESE_UPDATE_COMPLETE && arg != HAL_ESE_IOCTL_NFC_JCOP_DWNLD)
+#endif
+    )
    {
        NFCSTATUS status = NFCSTATUS_FAILED;
        status = phNxpNciHal_MinOpen();
@@ -2625,6 +2631,7 @@ int phNxpNciHal_ioctl(long arg, void* p_data) {
         pInpOutData->out.data.chipType = (uint8_t)phNxpNciHal_getChipType();
         ret = 0;
         break;
+    #ifdef ENABLE_ESE_CLIENT
     case HAL_ESE_IOCTL_NFC_JCOP_DWNLD :
         NXPLOG_NCIHAL_D("HAL_ESE_IOCTL_NFC_JCOP_DWNLD Enter value is %d: \n",pInpOutData->inp.data.nciCmd.p_cmd[0]);
         if(gpEseAdapt !=  NULL)
@@ -2648,6 +2655,7 @@ int phNxpNciHal_ioctl(long arg, void* p_data) {
         }
         ret = 0;
         break;
+    #endif
     case HAL_NFC_IOCTL_SPI_DWP_SYNC:
         {
                   ret = phNxpNciHal_send_ese_hal_cmd(pInpOutData->inp.data.nciCmd.cmd_len,
@@ -2716,8 +2724,10 @@ int phNxpNciHal_ioctl(long arg, void* p_data) {
          break;
     case HAL_NFC_IOCTL_RF_STATUS_UPDATE:
         NXPLOG_NCIHAL_D("HAL_NFC_IOCTL_RF_STATUS_UPDATE Enter value is %d: \n",pInpOutData->inp.data.nciCmd.p_cmd[0]);
+        #ifdef ENABLE_ESE_CLIENT
         if(gpEseAdapt !=  NULL)
         ret = gpEseAdapt->HalIoctl(HAL_NFC_IOCTL_RF_STATUS_UPDATE,pInpOutData);
+        #endif
         break;
     case HAL_NFC_IOCTL_SET_TRANSIT_CONFIG:
         phNxpNciHal_setNxpTransitConfig(pInpOutData->inp.data.transitConfig.val);

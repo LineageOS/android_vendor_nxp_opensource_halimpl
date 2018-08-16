@@ -20,7 +20,6 @@
 #include <phNxpNciHal_utils.h>
 #include "NxpNfcCapability.h"
 #include "hal_nxpnfc.h"
-#include "eSEClientIntf.h"
 
 /********************* Definitions and structures *****************************/
 #define MAX_RETRY_COUNT 5
@@ -92,7 +91,9 @@ typedef enum {
   GPIO_RESTORE_DONE = 0x20,
   GPIO_CLEAR = 0xFF
 } phNxpNciHal_GpioInfoState;
+#ifdef ENABLE_ESE_CLIENT
 extern ese_update_state_t ese_update;
+#endif
 typedef struct phNxpNciGpioInfo {
   phNxpNciHal_GpioInfoState state;
   uint8_t values[2];
