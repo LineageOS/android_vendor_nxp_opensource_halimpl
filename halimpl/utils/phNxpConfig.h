@@ -51,10 +51,14 @@ void resetNxpConfig(void);
 int isNxpRFConfigModified();
 int isNxpConfigModified();
 int updateNxpConfigTimestamp();
+void setNxpRfConfigPath(const char* name);
+void setNxpFwConfigPath(const char* name);
 
 #ifdef __cplusplus
 };
 #endif
+
+extern char Fw_Lib_Path[256];
 
 #define NAME_NXPLOG_EXTNS_LOGLEVEL "NXPLOG_EXTNS_LOGLEVEL"
 #define NAME_NXPLOG_NCIHAL_LOGLEVEL "NXPLOG_NCIHAL_LOGLEVEL"
@@ -128,6 +132,11 @@ int updateNxpConfigTimestamp();
 #define NAME_PRESENCE_CHECK_ALGORITHM "PRESENCE_CHECK_ALGORITHM"
 #define NAME_NXP_CORE_PROP_SYSTEM_DEBUG "NXP_CORE_PROP_SYSTEM_DEBUG"
 #define NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE "NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE"
+#define NAME_NXP_P61_LS_DEFAULT_INTERFACE "NXP_P61_LS_DEFAULT_INTERFACE"
+#define NAME_NXP_LS_FORCE_UPDATE_REQUIRED "NXP_LS_FORCE_UPDATE_REQUIRED"
+#define NAME_NXP_JCOP_FORCE_UPDATE_REQUIRED "NXP_JCOP_FORCE_UPDATE_REQUIRED"
+#define NAME_RF_STORAGE "RF_STORAGE"
+#define NAME_NXP_FLASH_CONFIG "NXP_FLASH_CONFIG"
 
 /**
  *  @brief defines the different config files used.

@@ -27,9 +27,10 @@
 #include <phTmlNfc.h>
 #include <phDnldNfc.h>
 #if(NXP_EXTNS == TRUE)
+#include <cutils/properties.h>
 #include "phNxpNciHal_nciParser.h"
+#include "phNxpNciHal.h"
 #endif
-
 /* Timeout value to wait for response from PN548AD */
 #define HAL_EXTNS_WRITE_RSP_TIMEOUT (1000)
 
@@ -270,8 +271,12 @@ NFCSTATUS phNxpNciHal_process_ext_rsp(uint8_t* p_ntf, uint16_t* p_len) {
     }
   }
   phNxpNciHal_ext_process_nfc_init_rsp(p_ntf, p_len);
-
-  if (p_ntf[0] == 0x61 && p_ntf[1] == 0x05 && p_ntf[2] == 0x15 &&
+  if(p_ntf[0] == 0x42 && p_ntf[1] == 0x01 && p_ntf[2] == 0x01 && p_ntf[3] == 0x00) {
+    if(nxpncihal_ctrl.hal_ext_enabled == TRUE && nfcFL.chipType == sn100u) {
+      nxpncihal_ctrl.nci_info.wait_for_ntf = TRUE;
+      NXPLOG_NCIHAL_D(" Mode set received");
+    }
+  } else if (p_ntf[0] == 0x61 && p_ntf[1] == 0x05 && p_ntf[2] == 0x15 &&
       p_ntf[4] == 0x01 && p_ntf[5] == 0x06 && p_ntf[6] == 0x06) {
     NXPLOG_NCIHAL_D("> Going through workaround - notification of ISO 15693");
     icode_detected = 0x01;
@@ -966,6 +971,7 @@ static void hal_extns_write_rsp_timeout_cb(uint32_t timerId, void* pContext) {
 
   return;
 }
+
 /*******************************************************************************
  **
  ** Function:        request_EEPROM()
@@ -1193,26 +1199,51 @@ retryget:
  **
  ********************************************************************************/
 int phNxpNciHal_CheckFwRegFlashRequired(uint8_t* fw_update_req,
-                                        uint8_t* rf_update_req) {
-  int status = NFCSTATUS_OK;
-  UNUSED_PROP(rf_update_req);
+                                        uint8_t* rf_update_req,
+                                        uint8_t skipEEPROMRead) {
   NXPLOG_NCIHAL_D("phNxpNciHal_CheckFwRegFlashRequired() : enter");
-  status = phDnldNfc_InitImgInfo();
-  NXPLOG_NCIHAL_D("FW version of the libpn5xx.so binary = 0x%x", wFwVer);
-  NXPLOG_NCIHAL_D("FW version found on the device = 0x%x", wFwVerRsp);
-  /* Consider for each chip type */
-  if(status != NFCSTATUS_SUCCESS)
-      *fw_update_req = false;
-  else
-      *fw_update_req = (((wFwVerRsp & 0x0000FFFF) != wFwVer) ? true : false);
+  UNUSED_PROP(rf_update_req);
+  int status = NFCSTATUS_OK;
+  long option;
+  if (fpRegRfFwDndl != NULL) {
+    status = fpRegRfFwDndl(fw_update_req, rf_update_req, skipEEPROMRead);
+  } else {
+    status = phDnldNfc_InitImgInfo();
+    NXPLOG_NCIHAL_D("FW version of the libsn100u.so binary = 0x%x", wFwVer);
+    NXPLOG_NCIHAL_D("FW version found on the device = 0x%x", wFwVerRsp);
 
-  if (false == *fw_update_req) {
+  if (!GetNxpNumValue(NAME_NXP_FLASH_CONFIG, &option, sizeof(unsigned long))) {
+    NXPLOG_NCIHAL_D("Flash option not found; giving default value");
+    option = 1;
+  }
+    switch (option) {
+      case FLASH_UPPER_VERSION:
+        wFwUpdateReq = (utf8_t)wFwVer > (utf8_t)wFwVerRsp ? true : false;
+        break;
+      case FLASH_DIFFERENT_VERSION:
+        wFwUpdateReq = ((wFwVerRsp & 0x0000FFFF) != wFwVer) ? true : false;
+        break;
+      case FLASH_ALWAYS:
+        wFwUpdateReq = true;
+        break;
+      default:
+        NXPLOG_NCIHAL_D("Invalid flash option selected");
+        status = NFCSTATUS_INVALID_PARAMETER;
+        break;
+    }
+  }
+  *fw_update_req = wFwUpdateReq;
+
+  if (false == wFwUpdateReq) {
     NXPLOG_NCIHAL_D("FW update not required");
     phDnldNfc_ReSetHwDevHandle();
+  } else {
+    property_set("nfc.fw.downloadmode_force", "1");
   }
 
-  NXPLOG_NCIHAL_D("phNxpNciHal_CheckFwRegFlashRequired() : exit - status = %x ",
-                  status);
+  NXPLOG_NCIHAL_D("phNxpNciHal_CheckFwRegFlashRequired() : exit - status = %x "
+                   "wFwUpdateReq=%u, wRfUpdateReq=%u", status, *fw_update_req,
+                  *rf_update_req);
   return status;
 }
 
