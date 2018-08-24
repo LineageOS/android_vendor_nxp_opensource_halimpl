@@ -1,47 +1,53 @@
-subdirs = ["src"]
 cc_library_shared {
     name: "nfc_nci.nqx.default",
-    vendor: true,
     relative_install_path: "hw",
+    defaults: ["hidl_defaults"],
+    vendor: true,
+
     srcs: [
-        "halimpl/pn54x/common/*.c",
-        "halimpl/pn54x/dnld/*.c",
-        "halimpl/pn54x/hal/*.c",
-        "halimpl/pn54x/log/*.c",
-        "halimpl/pn54x/self-test/*.c",
-        "halimpl/pn54x/tml/*.c",
-        "halimpl/pn54x/utils/*.c",
-        "halimpl/pn54x/utils/*.cpp",
-        "halimpl/pn54x/configs/*.cpp",
-        "halimpl/pn54x/nfc_nci.c"
+        "halimpl/common/*.cc",
+        "halimpl/dnld/*.cc",
+        "halimpl/hal/*.cc",
+        "halimpl/log/*.cc",
+        "halimpl/self-test/*.cc",
+        "halimpl/tml/*.cc",
+        "halimpl/utils/*.cc",
+        "halimpl/utils/*.cpp",
+        "halimpl/configs/*.cpp",
     ],
     shared_libs: [
+        "libbase",
         "libcutils",
-         "liblog",
+        "liblog",
         "libhwbinder",
         "libhardware",
+        "libhardware_legacy",
+        "libhidlbase",
+        "libhidltransport",
+        "liblog",
+        "libutils",
+        "android.hardware.nfc@1.0",
+        "android.hardware.nfc@1.1",
+        "android.hardware.secure_element@1.0",
     ],
-
+    local_include_dirs: [
+        "halimpl/dnld",
+        "halimpl/hal",
+        "halimpl/log",
+        "halimpl/self-test",
+        "halimpl/tml",
+        "halimpl/utils",
+        "halimpl/src/include",
+        "halimpl/configs",
+    ],
+    export_include_dirs: [
+        "extns/impl",
+        "halimpl/inc",
+        "halimpl/common",
+    ],
     header_libs: [
         "libhardware_headers",
     ],
-
-    local_include_dirs: [
-        "halimpl/pn54x/inc",
-        "halimpl/pn54x/common",
-        "halimpl/pn54x/dnld",
-        "halimpl/pn54x/hal",
-        "halimpl/pn54x/log",
-        "halimpl/pn54x/self-test",
-        "halimpl/pn54x/tml",
-        "halimpl/pn54x/utils",
-        "halimpl/pn54x/configs",
-    ],
-
-     export_include_dirs: [
-        "halimpl/pn54x/inc",
-    ],
-
     cflags: [
         "-DBUILDCFG=1",
         "-Wno-deprecated-register",
@@ -61,46 +67,53 @@ cc_library_shared {
 
 cc_library_shared {
     name: "nfc_nci.nqx.default.hw",
+    defaults: ["hidl_defaults"],
     vendor: true,
+
     srcs: [
-        "halimpl/pn54x/common/*.c",
-        "halimpl/pn54x/dnld/*.c",
-        "halimpl/pn54x/hal/*.c",
-        "halimpl/pn54x/log/*.c",
-        "halimpl/pn54x/self-test/*.c",
-        "halimpl/pn54x/tml/*.c",
-        "halimpl/pn54x/utils/*.c",
-        "halimpl/pn54x/utils/*.cpp",
-        "halimpl/pn54x/configs/*.cpp",
-        "halimpl/pn54x/nfc_nci.c"
+        "halimpl/common/*.cc",
+        "halimpl/dnld/*.cc",
+        "halimpl/hal/*.cc",
+        "halimpl/log/*.cc",
+        "halimpl/self-test/*.cc",
+        "halimpl/tml/*.cc",
+        "halimpl/utils/*.cc",
+        "halimpl/utils/*.cpp",
+        "halimpl/configs/*.cpp",
     ],
     shared_libs: [
+        "libbase",
         "libcutils",
         "liblog",
         "libhwbinder",
         "libhardware",
+        "libhardware_legacy",
+        "libhidlbase",
+        "libhidltransport",
+        "liblog",
+        "libutils",
+        "android.hardware.nfc@1.0",
+        "android.hardware.nfc@1.1",
+        "android.hardware.secure_element@1.0",
     ],
-
+    local_include_dirs: [
+        "halimpl/dnld",
+        "halimpl/hal",
+        "halimpl/log",
+        "halimpl/self-test",
+        "halimpl/tml",
+        "halimpl/utils",
+        "halimpl/src/include",
+        "halimpl/configs",
+    ],
+    export_include_dirs: [
+        "extns/impl",
+        "halimpl/inc",
+        "halimpl/common",
+    ],
     header_libs: [
         "libhardware_headers",
     ],
-
-    local_include_dirs: [
-        "halimpl/pn54x/inc",
-        "halimpl/pn54x/common",
-        "halimpl/pn54x/dnld",
-        "halimpl/pn54x/hal",
-        "halimpl/pn54x/log",
-        "halimpl/pn54x/self-test",
-        "halimpl/pn54x/tml",
-        "halimpl/pn54x/utils",
-        "halimpl/pn54x/configs",
-    ],
-
-     export_include_dirs: [
-        "halimpl/pn54x/inc",
-    ],
-
     cflags: [
         "-DBUILDCFG=1",
         "-Wno-deprecated-register",
