@@ -122,6 +122,7 @@ int updateNxpConfigTimestamp();
 #define NAME_NXP_UICC_WIRED_PRT_MASK "NXP_UICC_WIRED_PRT_MASK"
 #define NAME_NXP_WIRED_MODE_RF_FIELD_ENABLE "NXP_WIRED_MODE_RF_FIELD_ENABLE"
 #define NAME_AID_BLOCK_ROUTE "AID_BLOCK_ROUTE"
+#define NAME_NXP_WIREDSE_TERMINAL_NAME "NXP_WIREDSE_TERMINAL_NAME"
 
 /**
  *  @brief defines the different config files used.
