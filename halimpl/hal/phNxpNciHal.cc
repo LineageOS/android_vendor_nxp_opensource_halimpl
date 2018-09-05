@@ -868,7 +868,7 @@ int phNxpNciHal_MinOpen() {
   NFCSTATUS wConfigStatus = NFCSTATUS_SUCCESS;
   NFCSTATUS status = NFCSTATUS_SUCCESS;
   uint8_t boot_mode = nxpncihal_ctrl.hal_boot_mode;
-  uint8_t* nfc_dev_node = NULL;
+  char* nfc_dev_node = NULL;
   nxpncihal_ctrl.bIsForceFwDwnld = false;
   NXPLOG_NCIHAL_D("phNxpNci_MinOpen(): enter");
   /*NCI_INIT_CMD*/
@@ -933,16 +933,16 @@ int phNxpNciHal_MinOpen() {
   memset(mGetCfg_info, 0x00, sizeof(phNxpNci_getCfg_info_t));
 
   /*Read the nfc device node name*/
-  nfc_dev_node = (uint8_t*)nxp_malloc(max_len * sizeof(uint8_t));
+  nfc_dev_node = (char*)malloc(max_len * sizeof(char));
   if (nfc_dev_node == NULL) {
     NXPLOG_NCIHAL_E("malloc of nfc_dev_node failed ");
     goto minCleanAndreturn;
-  } else if (!GetNxpStrValue(NAME_NXP_NFC_DEV_NODE, (char*)nfc_dev_node,
+  } else if (!GetNxpStrValue(NAME_NXP_NFC_DEV_NODE, nfc_dev_node,
                              max_len)) {
     NXPLOG_NCIHAL_E(
         "Invalid nfc device node name keeping the default device node "
         "/dev/nq-nci");
-    strlcpy((char*)nfc_dev_node, "/dev/nq-nci", max_len);
+    strlcpy(nfc_dev_node, "/dev/nq-nci", max_len);
   }
 
   /* Configure hardware link */
@@ -2464,7 +2464,9 @@ static void phNxpNciHal_hci_network_reset(void) {
  *
  ******************************************************************************/
 static NFCSTATUS phNxpNciHal_check_eSE_Session_Identity(void) {
+  struct stat st;
   NFCSTATUS status = NFCSTATUS_FAILED;
+  const char config_eseinfo_path[] = "/data/nfc/nfaStorage.bin1";
   static uint8_t session_identity[8] = {0x00};
   uint8_t default_session[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
   uint8_t swp2_intf_status = 0x00;
@@ -2487,6 +2489,10 @@ static NFCSTATUS phNxpNciHal_check_eSE_Session_Identity(void) {
     return NFCSTATUS_SUCCESS;
   }
 
+  if (stat(config_eseinfo_path, &st) == -1) {
+    status = NFCSTATUS_FAILED;
+    NXPLOG_NCIHAL_D("%s file not present = %s", __func__, config_eseinfo_path);
+  } else {
     phNxpNci_EEPROM_info_t mEEPROM_info = {.request_mode = 0};
     mEEPROM_info.request_mode = GET_EEPROM_DATA;
     mEEPROM_info.request_type = EEPROM_ESE_SESSION_ID;
@@ -2501,6 +2507,7 @@ static NFCSTATUS phNxpNciHal_check_eSE_Session_Identity(void) {
         status = NFCSTATUS_OK;
       }
     }
+  }
 
   if (status == NFCSTATUS_FAILED) {
     /*Disable SWP1 and 1A interfaces*/
