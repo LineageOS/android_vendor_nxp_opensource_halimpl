@@ -448,7 +448,7 @@ extern tNfc_featureList nfcFL;
             nfcFL.nfccFL._NFCC_MIFARE_TIANJIN = false;                      \
             nfcFL.nfccFL._NFCC_MW_RCVRY_BLK_FW_DNLD = true;                 \
             nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC = true;                    \
-            nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH = false;        \
+            nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH = true;      \
             nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH = true;      \
             nfcFL.nfccFL._NFCC_FW_WA = true;                                \
             nfcFL.nfccFL._NFCC_FORCE_NCI1_0_INIT = true;                    \
@@ -488,9 +488,9 @@ extern tNfc_featureList nfcFL;
             nfcFL.nfccFL._NFCC_I2C_READ_WRITE_IMPROVEMENT = true;           \
             nfcFL.nfccFL._NFCC_MIFARE_TIANJIN = true;                       \
             nfcFL.nfccFL._NFCC_MW_RCVRY_BLK_FW_DNLD = false;                \
-            nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC = false;                   \
             nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH = true;         \
             nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH = false;     \
+            nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC = false;                   \
             nfcFL.nfccFL._NFCC_FW_WA = false;                               \
             nfcFL.nfccFL._NFCC_FORCE_NCI1_0_INIT = false;                   \
             nfcFL.nfccFL._NFCC_ROUTING_BLOCK_BIT = false;                   \
@@ -530,9 +530,9 @@ extern tNfc_featureList nfcFL;
             nfcFL.nfccFL._NFCC_I2C_READ_WRITE_IMPROVEMENT = true;           \
             nfcFL.nfccFL._NFCC_MIFARE_TIANJIN = true;                       \
             nfcFL.nfccFL._NFCC_MW_RCVRY_BLK_FW_DNLD = false;                \
-            nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC = false;                   \
             nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH = true;         \
             nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH = false;     \
+            nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC = false;                   \
             nfcFL.nfccFL._NFCC_FW_WA = false;                               \
             nfcFL.nfccFL._NFCC_FORCE_NCI1_0_INIT = false;                   \
             nfcFL.nfccFL._NFCC_ROUTING_BLOCK_BIT = false;                   \
@@ -567,9 +567,9 @@ extern tNfc_featureList nfcFL;
             nfcFL.nfccFL._NFCC_I2C_READ_WRITE_IMPROVEMENT = false;          \
             nfcFL.nfccFL._NFCC_MIFARE_TIANJIN = true;                       \
             nfcFL.nfccFL._NFCC_MW_RCVRY_BLK_FW_DNLD = false;                \
-            nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC = false;                   \
             nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH = false;        \
             nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH = false;     \
+            nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC = false;                   \
             nfcFL.nfccFL._NFCC_FW_WA = false;                               \
             nfcFL.nfccFL._NFCC_FORCE_NCI1_0_INIT = false;                   \
             nfcFL.nfccFL._NFCC_ROUTING_BLOCK_BIT = false;                   \

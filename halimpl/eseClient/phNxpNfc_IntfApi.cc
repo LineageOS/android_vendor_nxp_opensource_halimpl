@@ -17,6 +17,11 @@
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
 #include <phNfcCommon.h>
+#include <phNxpNciHal.h>
+
+#define ESE_HCI_APDU_PIPE_ID 0x19
+#define EVT_END_OF_APDU_TRANSFER 0x61
+
 #if(NXP_EXTNS == TRUE)
  /*********************** Global Variables *************************************/
 static void nfaDeviceManagementCallback(uint8_t dmEvent,
@@ -44,7 +49,7 @@ phNxpNciHal_Sem_t cb_data_trans;
 phNxpNciHal_Sem_t cd_mode_set;
 phNxpNciHal_Sem_t cb_powerlink;
 struct timespec ts;
-
+uint8_t isNfcInitialzed = false;
 NFCSTATUS phNxpNfc_ResetEseJcopUpdate() {
 
   NXPLOG_NCIHAL_E("phNxpNfc_ResetEseJcopUpdate enter");
@@ -91,10 +96,60 @@ NFCSTATUS phNxpNfc_ResetEseJcopUpdate() {
   return nfaStat;
 }
 
+NFCSTATUS phNxpNfc_openEse() {
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
+  NXPLOG_NCIHAL_E("phNxpNfc_openEse enter");
+
+  nfaStat = NFA_SendPowerLinkCommand((uint8_t)ESE_HANDLE, 0x03);
+  if(nfaStat ==  NFA_STATUS_OK) {
+    if (SEM_WAIT(cb_powerlink)) {
+      NXPLOG_NCIHAL_E("semaphore error");
+      return nfaStat;
+    }
+  }
+  NXPLOG_NCIHAL_E("phNxpNfc_openEse mode set");
+  nfaStat =  NFA_EeModeSet((uint8_t)ESE_HANDLE, NFA_EE_MD_ACTIVATE);
+  if(nfaStat == NFA_STATUS_OK)
+  {
+      if (SEM_WAIT(cd_mode_set)) {
+        NXPLOG_NCIHAL_E("semaphore error");
+        return nfaStat;
+      }
+      usleep(100 * 1000);
+  }
+  NXPLOG_NCIHAL_E("phNxpNfc_openEse exit: status : %d",nfaStat);
+
+  return nfaStat;
+}
+
+NFCSTATUS phNxpNfc_closeEse() {
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
+  NXPLOG_NCIHAL_E("phNxpNfc_closeEse enter");
+
+  nfaStat = NFA_SendPowerLinkCommand((uint8_t)ESE_HANDLE, 0x01);
+  if(nfaStat ==  NFA_STATUS_OK) {
+    if (SEM_WAIT(cb_powerlink)) {
+      NXPLOG_NCIHAL_E("semaphore error");
+      return nfaStat;
+    }
+  }
+  NXPLOG_NCIHAL_E("phNxpNfc_closeEse END OF APDU");
+
+  NFA_HciSendEvent (mNfaHciHandle, ESE_HCI_APDU_PIPE_ID, EVT_END_OF_APDU_TRANSFER, 0x00, NULL, 0x00,NULL, 0);
+  NXPLOG_NCIHAL_E("phNxpNfc_closeEse exit: status : %d",nfaStat);
+
+  return nfaStat;
+}
+
 NFCSTATUS phNxpNfc_InitLib() {
   static const char fn [] = "phNxpNfc_InitLib";
   tNFA_STATUS stat = NFCSTATUS_SUCCESS;
   ALOGE("phNxpNfc_InitLib enter");
+  if(isNfcInitialzed)
+  {
+	  ALOGE("phNxpNfc_InitLib already initialized");
+	  return stat;
+  }
   if (sem_init(&((cb_data).sem), 0, 0) == -1)
     NXPLOG_NCIHAL_E("semaphore init error");
   if (clock_gettime(CLOCK_REALTIME, &ts) == -1)
@@ -116,7 +171,7 @@ NFCSTATUS phNxpNfc_InitLib() {
       }
       NXPLOG_NCIHAL_E("phNxpNfc_InitLib after waiting");
     }
-
+    isNfcInitialzed = true;
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: try ee register", fn);
     stat = NFA_EeRegister(nfaEeCallback);
     if (stat != NFA_STATUS_OK) {
@@ -216,18 +271,22 @@ NFCSTATUS phNxpNfc_DeInitLib() {
          return stat;
       }
   } else {
-        LOG(ERROR) << StringPrintf("%s: fail disable; error=0x%X", __func__,
+      LOG(ERROR) << StringPrintf("%s: fail disable; error=0x%X", __func__,
                                stat);
     }
   }
-      //phNxpNciHal_cleanup_cb_data(&cb_data);
-    NXPLOG_NCIHAL_E("phNxpNfc_DeInitLib exit");
+  isNfcInitialzed = false;
+  NXPLOG_NCIHAL_E("phNxpNfc_DeInitLib exit");
   return stat;
 }
 
 void HalOpen(tHAL_NFC_CBACK* p_hal_cback,
                             tHAL_NFC_DATA_CBACK* p_data_cback) {
+  ese_update_state_t old_state =  ese_update;
+  ese_update = ESE_UPDATE_COMPLETED;
   phNxpNciHal_open(p_hal_cback, p_data_cback);
+  ese_update = old_state;
+  ALOGE("HalOpen exit");
 }
 
 void nfaEeCallback(tNFA_EE_EVT event,

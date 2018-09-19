@@ -57,7 +57,12 @@ enum {
   HAL_NFC_GET_SPM_STATUS,
   HAL_NFC_GET_ESE_ACCESS,
   HAL_NFC_SET_DWNLD_STATUS,
-  HAL_NFC_INHIBIT_PWR_CNTRL
+  HAL_NFC_INHIBIT_PWR_CNTRL,
+  HAL_NFC_IOCTL_ESE_JCOP_DWNLD,
+  HAL_NFC_IOCTL_ESE_UPDATE_COMPLETE
+#if (NXP_EXTNS == TRUE)
+ ,HAL_NFC_IOCTL_SET_TRANSIT_CONFIG
+#endif
 };
 
 enum {
@@ -85,6 +90,15 @@ typedef struct
     uint8_t  p_rsp[MAX_IOCTL_TRANSCEIVE_RESP_LEN];
 } nfc_nci_ExtnRsp_t;
 /*
+ * TransitConfig_t shall contain transit config value and transit
+ * Configuration length
+ */
+typedef struct
+{
+    long len;
+    char *val;
+} TransitConfig_t;
+/*
  * InputData_t :ioctl has multiple subcommands
  * Each command has corresponding input data which needs to be populated in this
  */
@@ -94,6 +108,7 @@ typedef union {
     nfc_nci_ExtnCmd_t nciCmd;
     uint32_t          timeoutMilliSec;
     long              nfcServicePid;
+    TransitConfig_t transitConfig;
 }InputData_t;
 /*
  * nfc_nci_ExtnInputData_t :Apart from InputData_t, there are context data
@@ -155,6 +170,16 @@ typedef struct {
     nfc_nci_ExtnInputData_t  inp;
     nfc_nci_ExtnOutputData_t out;
 }nfc_nci_IoctlInOutData_t;
+
+enum NxpNfcHalStatus {
+    /** In case of an error, HCI network needs to be re-initialized */
+    HAL_NFC_STATUS_RESTART = 0x30,
+};
+
+typedef union {
+    uint8_t ese_jcop_download_state;
+} nfcIoctlData_t;
+extern nfcIoctlData_t  nfcioctldata;
 
 /*
  * nxpnfc_nci_device_t :data structure for nxp's extended nfc_nci_device

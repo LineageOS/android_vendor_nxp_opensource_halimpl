@@ -21,10 +21,11 @@ cc_library_shared {
     vendor: true,
 
     cflags: [
-        "-DNXP_EXTNS=TRUE",
         "-Wall",
         "-Werror",
         "-Wextra",
+        "-DNXP_EXTNS=TRUE",
+        "-DNXP_HW_SELF_TEST=TRUE"
     ],
 
     srcs: [
@@ -63,8 +64,8 @@ cc_library_shared {
     ],
 
     include_dirs: [
-        "vendor/nxp/opensource/commonsys/external/libnfc-nci/extns/impl",
-        "vendor/nxp/opensource/commonsys/external/libnfc-nci/src/include",
+        "vendor/nxp/opensource/commonsys/external/libnfc-nci/SN100x/extns/impl",
+        "vendor/nxp/opensource/commonsys/external/libnfc-nci/SN100x/src/include",
     ],
 
     export_include_dirs: [
@@ -99,6 +100,8 @@ cc_library_shared {
         "-Wall",
         "-Werror",
         "-Wextra",
+        "-DNXP_EXTNS=TRUE",
+        "-DNXP_HW_SELF_TEST=TRUE"
     ],
 
     srcs: [
@@ -137,8 +140,8 @@ cc_library_shared {
     ],
 
     include_dirs: [
-        "vendor/nxp/opensource/commonsys/external/libnfc-nci/extns/impl",
-        "vendor/nxp/opensource/commonsys/external/libnfc-nci/src/include",
+        "vendor/nxp/opensource/commonsys/external/libnfc-nci/SN100x/extns/impl",
+        "vendor/nxp/opensource/commonsys/external/libnfc-nci/SN100x/src/include",
     ],
 
     export_include_dirs: [

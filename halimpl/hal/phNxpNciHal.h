@@ -91,7 +91,9 @@ typedef enum {
   GPIO_RESTORE_DONE = 0x20,
   GPIO_CLEAR = 0xFF
 } phNxpNciHal_GpioInfoState;
-
+#ifdef ENABLE_ESE_CLIENT
+extern ese_update_state_t ese_update;
+#endif
 typedef struct phNxpNciGpioInfo {
   phNxpNciHal_GpioInfoState state;
   uint8_t values[2];
@@ -173,6 +175,15 @@ typedef struct phNxpNciMwEepromArea {
   bool_t isGetEepromArea;
   uint8_t p_rx_data[32];
 } phNxpNciMwEepromArea_t;
+
+typedef void (*fpVerInfoStoreInEeprom_t)();
+typedef int (*fpVerifyCscEfsTest_t)(char* nfcc_csc, char* rffilepath,
+                              char* fwfilepath);
+typedef int (*fpRegRfFwDndl_t)(uint8_t* fw_update_req,
+                   uint8_t* rf_update_req,
+                   uint8_t skipEEPROMRead);
+void phNxpNciHal_initializeRegRfFwDnld();
+void phNxpNciHal_deinitializeRegRfFwDnld();
 
 /*set config management*/
 
