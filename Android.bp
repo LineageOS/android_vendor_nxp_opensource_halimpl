@@ -64,7 +64,7 @@ cc_library_shared {
     ],
 
     include_dirs: [
-        "vendor/nxp/opensource/commonsys/external/libnfc-nci/SN100x/extns/impl",
+        "vendor/nxp/opensource/halimpl/extns/impl",
         "vendor/nxp/opensource/commonsys/external/libnfc-nci/SN100x/src/include",
     ],
 
@@ -141,7 +141,7 @@ cc_library_shared {
     ],
 
     include_dirs: [
-        "vendor/nxp/opensource/commonsys/external/libnfc-nci/SN100x/extns/impl",
+        "vendor/nxp/opensource/halimpl/extns/impl",
         "vendor/nxp/opensource/commonsys/external/libnfc-nci/SN100x/src/include",
     ],
 

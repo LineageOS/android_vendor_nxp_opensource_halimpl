@@ -2556,10 +2556,12 @@ int phNxpNciHal_ioctl(long arg, void* p_data) {
          return -1;
        }
    }
+#ifdef ENABLE_ESE_CLIENT
     if(gpEseAdapt == NULL) {
         gpEseAdapt = &EseAdaptation::GetInstance();
         gpEseAdapt->Initialize();
     }
+#endif
   switch (arg) {
     case HAL_NFC_IOCTL_GET_CONFIG_INFO:
       if (mGetCfg_info) {
@@ -2640,6 +2642,7 @@ int phNxpNciHal_ioctl(long arg, void* p_data) {
         NXPLOG_NCIHAL_D("HAL_ESE_IOCTL_NFC_JCOP_DWNLD Enter value is %d: \n",pInpOutData->inp.data.nciCmd.p_cmd[0]);
         if(gpEseAdapt !=  NULL)
           ret = gpEseAdapt->HalIoctl(HAL_ESE_IOCTL_NFC_JCOP_DWNLD,pInpOutData);
+        break;
     case HAL_NFC_IOCTL_ESE_JCOP_DWNLD :
         NXPLOG_NCIHAL_D("HAL_NFC_IOCTL_ESE_JCOP_DWNLD Enter value is %d: \n",pInpOutData->inp.data.nciCmd.p_cmd[0]);
         if(p_nfc_stack_cback_backup != NULL)
