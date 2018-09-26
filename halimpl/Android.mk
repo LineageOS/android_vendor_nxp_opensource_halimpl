@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ifeq ($(strip $(TARGET_USES_NQ_NFC)),true)
 
 LOCAL_PATH := $(call my-dir)
 
@@ -70,3 +71,5 @@ else
 LOCAL_SRC_FILES    := libnfc-nxp-PN66T_example.conf
 endif
 include $(BUILD_PREBUILT)
+
+endif
