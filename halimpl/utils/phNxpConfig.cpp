@@ -141,6 +141,7 @@ typedef enum
   TARGET_SDM439                        = 353, /**< SDM439 target */
   TARGET_SDM429                        = 354, /**< SDM429 target */
   TARGET_SDM450                        = 338, /**< SDM450 target */
+  TARGET_SDM455                        = 385, /**< SDM455 target */
   TARGET_SDM845                        = 321, /**< SDM845 target */
   TARGET_DEFAULT                       = TARGET_GENERIC, /**< new targets */
   TARGET_INVALID                       = 0xFF
@@ -427,6 +428,7 @@ int CNfcConfig::getconfiguration_id (char * config_file)
             break;
         case TARGET_SDM660:
         case TARGET_SDM630:
+        case TARGET_SDM455:
         case TARGET_MSM8998:
         case TARGET_MSM8997:
             if ((!strncmp(nq_chipid, NQ220, PROPERTY_VALUE_MAX)) || (!strncmp(nq_chipid, NQ210, PROPERTY_VALUE_MAX))) {
@@ -486,6 +488,7 @@ int CNfcConfig::getconfiguration_id (char * config_file)
             break;
         case TARGET_SDM660:
         case TARGET_SDM630:
+        case TARGET_SDM455:
         case TARGET_MSM8998:
         case TARGET_MSM8997:
             if ((!strncmp(nq_chipid, NQ220, PROPERTY_VALUE_MAX)) || (!strncmp(nq_chipid, NQ210, PROPERTY_VALUE_MAX))) {
