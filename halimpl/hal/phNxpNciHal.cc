@@ -53,6 +53,7 @@ using android::base::WriteStringToFile;
 /*********************** Global Variables *************************************/
 #define PN547C2_CLOCK_SETTING
 #define CORE_RES_STATUS_BYTE 3
+#define MAX_LISTEN_TECH_PARAMS_OFFSET 5
 
 /* Processing of ISO 15693 EOF */
 extern uint8_t icode_send_eof;
@@ -1011,7 +1012,9 @@ int phNxpNciHal_write(uint16_t data_len, const uint8_t* p_data) {
   /* Create local copy of cmd_data */
   memcpy(nxpncihal_ctrl.p_cmd_data, p_data, data_len);
   nxpncihal_ctrl.cmd_len = data_len;
-  if (nxpncihal_ctrl.cmd_len > NCI_MAX_DATA_LEN) {
+  /* MAX_LISTEN_TECH_PARAMS_OFFSET being subtracted for restricting p_cmd_data
+     of size NCI_MAX_DATA_LEN used in phNxpNHal_DtaUpdate from overflow */
+  if (nxpncihal_ctrl.cmd_len > NCI_MAX_DATA_LEN - MAX_LISTEN_TECH_PARAMS_OFFSET) {
     NXPLOG_NCIHAL_D("cmd_len exceeds limit NCI_MAX_DATA_LEN");
     goto clean_and_return;
   }
