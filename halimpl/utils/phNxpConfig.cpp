@@ -135,11 +135,13 @@ typedef enum
   TARGET_SDM660                        = 317, /**< SDM660 target */
   TARGET_SDM670                        = 336, /**< SDM670 target */
   TARGET_SDM710                        = 360, /**< SDM710 target */
+  TARGET_SDM712                        = 393, /**< SDM712 target */
   TARGET_SDM630                        = 318, /**< SDM630 target */
   TARGET_SDM632                        = 349, /**< SDM632 target */
   TARGET_SDM439                        = 353, /**< SDM439 target */
   TARGET_SDM429                        = 354, /**< SDM429 target */
   TARGET_SDM450                        = 338, /**< SDM450 target */
+  TARGET_SDM455                        = 385, /**< SDM455 target */
   TARGET_SDM845                        = 321, /**< SDM845 target */
   TARGET_DEFAULT                       = TARGET_GENERIC, /**< new targets */
   TARGET_INVALID                       = 0xFF
@@ -414,6 +416,7 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_SDM845:
         case TARGET_SDM670:
         case TARGET_SDM710:
+        case TARGET_SDM712:
             if (!strncmp(nq_fw_ver, FW_MAJOR_NUM_NQ4xx, FW_MAJOR_NUM_LENGTH)) {
                 config_id = QRD_TYPE_NQ4XX;
                 strlcpy(config_file, config_name_qrd_NQ4XX, MAX_DATA_CONFIG_PATH_LEN);
@@ -425,6 +428,7 @@ int CNfcConfig::getconfiguration_id (char * config_file)
             break;
         case TARGET_SDM660:
         case TARGET_SDM630:
+        case TARGET_SDM455:
         case TARGET_MSM8998:
         case TARGET_MSM8997:
             if ((!strncmp(nq_chipid, NQ220, PROPERTY_VALUE_MAX)) || (!strncmp(nq_chipid, NQ210, PROPERTY_VALUE_MAX))) {
@@ -472,6 +476,7 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_SDM845:
         case TARGET_SDM670:
         case TARGET_SDM710:
+        case TARGET_SDM712:
             if (!strncmp(nq_fw_ver, FW_MAJOR_NUM_NQ4xx, FW_MAJOR_NUM_LENGTH)) {
                 config_id = MTP_TYPE_NQ4XX;
                 strlcpy(config_file, config_name_mtp_NQ4XX, MAX_DATA_CONFIG_PATH_LEN);
@@ -483,6 +488,7 @@ int CNfcConfig::getconfiguration_id (char * config_file)
             break;
         case TARGET_SDM660:
         case TARGET_SDM630:
+        case TARGET_SDM455:
         case TARGET_MSM8998:
         case TARGET_MSM8997:
             if ((!strncmp(nq_chipid, NQ220, PROPERTY_VALUE_MAX)) || (!strncmp(nq_chipid, NQ210, PROPERTY_VALUE_MAX))) {
