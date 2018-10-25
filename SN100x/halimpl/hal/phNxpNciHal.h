@@ -62,10 +62,15 @@ typedef void(phNxpNciHal_control_granted_callback_t)();
 
 #define CORE_RESET_TRIGGER_TYPE_CORE_RESET_CMD_RECEIVED 0x02
 #define CORE_RESET_TRIGGER_TYPE_POWERED_ON              0x01
+#define NCI2_0_CORE_RESET_TRIGGER_TYPE_OVER_TEMPERATURE ((uint8_t)0xA1)
 //#define NCI_MSG_CORE_RESET           0x00
 //#define NCI_MSG_CORE_INIT            0x01
 #define NCI_MT_MASK                  0xE0
 #define NCI_OID_MASK                 0x3F
+#if (NXP_EXTNS == TRUE)
+/* GID: Group Identifier (byte 0) */
+#define NCI_GID_MASK                 0x0F
+#endif
 #define NXP_PROPCMD_GID              0x2F
 #define NXP_FLUSH_SRAM_AO_TO_FLASH   0x21
 #define NXP_CORE_GET_CONFIG_CMD      0x03
