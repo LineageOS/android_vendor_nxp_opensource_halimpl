@@ -53,7 +53,11 @@ using android::base::WriteStringToFile;
 /*********************** Global Variables *************************************/
 #define PN547C2_CLOCK_SETTING
 #define CORE_RES_STATUS_BYTE 3
-#define MAX_LISTEN_TECH_PARAMS_OFFSET 5
+/*
+ * MAX_LISTEN_TECH_PARAMS_OFFSET being set 6 for restricting p_cmd_data
+ * of size NCI_MAX_DATA_LEN used in phNxpNHal_DtaUpdate from overflow
+ */
+#define MAX_LISTEN_TECH_PARAMS_OFFSET 6
 
 /* Processing of ISO 15693 EOF */
 extern uint8_t icode_send_eof;
