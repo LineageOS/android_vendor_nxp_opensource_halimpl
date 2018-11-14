@@ -51,6 +51,7 @@ void resetNxpConfig(void);
 int isNxpRFConfigModified();
 int isNxpConfigModified();
 int updateNxpConfigTimestamp();
+int updateNxpRfConfigTimestamp();
 void setNxpRfConfigPath(const char* name);
 void setNxpFwConfigPath(const char* name);
 
@@ -139,6 +140,10 @@ extern char Fw_Lib_Path[256];
 #define NAME_NXP_FLASH_CONFIG "NXP_FLASH_CONFIG"
 #if(NXP_EXTNS == TRUE)
 #define NAME_NXP_SE_COLD_TEMP_ERROR_DELAY "NXP_SE_COLD_TEMP_ERROR_DELAY"
+#define NAME_P2P_LISTEN_TECH_MASK "P2P_LISTEN_TECH_MASK"
+#define NAME_HOST_LISTEN_TECH_MASK "HOST_LISTEN_TECH_MASK"
+#define NAME_UICC_LISTEN_TECH_MASK "UICC_LISTEN_TECH_MASK"
+#define NAME_POLLING_TECH_MASK "POLLING_TECH_MASK"
 #endif
 
 /**
