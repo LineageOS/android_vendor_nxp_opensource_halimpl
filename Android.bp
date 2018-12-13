@@ -1,8 +1,18 @@
+cc_library_headers {
+    name: "libese_client_headers",
+    export_include_dirs: [
+        "inc",
+        "jcos_client/inc",
+        "ls_client/inc",
+    ],
+    vendor_available: true,
+}
+
 cc_library_shared {
 
     name: "se_extn_client",
     defaults: ["hidl_defaults"],
-    proprietary: true,
+    vendor: true,
 
     srcs: [
         "utils/phNxpConfig.cc",
@@ -34,7 +44,7 @@ cc_library_shared {
 
     name: "jcos_client",
     defaults: ["hidl_defaults"],
-    proprietary: true,
+    vendor: true,
 
     srcs: [
         "jcos_client/src/JcDnld.cpp",
@@ -63,7 +73,7 @@ cc_library_shared {
 
     name: "ls_client",
     defaults: ["hidl_defaults"],
-    proprietary: true,
+    vendor: true,
 
     srcs: [
         "ls_client/src/LsClient.cpp",
