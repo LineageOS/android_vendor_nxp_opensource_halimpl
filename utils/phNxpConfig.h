@@ -51,15 +51,10 @@ void resetNxpConfig(void);
 int isNxpRFConfigModified();
 int isNxpConfigModified();
 int updateNxpConfigTimestamp();
-int updateNxpRfConfigTimestamp();
-void setNxpRfConfigPath(const char* name);
-void setNxpFwConfigPath(const char* name);
 
 #ifdef __cplusplus
 };
 #endif
-
-extern char Fw_Lib_Path[256];
 
 #define NAME_NXPLOG_EXTNS_LOGLEVEL "NXPLOG_EXTNS_LOGLEVEL"
 #define NAME_NXPLOG_NCIHAL_LOGLEVEL "NXPLOG_NCIHAL_LOGLEVEL"
@@ -136,88 +131,10 @@ extern char Fw_Lib_Path[256];
 #define NAME_NXP_P61_LS_DEFAULT_INTERFACE "NXP_P61_LS_DEFAULT_INTERFACE"
 #define NAME_NXP_LS_FORCE_UPDATE_REQUIRED "NXP_LS_FORCE_UPDATE_REQUIRED"
 #define NAME_NXP_JCOP_FORCE_UPDATE_REQUIRED "NXP_JCOP_FORCE_UPDATE_REQUIRED"
-#define NAME_RF_STORAGE "RF_STORAGE"
-#define NAME_NXP_FLASH_CONFIG "NXP_FLASH_CONFIG"
-#if(NXP_EXTNS == TRUE)
-#define NAME_NXP_SE_COLD_TEMP_ERROR_DELAY "NXP_SE_COLD_TEMP_ERROR_DELAY"
-#define NAME_P2P_LISTEN_TECH_MASK "P2P_LISTEN_TECH_MASK"
-#define NAME_HOST_LISTEN_TECH_MASK "HOST_LISTEN_TECH_MASK"
-#define NAME_UICC_LISTEN_TECH_MASK "UICC_LISTEN_TECH_MASK"
-#define NAME_POLLING_TECH_MASK "POLLING_TECH_MASK"
-#endif
-
-/**
- *  @brief defines the different config files used.
- */
-
-#define config_name_mtp         "libnfc-mtp_default.conf"
-#define config_name_mtp1        "libnfc-mtp_rf1.conf"
-#define config_name_mtp2        "libnfc-mtp_rf2.conf"
-#define config_name_mtp_NQ3XX   "libnfc-mtp-NQ3XX.conf"
-#define config_name_mtp_NQ4XX   "libnfc-mtp-NQ4XX.conf"
-#define config_name_mtp_SN100   "libnfc-mtp-SN100.conf"
-#define config_name_qrd         "libnfc-qrd_default.conf"
-#define config_name_qrd1        "libnfc-qrd_rf1.conf"
-#define config_name_qrd2        "libnfc-qrd_rf2.conf"
-#define config_name_qrd_NQ3XX   "libnfc-qrd-NQ3XX.conf"
-#define config_name_qrd_NQ4XX   "libnfc-qrd-NQ4XX.conf"
-#define config_name_qrd_SN100   "libnfc-qrd-SN100.conf"
-#define config_name_default     "libnfc-nxp_default.conf"
-
-/**
- *  @brief defines the different major number used.
- */
-#define FW_MAJOR_NUM_NQ2xx      "10"
-#define FW_MAJOR_NUM_NQ3xx      "11"
-#define FW_MAJOR_NUM_NQ4xx      "12"
-
-#define FW_MAJOR_NUM_LENGTH     2
-
-/**
- *  @brief defines the maximum length of the target name.
- */
-
-#define MAX_SOC_INFO_NAME_LEN (15)
-
-/**
- *  @brief Defines the type of hardware platform.
- */
-
-#define QRD_HW_PLATFORM  "qrd"
-#define MTP_HW_PLATFORM  "mtp"
-
-/**
- *  @brief Defines the path where the hardware platform details are present.
- */
-
-#define SYSFS_HW_PLATFORM_PATH1  "/sys/devices/soc0/hw_platform"
-#define SYSFS_HW_PLATFORM_PATH2   "/sys/devices/system/soc/soc0/hw_platform"
-
-/**
- *  @brief Defines the path where the soc_id details are present.
- */
-
-#define SYSFS_SOCID_PATH1    "/sys/devices/soc0/soc_id"
-#define SYSFS_SOCID_PATH2    "/sys/devices/system/soc/soc0/id"
-
-/**
- *  @brief Defines the maximum length of the config file name.
- */
-
-#define MAX_DATA_CONFIG_PATH_LEN 64
-
-/**
- *  @brief Defines the NQ chip type.
- */
-
-#define NQ210 "0x48"
-#define NQ220 "0x58"
-
-/**
- *  @brief Defines whether debugging is enabled or disabled.
- */
-
-#define DEBUG 0
+#define NAME_NXP_SEMS_SUPPORTED "NXP_GP_AMD_I_SEMS_SUPPORTED"
+#define NAME_NXP_SPI_SE_TERMINAL_NUM "NXP_SPI_SE_TERMINAL_NUM"
+#define NAME_NXP_VISO_SE_TERMINAL_NUM "NXP_VISO_SE_TERMINAL_NUM"
+#define NAME_NXP_NFC_SE_TERMINAL_NUM "NXP_NFC_SE_TERMINAL_NUM"
 
 /* default configuration */
 #define default_storage_location "/data/vendor/nfc"

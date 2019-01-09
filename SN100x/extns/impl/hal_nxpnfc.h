@@ -25,8 +25,7 @@
 
 enum {
     HAL_NFC_IOCTL_NCI_TRANSCEIVE = 0xF1,
-    HAL_NFC_IOCTL_SEND_FLASH_UPDATE,
-    HAL_NFC_IOCTL_NFC_JCOP_DWNLD
+    HAL_NFC_IOCTL_NFC_JCOP_DWNLD,
 };
 
 enum {
@@ -97,10 +96,9 @@ typedef struct
  * TransitConfig_t shall contain transit config value and transit
  * Configuration length
  */
-typedef struct
-{
-    long len;
-    char *val;
+typedef struct {
+  long len;
+  char *val;
 } TransitConfig_t;
 /*
  * InputData_t :ioctl has multiple subcommands
@@ -191,7 +189,6 @@ enum NxpNfcHalStatus {
     HAL_NFC_STATUS_RESTART = 0x30,
     HAL_NFC_HCI_NV_RESET = 0x40,
 };
-
 typedef union {
     uint8_t ese_jcop_download_state;
 } nfcIoctlData_t;
