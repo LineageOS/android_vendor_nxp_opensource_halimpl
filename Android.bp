@@ -1,3 +1,104 @@
+cc_library_headers {
+    name: "libese_client_headers",
+    export_include_dirs: [
+        "inc",
+        "jcos_client/inc",
+        "ls_client/inc",
+    ],
+    vendor_available: true,
+}
+
+cc_library_shared {
+
+    name: "se_extn_client",
+    defaults: ["hidl_defaults"],
+    vendor: true,
+
+    srcs: [
+        "utils/phNxpConfig.cc",
+        "utils/sparse_crc32.cc",
+        "src/eSEClientIntf.cc",
+        "src/phNxpLog.cc"
+    ],
+
+    local_include_dirs: [
+        "inc",
+        "utils",
+        "jcos_client/inc",
+        "ls_client/inc",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "libdl",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+        "libchrome",
+        "libdl",
+        "libhidlbase",
+    ],
+}
+
+cc_library_shared {
+
+    name: "jcos_client",
+    defaults: ["hidl_defaults"],
+    vendor: true,
+
+    srcs: [
+        "jcos_client/src/JcDnld.cpp",
+        "jcos_client/src/JcopOsDownload.cpp",
+    ],
+
+    local_include_dirs: [
+        "inc",
+        "utils",
+        "jcos_client/inc",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "libdl",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+        "libchrome",
+        "libdl",
+        "libhidlbase",
+    ],
+}
+
+cc_library_shared {
+
+    name: "ls_client",
+    defaults: ["hidl_defaults"],
+    vendor: true,
+
+    srcs: [
+        "ls_client/src/LsClient.cpp",
+        "ls_client/src/LsLib.cpp",
+    ],
+
+    local_include_dirs: [
+        "inc",
+        "utils",
+        "ls_client/inc",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "libdl",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+        "libchrome",
+        "libdl",
+        "libhidlbase",
+        "se_extn_client"
+    ],
+}
+
 cc_library_shared {
     name: "nfc_nci.nqx.default",
     relative_install_path: "hw",
