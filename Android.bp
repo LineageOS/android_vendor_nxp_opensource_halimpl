@@ -10,7 +10,7 @@ cc_library_headers {
 
 cc_library_shared {
 
-    name: "se_extn_client",
+    name: "se_nq_extn_client",
     defaults: ["hidl_defaults"],
     vendor: true,
 
@@ -42,7 +42,7 @@ cc_library_shared {
 
 cc_library_shared {
 
-    name: "jcos_client",
+    name: "jcos_nq_client",
     defaults: ["hidl_defaults"],
     vendor: true,
 
@@ -71,7 +71,7 @@ cc_library_shared {
 
 cc_library_shared {
 
-    name: "ls_client",
+    name: "ls_nq_client",
     defaults: ["hidl_defaults"],
     vendor: true,
 
@@ -95,7 +95,7 @@ cc_library_shared {
         "libchrome",
         "libdl",
         "libhidlbase",
-        "se_extn_client"
+        "se_nq_extn_client"
     ],
 }
 
