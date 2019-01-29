@@ -65,6 +65,24 @@ bool (*transceive) (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBu
 
 /*******************************************************************************
 **
+** Function:        transceiveRaw
+**
+** Description:     Send native/non-gp commands to the secure element; read it's response.
+**                  xmitBuffer: Data to transmit.
+**                  xmitBufferSize: Length of data.
+**                  recvBuffer: Buffer to receive response.
+**                  recvBufferMaxSize: Maximum size of buffer.
+**                  recvBufferActualSize: Actual length of response.
+**                  timeoutMillisec: timeout in millisecond
+**
+** Returns:         True if ok.
+**
+*******************************************************************************/
+bool (*transceiveRaw) (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffer,
+                     int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec);
+
+/*******************************************************************************
+**
 ** Function:        doeSE_Reset
 **
 ** Description:     Power OFF and ON to eSE
