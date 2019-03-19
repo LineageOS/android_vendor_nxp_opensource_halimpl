@@ -21,6 +21,7 @@
 #include <android/hardware/nfc/1.1/INfc.h>
 #include <android/hardware/nfc/1.1/types.h>
 
+using namespace std;
 using ::android::hardware::nfc::V1_1::NfcConfig;
 
 typedef struct {
@@ -40,6 +41,8 @@ int phNxpNciHal_close(bool);
 int phNxpNciHal_configDiscShutdown(void);
 int phNxpNciHal_control_granted(void);
 int phNxpNciHal_power_cycle(void);
+string phNxpNciHal_getNfcChipId();
+string phNxpNciHal_getNfcFirmwareVersion();
 int phNxpNciHal_ioctl(long arg, void* p_data);
 void phNxpNciHal_do_factory_reset(void);
 void phNxpNciHal_getVendorConfig(NfcConfig& config);
