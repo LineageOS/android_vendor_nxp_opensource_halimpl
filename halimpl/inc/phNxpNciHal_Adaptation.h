@@ -23,6 +23,7 @@
 #include <android/hardware/nfc/1.1/INfc.h>
 #include <android/hardware/nfc/1.1/types.h>
 
+using namespace std;
 using ::android::hardware::nfc::V1_1::NfcConfig;
 
 #define NFC_NCI_NXP_PN54X_HARDWARE_MODULE_ID "nfc_nci.nqx"
@@ -50,6 +51,8 @@ int phNxpNciHal_close(bool);
 int phNxpNciHal_configDiscShutdown(void);
 int phNxpNciHal_control_granted(void);
 int phNxpNciHal_power_cycle(void);
+string phNxpNciHal_getNfcChipId();
+string phNxpNciHal_getNfcFirmwareVersion();
 void phNxpNciHal_getVendorConfig(NfcConfig& config);
 int phNxpNciHal_MinInit(nfc_stack_callback_t* p_cback,
                         nfc_stack_data_callback_t* p_data_cback);

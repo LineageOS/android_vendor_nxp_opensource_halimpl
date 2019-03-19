@@ -3389,6 +3389,60 @@ int phNxpNciHal_check_ncicmd_write_window(uint16_t cmd_len, uint8_t* p_cmd) {
 }
 
 /******************************************************************************
+ * Function         phNxpNciHal_getNfcChipId
+ *
+ * Description      This function is called to get the NFC HW chip id.
+ *                  On successful property retrieval, chip-id is returned
+ *                  to HIDL.
+ *
+ * Returns          return chip-id on success, and NULL on failure.
+ *
+ ******************************************************************************/
+std::string phNxpNciHal_getNfcChipId() {
+  NXPLOG_NCIHAL_D("%s : enter", __func__);
+
+  char nq_chipid[PROPERTY_VALUE_MAX] = {0};
+  int ret = 0;
+
+  ret = __system_property_get("vendor.qti.nfc.chipid", nq_chipid);
+  if(ret <= 0) {
+      NXPLOG_NCIHAL_E("%s: Failure in getting chip-id.", __func__);
+      return NULL;
+  }
+  else {
+      NXPLOG_NCIHAL_D("%s: Got vendor.qti.nfc.chipid: %s ", __func__, nq_chipid);
+      return nq_chipid;
+  }
+}
+
+/******************************************************************************
+ * Function         phNxpNciHal_getNfcFirmwareVersion
+ *
+ * Description      This function is called to get the NFC FW version.
+ *                  On successful property retrieval, firmware version
+ *                  is returned to HIDL.
+ *
+ * Returns          return fw version on success, and NULL on failure.
+ *
+ ******************************************************************************/
+std::string phNxpNciHal_getNfcFirmwareVersion() {
+  NXPLOG_NCIHAL_D("%s : enter", __func__);
+
+  char nq_fw_ver[PROPERTY_VALUE_MAX] = {0};
+  int ret = 0;
+
+  ret = __system_property_get("vendor.qti.nfc.fwver", nq_fw_ver);
+  if(ret <= 0) {
+      NXPLOG_NCIHAL_E("%s: Failure in getting firmware version.", __func__);
+      return NULL;
+  }
+  else {
+      NXPLOG_NCIHAL_D("%s: Got vendor.qti.nfc.fwver: %s ", __func__, nq_fw_ver);
+      return nq_fw_ver;
+  }
+}
+
+/******************************************************************************
  * Function         phNxpNciHal_ioctl
  *
  * Description      This function is called by jni when wired mode is
