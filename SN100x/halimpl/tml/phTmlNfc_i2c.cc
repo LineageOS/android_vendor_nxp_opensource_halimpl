@@ -34,6 +34,7 @@
 #include <phTmlNfc_i2c.h>
 #include <string.h>
 #include "phNxpNciHal_utils.h"
+#include <cutils/properties.h>
 
 #define CRC_LEN 2
 #define NORMAL_MODE_HEADER_LEN 3
@@ -41,6 +42,10 @@
 #define FW_DNLD_LEN_OFFSET 1
 #define NORMAL_MODE_LEN_OFFSET 2
 #define FRAGMENTSIZE_MAX PHNFC_I2C_FRAGMENT_SIZE
+
+#define SN100_A3 "0xa3"
+#define SN100_A4 "0xa4"
+
 static bool_t bFwDnldFlag = false;
 extern phTmlNfc_i2cfragmentation_t fragmentation_enabled;
 bool_t notifyFwrequest;
@@ -85,6 +90,8 @@ void phTmlNfc_i2c_close(void* pDevHandle) {
 NFCSTATUS phTmlNfc_i2c_open_and_configure(pphTmlNfc_Config_t pConfig,
                                           void** pLinkHandle) {
   int nHandle;
+  char nq_chipid[PROPERTY_VALUE_MAX] = {0};
+  int rc = 0;
 
   NXPLOG_TML_D("Opening port=%s\n", pConfig->pDevName);
   /* open port */
@@ -102,8 +109,27 @@ NFCSTATUS phTmlNfc_i2c_open_and_configure(pphTmlNfc_Config_t pConfig,
   }
 #endif
   /*Reset PN54X*/
-  phTmlNfc_i2c_reset((void*)((intptr_t)nHandle), MODE_POWER_OFF);
-  usleep(10 * 1000);
+  rc = __system_property_get("vendor.qti.nfc.chipid", nq_chipid);
+  if (rc <= 0) {
+      NXPLOG_TML_E("get vendor.qti.nfc.chipid fail, rc = %d\n", rc);
+      NXPLOG_TML_D("Taking default chip-id as : SN100u %s\n", SN100_A4);
+      strlcpy(nq_chipid, SN100_A4, PROPERTY_VALUE_MAX);
+  }
+  else {
+      NXPLOG_TML_D("vendor.qti.nfc.chipid = %s\n", nq_chipid);
+  }
+
+  if (!(strncmp(nq_chipid, SN100_A3, PROPERTY_VALUE_MAX))
+    || !(strncmp(nq_chipid, SN100_A4, PROPERTY_VALUE_MAX))) {
+      /* Do not toggle the NFC Enable pin if the chip is SN100 */
+      NXPLOG_TML_D("Not toggling NFC ENABLE PIN");
+  }
+  else {
+      /* Toggle the NFC Enable pin if the chip is not SN100 */
+      NXPLOG_TML_D("Toggling NFC ENABLE PIN");
+      phTmlNfc_i2c_reset((void*)((intptr_t)nHandle), MODE_POWER_OFF);
+      usleep(10 * 1000);
+  }
   phTmlNfc_i2c_reset((void*)((intptr_t)nHandle), MODE_POWER_ON);
 
   return NFCSTATUS_SUCCESS;
