@@ -21,7 +21,6 @@
 #include <errno.h>
 #include <pthread.h>
 #include <sched.h>
-#include <string.h>
 #include <semaphore.h>
 #include <sys/time.h>
 #include <unistd.h>

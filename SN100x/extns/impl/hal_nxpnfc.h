@@ -84,6 +84,39 @@ typedef struct
     uint8_t  p_cmd[MAX_IOCTL_TRANSCEIVE_CMD_LEN];
 } nfc_nci_ExtnCmd_t;
 
+#if(NXP_EXTNS == TRUE)
+/*
+ * nxp_nfc_config_t shall contain the respective flag value from the
+ * libnfc-nxp.conf
+ */
+typedef struct {
+  uint8_t eSeLowTempErrorDelay;
+  uint8_t tagOpTimeout;
+  uint8_t dualUiccEnable;
+  uint8_t defaultAidRoute;
+  uint8_t defaultMifareCltRoute;
+  uint8_t defautlFelicaCltRoute;
+  uint8_t defautlIsoDepRoute;
+  uint8_t defaultAidPwrState;
+  uint8_t defaultDesfirePwrState;
+  uint8_t defaultMifareCltPwrState;
+  uint8_t hostListenTechMask;
+  uint8_t fwdFunctionalityEnable;
+  uint8_t gsmaPwrState;
+  uint8_t offHostRoute;
+  uint8_t defaultUicc2Select;
+  uint8_t smbTransceiveTimeout;
+  uint8_t smbErrorRetry;
+  uint8_t felicaCltPowerState;
+  uint8_t checkDefaultProtoSeId;
+  uint8_t nxpLogHalLoglevel;
+  uint8_t nxpLogExtnsLogLevel;
+  uint8_t nxpLogTmlLogLevel;
+  uint8_t nxpLogFwDnldLogLevel;
+  uint8_t nxpLogNcixLogLevel;
+  uint8_t nxpLogNcirLogLevel;
+} nxp_nfc_config_t;
+#endif
 /*
  * nfc_nci_ExtnRsp_t shall contain response for command sent in transceive command
  */
@@ -152,7 +185,9 @@ typedef union{
     uint16_t            fwDwnldStatus;
     uint16_t            fwMwVerStatus;
     uint8_t             chipType;
-    nxp_nfc_config_t    nxpConfigs;
+#if(NXP_EXTNS == TRUE)
+    nxp_nfc_config_t nxpConfigs;
+#endif
 }outputData_t;
 
 /*

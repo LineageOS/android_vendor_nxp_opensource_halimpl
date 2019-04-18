@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2018 NXP Semiconductors
+ * Copyright (C) 2012-2019 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@
 #define _PHNXPNCIHAL_ADAPTATION_H_
 
 #include <hardware/nfc.h>
-#include <android/hardware/nfc/1.1/INfc.h>
-#include <android/hardware/nfc/1.1/types.h>
+#include <android/hardware/nfc/1.2/INfc.h>
+#include <android/hardware/nfc/1.2/types.h>
 
 using namespace std;
-using ::android::hardware::nfc::V1_1::NfcConfig;
+using ::android::hardware::nfc::V1_2::NfcConfig;
 
 typedef struct {
   struct nfc_nci_device nci_device;
@@ -45,5 +45,6 @@ string phNxpNciHal_getNfcChipId();
 string phNxpNciHal_getNfcFirmwareVersion();
 int phNxpNciHal_ioctl(long arg, void* p_data);
 void phNxpNciHal_do_factory_reset(void);
-void phNxpNciHal_getVendorConfig(NfcConfig& config);
+void phNxpNciHal_getVendorConfig(android::hardware::nfc::V1_1::NfcConfig& config);
+void phNxpNciHal_getVendorConfig_1_2(NfcConfig& config);
 #endif /* _PHNXPNCIHAL_ADAPTATION_H_ */
