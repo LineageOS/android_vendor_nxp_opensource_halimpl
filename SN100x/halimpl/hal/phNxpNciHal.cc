@@ -35,12 +35,12 @@
 
 #include <sys/stat.h>
 #ifdef ENABLE_ESE_CLIENT
-#include <EseAdaptation.h>
 #include "eSEClient.h"
 #include "hal_nxpese.h"
 #endif
 #include "hal_nxpnfc.h"
 #include "spi_spm.h"
+#include <EseAdaptation.h>
 
 
 #include <android-base/stringprintf.h>

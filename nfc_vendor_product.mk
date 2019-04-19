@@ -3,7 +3,7 @@ ifeq ($(call is-board-platform-in-list, sdm845 sdm710 msmnile $(MSMSTEPPE) $(TRI
 TARGET_USES_NQ_NFC := true
 endif
 
-NQ_VENDOR_NFC += vendor.nxp.hardware.nfc@1.1-service
+NQ_VENDOR_NFC += vendor.nxp.hardware.nfc@1.2-service
 NQ_VENDOR_NFC += nfc_nci.nqx.default
 NQ_VENDOR_NFC += nfc_nci.nqx.default.hw
 
