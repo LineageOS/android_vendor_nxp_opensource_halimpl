@@ -37,6 +37,7 @@
 #define NCI_VERSION_1_1 0x11
 #define NCI_VERSION_1_0 0x10
 #define NCI_VERSION_UNKNOWN 0x00
+#define NQ_330_440_CHIPID "0x51"
 
 /* Uncomment define ENABLE_ESE_CLIENT to
 enable eSE client */
