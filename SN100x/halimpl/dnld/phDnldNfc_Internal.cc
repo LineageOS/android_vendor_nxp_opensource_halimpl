@@ -2,7 +2,7 @@
  * Copyright (c) 2016, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
- * Copyright (C) 2010-2018 NXP Semiconductors
+ * Copyright (C) 2010-2019 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +61,6 @@
 #define PHDNLDNFC_CHK_HDR_FRAGBIT(n) \
   ((n)&0x04) /* macro to check if frag bit is set in Hdr */
 
-/* Timeout value to wait for response from NFCC */
-#define PHDNLDNFC_RSP_TIMEOUT (2500)
 /* Timeout value to wait before resending the last frame */
 #define PHDNLDNFC_RETRY_FRAME_WRITE (50)
 
@@ -248,9 +246,8 @@ static void phDnldNfc_ProcessSeqState(void* pContext,
 
         if (NFCSTATUS_SUCCESS == wStatus) {
           wStatus = phOsalNfc_Timer_Start((pDlCtxt->TimerInfo.dwRspTimerId),
-                                          PHDNLDNFC_RSP_TIMEOUT,
+                                          pDlCtxt->TimerInfo.rspTimeout,
                                           &phDnldNfc_RspTimeOutCb, pDlCtxt);
-
           if (NFCSTATUS_SUCCESS == wStatus) {
             NXPLOG_FWDNLD_D("Response timer started");
             pDlCtxt->TimerInfo.TimerStatus = 1;
@@ -396,7 +393,7 @@ static void phDnldNfc_ProcessRWSeqState(void* pContext,
         if (NFCSTATUS_SUCCESS == wStatus) {
           /* processing For Pipelined write before calling timer below */
           wStatus = phOsalNfc_Timer_Start((pDlCtxt->TimerInfo.dwRspTimerId),
-                                          PHDNLDNFC_RSP_TIMEOUT,
+                                          pDlCtxt->TimerInfo.rspTimeout,
                                           &phDnldNfc_RspTimeOutCb, pDlCtxt);
 
           if (NFCSTATUS_SUCCESS == wStatus) {
@@ -425,7 +422,7 @@ static void phDnldNfc_ProcessRWSeqState(void* pContext,
           pDlCtxt->tCurrState = phDnldNfc_StateResponse;
         }
       }
-     [[fallthrough]];
+      [[fallthrough]];
       case phDnldNfc_StateTimer: {
         if (1 == (pDlCtxt->TimerInfo.TimerStatus)) /*Is Timer Running*/
         {

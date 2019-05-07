@@ -1182,8 +1182,7 @@ NFCSTATUS phNxpNciHal_TestMode_open(void) {
   if (nfc_dev_node == NULL) {
     NXPLOG_NCIHAL_E("malloc of nfc_dev_node failed ");
     goto clean_and_return;
-  } else if (!GetNxpStrValue(NAME_NXP_NFC_DEV_NODE, nfc_dev_node,
-                             sizeof(nfc_dev_node))) {
+  } else if (!GetNxpStrValue(NAME_NXP_NFC_DEV_NODE, nfc_dev_node, max_len)) {
     NXPLOG_NCIHAL_E(
         "Invalid nfc device node name keeping the default device node "
         "/dev/nq-nci");
@@ -1218,7 +1217,7 @@ NFCSTATUS phNxpNciHal_TestMode_open(void) {
   pthread_attr_destroy(&attr);
   if (ret_val != 0) {
     NXPLOG_NCIHAL_E("pthread_create failed");
-    phTmlNfc_Shutdown_CleanUp();
+    phTmlNfc_Shutdown();
     goto clean_and_return;
   }
 
@@ -1266,7 +1265,7 @@ void phNxpNciHal_TestMode_close() {
 
     phOsalNfc_Timer_Cleanup();
 
-    status = phTmlNfc_Shutdown_CleanUp();
+    status = phTmlNfc_Shutdown();
 
     NXPLOG_NCIHAL_D("phNxpNciHal_close return status = %d", status);
 

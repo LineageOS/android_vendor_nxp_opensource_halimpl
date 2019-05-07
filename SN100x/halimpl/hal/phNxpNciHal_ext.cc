@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <log/log.h>
 #include <phDal4Nfc_messageQueueLib.h>
 #include <phNxpConfig.h>
 #include <phNxpLog.h>
@@ -133,6 +134,15 @@ NFCSTATUS phNxpNciHal_process_ext_rsp(uint8_t* p_ntf, uint16_t* p_len) {
       phNxpNciHal_parsePacket(p_ntf,*p_len);
   }
 #endif
+
+  if (p_ntf[0] == 0x61 && p_ntf[1] == 0x05 && *p_len < 14) {
+    if(*p_len <= 6) {
+      android_errorWriteLog(0x534e4554, "118152591");
+    }
+    NXPLOG_NCIHAL_E("RF_INTF_ACTIVATED_NTF length error!");
+    status = NFCSTATUS_FAILED;
+    return status;
+  }
 
   if (p_ntf[0] == 0x61 && p_ntf[1] == 0x05 && p_ntf[4] == 0x03 &&
       p_ntf[5] == 0x05 && nxpprofile_ctrl.profile_type == EMV_CO_PROFILE) {
@@ -696,7 +706,9 @@ NFCSTATUS phNxpNciHal_write_ext(uint16_t* cmd_len, uint8_t* p_cmd_data,
       (nxpprofile_ctrl.profile_type == NFC_FORUM_PROFILE)) {
     unsigned long retval = 0;
 
-    GetNxpNumValue(NAME_MIFARE_READER_ENABLE, &retval, sizeof(unsigned long));
+    if (!GetNxpNumValue(NAME_MIFARE_READER_ENABLE, &retval, sizeof(unsigned long))) {
+      NXPLOG_NCIHAL_E("Reading of MIFARE_READER_ENABLE failed. Default retval = %lu", retval);
+    }
     if(retval == 0x01) {
       NXPLOG_NCIHAL_D("Going through extns - Adding Mifare in RF Discovery");
       p_cmd_data[2] += 3;
@@ -950,6 +962,7 @@ static void hal_extns_write_rsp_timeout_cb(uint32_t timerId, void* pContext) {
   NXPLOG_NCIHAL_E("hal_extns_write_rsp_timeout_cb - write timeout!!!");
   nxpncihal_ctrl.ext_cb_data.status = NFCSTATUS_FAILED;
   usleep(1);
+  sem_post(&(nxpncihal_ctrl.syncSpiNfc));
   SEM_POST(&(nxpncihal_ctrl.ext_cb_data));
 
   return;
@@ -1248,7 +1261,7 @@ NFCSTATUS phNxpNciHal_enableDefaultUICC2SWPline(uint8_t uicc2_sel) {
   NXPLOG_NCIHAL_D("phNxpNciHal_enableDefaultUICC2SWPline %d",uicc2_sel);
   p_data[LEN_INDEX] = 1;
   p += 4;
-    if(uicc2_sel & 0x04) {
+    if(uicc2_sel == 0x03) {
       UINT8_TO_STREAM(p, NXP_NFC_SET_CONFIG_PARAM_EXT);
       UINT8_TO_STREAM(p, NXP_NFC_PARAM_ID_SWP2);
       UINT8_TO_STREAM(p, 0x01);
@@ -1256,7 +1269,7 @@ NFCSTATUS phNxpNciHal_enableDefaultUICC2SWPline(uint8_t uicc2_sel) {
       p_data[LEN_INDEX]+= 4;
       p_data[PARAM_INDEX]+= 1;
     }
-    if(uicc2_sel & 0x08) {
+    if(uicc2_sel == 0x04) {
       UINT8_TO_STREAM(p, NXP_NFC_SET_CONFIG_PARAM_EXT);
       UINT8_TO_STREAM(p, NXP_NFC_PARAM_ID_SWPUICC3);
       UINT8_TO_STREAM(p, 0x01);

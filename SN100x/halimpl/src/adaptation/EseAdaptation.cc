@@ -32,7 +32,9 @@ using android::hardware::secure_element::V1_0::ISecureElementHalCallback;
 using android::hardware::hidl_vec;
 using android::sp;
 
+#ifdef ENABLE_ESE_CLIENT
 using vendor::nxp::nxpese::V1_0::INxpEse;
+#endif
 
 extern bool nfc_debug_enabled;
 
@@ -44,7 +46,9 @@ extern "C" void delete_stack_non_volatile_store(bool forceDelete);
 EseAdaptation* EseAdaptation::mpInstance = NULL;
 ThreadMutex EseAdaptation::sLock;
 ThreadMutex EseAdaptation::sIoctlLock;
+#ifdef ENABLE_ESE_CLIENT
 sp<INxpEse> EseAdaptation::mHalNxpEse;
+#endif
 sp<ISecureElement> EseAdaptation::mHal;
 tHAL_ESE_CBACK* EseAdaptation::mHalCallback = NULL;
 tHAL_ESE_DATA_CBACK* EseAdaptation::mHalDataCallback = NULL;
@@ -69,6 +73,9 @@ ThreadCondVar EseAdaptation::mHalInitCompletedEvent;
 **
 *******************************************************************************/
 EseAdaptation::EseAdaptation() {
+#ifdef ENABLE_ESE_CLIENT
+  mCurrentIoctlData = NULL;
+#endif
   memset(&mSpiHalEntryFuncs, 0, sizeof(mSpiHalEntryFuncs));
 }
 
@@ -110,6 +117,7 @@ EseAdaptation& EseAdaptation::GetInstance() {
 *******************************************************************************/
 void EseAdaptation::Initialize() {
   const char* func = "EseAdaptation::Initialize";
+#ifdef ENABLE_ESE_CLIENT
   uint8_t cmd_ese_nxp[] = {0x2F, 0x01, 0x01, 0x01};
   ALOGD_IF(nfc_debug_enabled, "%s: enter", func);
 
@@ -117,11 +125,16 @@ void EseAdaptation::Initialize() {
   ese_nxp_IoctlInOutData_t* pInpOutData;
   pInpOutData =
       (ese_nxp_IoctlInOutData_t*)malloc(sizeof(ese_nxp_IoctlInOutData_t));
+  if (!pInpOutData) {
+    ALOGE("%s Unable to intialize", __func__);
+    return;
+  }
   memset(pInpOutData, 0x00, sizeof(ese_nxp_IoctlInOutData_t));
   pInpOutData->inp.data.nxpCmd.cmd_len = sizeof(cmd_ese_nxp);
   memcpy(pInpOutData->inp.data.nxpCmd.p_cmd, cmd_ese_nxp, sizeof(cmd_ese_nxp));
   InitializeHalDeviceContext();
   if (pInpOutData != NULL) free(pInpOutData);
+#endif
   ALOGD_IF(nfc_debug_enabled, "%s: exit", func);
 }
 
@@ -185,6 +198,7 @@ void EseAdaptation::InitializeHalDeviceContext() {
   const char* func = "EseAdaptation::InitializeHalDeviceContext";
   ALOGD_IF(nfc_debug_enabled, "%s: enter", func);
   ALOGD_IF(nfc_debug_enabled, "%s: INxpEse::tryGetService()", func);
+#ifdef ENABLE_ESE_CLIENT
   mHalNxpEse = INxpEse::tryGetService();
   ALOGD_IF(mHalNxpEse == nullptr, "%s: Failed to retrieve the NXP ESE HAL!", func);
   if(mHalNxpEse != nullptr) {
@@ -192,6 +206,7 @@ void EseAdaptation::InitializeHalDeviceContext() {
              func, mHalNxpEse.get(),
              (mHalNxpEse->isRemote() ? "remote" : "local"));
   }
+#endif
   /*Transceive NCI_INIT_CMD*/
   ALOGD_IF(nfc_debug_enabled, "%s: exit", func);
 }
@@ -222,7 +237,8 @@ void EseAdaptation::HalDeviceContextDataCallback(uint16_t data_len,
 ** Returns:     None.
 **
 *******************************************************************************/
-void IoctlCallback(hidl_vec<uint8_t> outputData) {
+void IoctlCallback(hidl_vec<uint8_t> /* outputData */) {
+#ifdef ENABLE_ESE_CLIENT
   const char* func = "IoctlCallback";
   ese_nxp_ExtnOutputData_t* pOutData =
       (ese_nxp_ExtnOutputData_t*)&outputData[0];
@@ -233,6 +249,7 @@ void IoctlCallback(hidl_vec<uint8_t> outputData) {
    * This data will be sent back to libese*/
   memcpy(&pAdaptation->mCurrentIoctlData->out, &outputData[0],
          sizeof(ese_nxp_ExtnOutputData_t));
+#endif
 }
 /*******************************************************************************
 **
@@ -250,7 +267,9 @@ void IoctlCallback(hidl_vec<uint8_t> outputData) {
 ** Returns:     -1 or 0.
 **
 *******************************************************************************/
-int EseAdaptation::HalIoctl(long arg, void* p_data) {
+int EseAdaptation::HalIoctl(long /* arg */, void* /* p_data */) {
+  int ret = -1;
+#ifdef ENABLE_ESE_CLIENT
   const char* func = "EseAdaptation::HalIoctl";
   hidl_vec<uint8_t> data;
   AutoThreadMutex a(sIoctlLock);
@@ -262,7 +281,9 @@ int EseAdaptation::HalIoctl(long arg, void* p_data) {
   if (mHalNxpEse != nullptr) mHalNxpEse->ioctl(arg, data, IoctlCallback);
   ALOGD_IF(nfc_debug_enabled, "%s Ioctl Completed for Type=%lu", func,
            (unsigned long)pInpOutData->out.ioctlType);
-  return (pInpOutData->out.result);
+  ret = (pInpOutData->out.result);
+#endif
+  return ret;
 }
 
 /*******************************************************************************

@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2018-2019 NXP
+ *  Copyright 2019 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-#define LOG_TAG "nxpnfc@1.0-service"
+#define LOG_TAG "nxpnfc@2.0-service"
 #include <android/hardware/nfc/1.1/INfc.h>
 #include <vendor/nxp/nxpnfc/1.0/INxpNfc.h>
 #include <unistd.h>
@@ -27,8 +27,8 @@
 #include "eSEClient.h"
 
 // Generated HIDL files
-using android::hardware::nfc::V1_1::INfc;
-using android::hardware::nfc::V1_1::implementation::Nfc;
+using android::hardware::nfc::V1_2::INfc;
+using android::hardware::nfc::V1_2::implementation::Nfc;
 using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 using android::sp;
@@ -43,7 +43,7 @@ int main() {
     sp<INfc> nfc_service = nullptr;
     sp<INxpNfc> nxp_nfc_service = nullptr;
 
-    ALOGD("NFC HAL Service 1.1 is starting.");
+    ALOGD("NFC HAL Service 1.2 is starting.");
     nfc_service = new Nfc();
     if (nfc_service == nullptr) {
         ALOGE("Can not create an instance of NFC HAL Iface, exiting.");
@@ -51,7 +51,7 @@ int main() {
     }
 
     configureRpcThreadpool(1, true /*callerWillJoin*/);
-    //checkEseClientUpdate();
+    checkEseClientUpdate();
     status = nfc_service->registerAsService();
     if (status != OK) {
         LOG_ALWAYS_FATAL("Could not register service for NFC HAL Iface (%d).", status);

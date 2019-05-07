@@ -40,6 +40,7 @@ cc_library_shared {
         "halimpl/hal/phNxpNciHal_nciParser.cc",
         "halimpl/log/phNxpLog.cc",
         "halimpl/self-test/phNxpNciHal_SelfTest.cc",
+        "halimpl/src/adaptation/EseAdaptation.cc",
         "halimpl/tml/phDal4Nfc_messageQueueLib.cc",
         "halimpl/tml/phOsalNfc_Timer.cc",
         "halimpl/tml/phTmlNfc.cc",
@@ -60,6 +61,7 @@ cc_library_shared {
         "halimpl/self-test",
         "halimpl/tml",
         "halimpl/utils",
+        "halimpl/ese-clients/inc",
         "halimpl/src/include"
     ],
 
@@ -76,6 +78,7 @@ cc_library_shared {
     shared_libs: [
         "android.hardware.nfc@1.0",
         "android.hardware.nfc@1.1",
+        "android.hardware.nfc@1.2",
         "android.hardware.secure_element@1.0",
         "libbase",
         "libcutils",
@@ -116,6 +119,7 @@ cc_library_shared {
         "halimpl/hal/phNxpNciHal_nciParser.cc",
         "halimpl/log/phNxpLog.cc",
         "halimpl/self-test/phNxpNciHal_SelfTest.cc",
+        "halimpl/src/adaptation/EseAdaptation.cc",
         "halimpl/tml/phDal4Nfc_messageQueueLib.cc",
         "halimpl/tml/phOsalNfc_Timer.cc",
         "halimpl/tml/phTmlNfc.cc",
@@ -136,6 +140,7 @@ cc_library_shared {
         "halimpl/self-test",
         "halimpl/tml",
         "halimpl/utils",
+        "halimpl/ese-clients/inc",
         "halimpl/src/include"
     ],
 
@@ -152,6 +157,7 @@ cc_library_shared {
     shared_libs: [
         "android.hardware.nfc@1.0",
         "android.hardware.nfc@1.1",
+        "android.hardware.nfc@1.2",
         "android.hardware.secure_element@1.0",
         "libbase",
         "libcutils",

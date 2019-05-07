@@ -157,14 +157,20 @@ namespace {
 
 size_t readConfigFile(const char* fileName, uint8_t** p_data) {
   FILE* fd = fopen(fileName, "rb");
+  uint8_t* buffer = NULL;
+  size_t read = 0;
   if (fd == nullptr) return 0;
 
   fseek(fd, 0L, SEEK_END);
   const size_t file_size = ftell(fd);
   rewind(fd);
 
-  uint8_t* buffer = new uint8_t[file_size];
-  size_t read = fread(buffer, file_size, 1, fd);
+  if (file_size > 0) {
+    buffer = new uint8_t[file_size];
+    read = fread(buffer, file_size, 1, fd);
+  } else {
+    ALOGE("%s Invalid file size file_size = %zu\n", __func__, file_size);
+  }
   fclose(fd);
 
   if (read == 1) {
@@ -172,7 +178,8 @@ size_t readConfigFile(const char* fileName, uint8_t** p_data) {
     return file_size;
   }
 
-  delete[] buffer;
+  if(buffer)
+    delete[] buffer;
   return 0;
 }
 
@@ -700,9 +707,8 @@ bool CNfcConfig::readConfig(const char* name, bool bResetContent) {
           state = END_LINE;
           break;
         }
-      // fall through to numValue to handle numValue
-      [[fallthrough]];
-
+        // fall through to numValue to handle numValue
+        [[fallthrough]];
       case NUM_VALUE:
         if (isDigit(c, base)) {
           numValue *= base;
@@ -786,6 +792,9 @@ bool CNfcConfig::readConfig(const char* name, bool bResetContent) {
 CNfcConfig::CNfcConfig()
     : mValidFile(true),
       mDynamConfig(true),
+      config_crc32_(0),
+      config_rf_crc32_(0),
+      config_tr_crc32_(0),
       state(0) {}
 
 /*******************************************************************************
@@ -1166,7 +1175,10 @@ bool CNfcConfig::isModified(tNXP_CONF_FILE aType) {
   }
 
   uint32_t stored_crc32 = 0;
-  fread(&stored_crc32, sizeof(uint32_t), 1, fd);
+  if (fread(&stored_crc32, sizeof(uint32_t), 1, fd) != 1) {
+    ALOGE("%s File read is not successfull errno = %d", __func__, errno);
+  }
+
   fclose(fd);
   ALOGD("stored_crc32 is %d config_crc32_ is %d", stored_crc32, config_crc32_);
 

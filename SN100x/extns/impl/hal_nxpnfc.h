@@ -22,14 +22,14 @@
 #define MAX_IOCTL_TRANSCEIVE_CMD_LEN  256
 #define MAX_IOCTL_TRANSCEIVE_RESP_LEN 256
 #define MAX_ATR_INFO_LEN              128
-
+#define HAL_NFC_IOCTL_FIRST_EVT 0xA0
 enum {
     HAL_NFC_IOCTL_NCI_TRANSCEIVE = 0xF1,
     HAL_NFC_IOCTL_NFC_JCOP_DWNLD,
 };
 
 enum {
-  HAL_NFC_IOCTL_P61_IDLE_MODE = 0,
+  HAL_NFC_IOCTL_P61_IDLE_MODE = HAL_NFC_IOCTL_FIRST_EVT,
   HAL_NFC_IOCTL_P61_WIRED_MODE,
   HAL_NFC_IOCTL_P61_PWR_MODE,
   HAL_NFC_IOCTL_P61_DISABLE_MODE,
@@ -60,7 +60,9 @@ enum {
   HAL_NFC_IOCTL_ESE_JCOP_DWNLD,
   HAL_NFC_IOCTL_ESE_UPDATE_COMPLETE,
 #if (NXP_EXTNS == TRUE)
- HAL_NFC_IOCTL_SET_TRANSIT_CONFIG,
+  HAL_NFC_IOCTL_SET_TRANSIT_CONFIG,
+  HAL_NFC_IOCTL_GET_ESE_UPDATE_STATE,
+  HAL_NFC_IOCTL_GET_NXP_CONFIG,
 #endif
  HAL_NFC_GET_NXP_CONFIG,
  HAL_NFC_IOCTL_NFCEE_SESSION_RESET,
@@ -84,6 +86,39 @@ typedef struct
     uint8_t  p_cmd[MAX_IOCTL_TRANSCEIVE_CMD_LEN];
 } nfc_nci_ExtnCmd_t;
 
+#if(NXP_EXTNS == TRUE)
+/*
+ * nxp_nfc_config_t shall contain the respective flag value from the
+ * libnfc-nxp.conf
+ */
+typedef struct {
+  uint8_t eSeLowTempErrorDelay;
+  uint8_t tagOpTimeout;
+  uint8_t dualUiccEnable;
+  uint8_t defaultAidRoute;
+  uint8_t defaultMifareCltRoute;
+  uint8_t defautlFelicaCltRoute;
+  uint8_t defautlIsoDepRoute;
+  uint8_t defaultAidPwrState;
+  uint8_t defaultDesfirePwrState;
+  uint8_t defaultMifareCltPwrState;
+  uint8_t hostListenTechMask;
+  uint8_t fwdFunctionalityEnable;
+  uint8_t gsmaPwrState;
+  uint8_t offHostRoute;
+  uint8_t defaultUicc2Select;
+  uint8_t smbTransceiveTimeout;
+  uint8_t smbErrorRetry;
+  uint8_t felicaCltPowerState;
+  uint8_t checkDefaultProtoSeId;
+  uint8_t nxpLogHalLoglevel;
+  uint8_t nxpLogExtnsLogLevel;
+  uint8_t nxpLogTmlLogLevel;
+  uint8_t nxpLogFwDnldLogLevel;
+  uint8_t nxpLogNcixLogLevel;
+  uint8_t nxpLogNcirLogLevel;
+} nxp_nfc_config_t;
+#endif
 /*
  * nfc_nci_ExtnRsp_t shall contain response for command sent in transceive command
  */
@@ -137,7 +172,7 @@ typedef struct {
   uint8_t uicc_wired_prt_mask;
   uint8_t wired_mode_rf_field_enable;
   uint8_t aid_block_route;
-} nxp_nfc_config_t;
+} nq_nfc_config_t;
 
 /*
  * outputData_t :ioctl has multiple commands/responses
@@ -152,7 +187,10 @@ typedef union{
     uint16_t            fwDwnldStatus;
     uint16_t            fwMwVerStatus;
     uint8_t             chipType;
-    nxp_nfc_config_t    nxpConfigs;
+#if(NXP_EXTNS == TRUE)
+    nxp_nfc_config_t nxpConfigs;
+    nq_nfc_config_t nqConfigs;
+#endif
 }outputData_t;
 
 /*

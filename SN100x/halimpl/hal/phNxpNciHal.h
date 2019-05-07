@@ -191,6 +191,7 @@ void phNxpNciHal_initializeRegRfFwDnld();
 void phNxpNciHal_deinitializeRegRfFwDnld();
 #if(NXP_EXTNS == true)
 NFCSTATUS phNxpNciHal_PropEsePowerCycle(void);
+void phNxpNciHal_getNxpConfig(nfc_nci_IoctlInOutData_t *pInpOutData);
 #endif
 /*set config management*/
 
