@@ -2687,7 +2687,7 @@ std::string phNxpNciHal_getNfcChipId() {
   ret = __system_property_get("vendor.qti.nfc.chipid", nq_chipid);
   if(ret <= 0) {
       NXPLOG_NCIHAL_E("%s: Failure in getting chip-id.", __func__);
-      return NULL;
+      return SN100_CHIPID;
   }
   else {
       NXPLOG_NCIHAL_D("%s: Got vendor.qti.nfc.chipid: %s ", __func__, nq_chipid);
