@@ -4007,7 +4007,9 @@ static bool phNxpNciHal_minOpenRequired(long arg)
   if(nxpncihal_ctrl.halStatus == HAL_STATUS_CLOSE &&
     (arg != HAL_NFC_IOCTL_ESE_JCOP_DWNLD &&
      arg != HAL_NFC_IOCTL_ESE_UPDATE_COMPLETE &&
+#ifdef ENABLE_ESE_CLIENT
      arg != HAL_ESE_IOCTL_NFC_JCOP_DWNLD &&
+#endif
      arg != HAL_NFC_IOCTL_GET_ESE_UPDATE_STATE &&
      arg != HAL_NFC_IOCTL_GET_NXP_CONFIG)) {
     required = true;

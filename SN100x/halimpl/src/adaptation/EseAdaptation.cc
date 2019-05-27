@@ -117,11 +117,13 @@ EseAdaptation& EseAdaptation::GetInstance() {
 *******************************************************************************/
 void EseAdaptation::Initialize() {
   const char* func = "EseAdaptation::Initialize";
+#ifdef ENABLE_ESE_CLIENT
   ALOGD_IF(nfc_debug_enabled, "%s: enter", func);
 
   mHalCallback = NULL;
   InitializeHalDeviceContext();
 
+#endif
   ALOGD_IF(nfc_debug_enabled, "%s: exit", func);
 }
 

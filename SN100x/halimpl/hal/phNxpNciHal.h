@@ -20,6 +20,9 @@
 #include <phNxpNciHal_utils.h>
 #include "NxpNfcCapability.h"
 #include "hal_nxpnfc.h"
+#ifdef ENABLE_ESE_CLIENT
+#include "eSEClientIntf.h"
+#endif
 
 /********************* Definitions and structures *****************************/
 #define MAX_RETRY_COUNT 5
