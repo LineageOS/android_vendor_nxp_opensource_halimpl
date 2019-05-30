@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2018 NXP Semiconductors
+ * Copyright (C) 2010-2019 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,8 @@ extern phTmlNfc_i2cfragmentation_t fragmentation_enabled;
 bool_t notifyFwrequest;
 #if(NXP_EXTNS == TRUE)
 sem_t txrxSemaphore;
+static int phTmlNfc_sem_timed_wait();
+static void phTmlNfc_sem_post();
 #endif
 /*******************************************************************************
 **
@@ -175,7 +177,7 @@ int phTmlNfc_i2c_read(void* pDevHandle, uint8_t* pBuffer, int nNbBytesToRead) {
     ret_Read = read((intptr_t)pDevHandle, pBuffer, totalBtyesToRead - numRead);
     if (ret_Read > 0) {
 #if(NXP_EXTNS == TRUE)
-      sem_wait(&txrxSemaphore);
+      phTmlNfc_sem_timed_wait();
 #endif
       numRead += ret_Read;
     } else if (ret_Read == 0) {
@@ -198,7 +200,7 @@ int phTmlNfc_i2c_read(void* pDevHandle, uint8_t* pBuffer, int nNbBytesToRead) {
 
       if (ret_Read != totalBtyesToRead - numRead) {
 #if(NXP_EXTNS == TRUE)
-        sem_post(&txrxSemaphore);
+        phTmlNfc_sem_post();
 #endif
         NXPLOG_TML_E("_i2c_read() [hdr] errno : %x", errno);
         return -1;
@@ -220,7 +222,7 @@ int phTmlNfc_i2c_read(void* pDevHandle, uint8_t* pBuffer, int nNbBytesToRead) {
         numRead += ret_Read;
       } else if (ret_Read == 0) {
 #if(NXP_EXTNS == TRUE)
-        sem_post(&txrxSemaphore);
+        phTmlNfc_sem_post();
 #endif
         NXPLOG_TML_E("_i2c_read() [pyld] EOF");
         return -1;
@@ -230,7 +232,7 @@ int phTmlNfc_i2c_read(void* pDevHandle, uint8_t* pBuffer, int nNbBytesToRead) {
           phNxpNciHal_print_packet("RECV", pBuffer, NORMAL_MODE_HEADER_LEN);
         }
 #if(NXP_EXTNS == TRUE)
-        sem_post(&txrxSemaphore);
+        phTmlNfc_sem_post();
 #endif
         NXPLOG_TML_E("_i2c_read() [pyld] errno : %x", errno);
         return -1;
@@ -240,7 +242,7 @@ int phTmlNfc_i2c_read(void* pDevHandle, uint8_t* pBuffer, int nNbBytesToRead) {
     }
   }
 #if(NXP_EXTNS == TRUE)
-  sem_post(&txrxSemaphore);
+  phTmlNfc_sem_post();
 #endif
   return numRead;
 }
@@ -285,13 +287,11 @@ int phTmlNfc_i2c_write(void* pDevHandle, uint8_t* pBuffer,
       }
     }
 #if(NXP_EXTNS == TRUE)
-    if (-1 == sem_wait(&txrxSemaphore)) {
-      NXPLOG_TML_E("%s:sem_wait failed  \n",__func__);
-    }
+    phTmlNfc_sem_timed_wait();
 #endif
     ret = write((intptr_t)pDevHandle, pBuffer + numWrote, numBytes - numWrote);
 #if(NXP_EXTNS == TRUE)
-    sem_post(&txrxSemaphore);
+    phTmlNfc_sem_post();
 #endif
     if (ret > 0) {
       numWrote += ret;
@@ -328,7 +328,7 @@ int phTmlNfc_i2c_write(void* pDevHandle, uint8_t* pBuffer,
 **
 *******************************************************************************/
 int phTmlNfc_i2c_reset(void* pDevHandle, long level) {
-  int ret;
+  int ret = -1;;
   NXPLOG_TML_D("phTmlNfc_i2c_reset(), VEN level %ld", level);
 
   if (NULL == pDevHandle) {
@@ -339,16 +339,16 @@ int phTmlNfc_i2c_reset(void* pDevHandle, long level) {
   if (ret < 0) {
     NXPLOG_TML_E("%s :failed errno = 0x%x", __func__, errno);
     if ((level == MODE_FW_DWNLD_WITH_VEN || level == MODE_FW_DWND_HIGH) && errno == EBUSY) {
-      notifyFwrequest = true;
+         notifyFwrequest = true;
     } else {
-      notifyFwrequest = false;
+         notifyFwrequest = false;
     }
   }
   if ((level == MODE_FW_DWNLD_WITH_VEN || level == MODE_FW_DWND_HIGH) && ret == 0) {
-    bFwDnldFlag = true;
-  } else {
-    bFwDnldFlag = false;
-  }
+        bFwDnldFlag = true;
+     } else {
+        bFwDnldFlag = false;
+     }
   return ret;
 }
 
@@ -363,3 +363,53 @@ int phTmlNfc_i2c_reset(void* pDevHandle, long level) {
 ** Returns           Current mode download/NCI
 *******************************************************************************/
 bool_t getDownloadFlag(void) { return bFwDnldFlag; }
+
+#if(NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function         phTmlNfc_sem_post
+**
+** Description      sem_post 2c_read / write
+**
+** Parameters       none
+**
+** Returns          none
+*******************************************************************************/
+static void phTmlNfc_sem_post() {
+  int sem_val = 0;
+  sem_getvalue(&txrxSemaphore, &sem_val);
+  if(sem_val == 0) {
+    sem_post(&txrxSemaphore);
+  }
+}
+
+/*******************************************************************************
+**
+** Function         phTmlNfc_sem_wait
+**
+** Description      Timed sem_wait for avoiding i2c_read & write overlap
+**
+** Parameters       none
+**
+** Returns          Sem_wait return status
+*******************************************************************************/
+static int phTmlNfc_sem_timed_wait() {
+  NFCSTATUS status = NFCSTATUS_FAILED;
+  long sem_timedout = 500*1000*1000;
+  int s = 0;
+  struct timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
+  ts.tv_sec += 0;
+  ts.tv_nsec += sem_timedout;
+  while ((s = sem_timedwait(&txrxSemaphore, &ts)) == -1 &&
+         errno == EINTR){
+    continue; /* Restart if interrupted by handler */
+  }
+  if (s != -1) {
+    status = NFCSTATUS_SUCCESS;
+  } else if(errno == ETIMEDOUT && s == -1) {
+    NXPLOG_TML_E("%s :timed out errno = 0x%x", __func__, errno);
+  }
+  return status;
+}
+#endif
