@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2018-2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,91 +15,11 @@
 //
 
 cc_library_shared {
-    name: "nfc_nci.nqx.default",
-    relative_install_path: "hw",
-    defaults: ["hidl_defaults"],
-    vendor: true,
-
-    cflags: [
-        "-Wall",
-        "-Werror",
-        "-Wextra",
-        "-DNXP_EXTNS=TRUE",
-        "-DNXP_HW_SELF_TEST=TRUE"
-    ],
-
-    srcs: [
-        "halimpl/dnld/phDnldNfc.cc",
-        "halimpl/dnld/phDnldNfc_Internal.cc",
-        "halimpl/dnld/phDnldNfc_Utils.cc",
-        "halimpl/dnld/phNxpNciHal_Dnld.cc",
-        "halimpl/hal/phNxpNciHal.cc",
-        "halimpl/hal/phNxpNciHal_NfcDepSWPrio.cc",
-        "halimpl/hal/phNxpNciHal_dta.cc",
-        "halimpl/hal/phNxpNciHal_ext.cc",
-        "halimpl/hal/phNxpNciHal_nciParser.cc",
-        "halimpl/log/phNxpLog.cc",
-        "halimpl/self-test/phNxpNciHal_SelfTest.cc",
-        "halimpl/src/adaptation/EseAdaptation.cc",
-        "halimpl/tml/phDal4Nfc_messageQueueLib.cc",
-        "halimpl/tml/phOsalNfc_Timer.cc",
-        "halimpl/tml/phTmlNfc.cc",
-        "halimpl/tml/phTmlNfc_i2c.cc",
-        "halimpl/tml/spi_spm.cc",
-        "halimpl/utils/NxpNfcCapability.cc",
-        "halimpl/utils/phNxpConfig.cc",
-        "halimpl/utils/phNxpNciHal_utils.cc",
-        "halimpl/utils/sparse_crc32.cc",
-    ],
-
-    local_include_dirs: [
-        "halimpl/common",
-        "halimpl/dnld",
-        "halimpl/hal",
-        "halimpl/inc",
-        "halimpl/log",
-        "halimpl/self-test",
-        "halimpl/tml",
-        "halimpl/utils",
-        "halimpl/ese-clients/inc",
-        "halimpl/src/include"
-    ],
-
-    include_dirs: [
-        "vendor/nxp/opensource/halimpl/SN100x/extns/impl",
-    ],
-
-    export_include_dirs: [
-        "extns/impl",
-        "halimpl/inc",
-        "halimpl/common",
-    ],
-
-    shared_libs: [
-        "android.hardware.nfc@1.0",
-        "android.hardware.nfc@1.1",
-        "android.hardware.nfc@1.2",
-        "android.hardware.secure_element@1.0",
-        "libbase",
-        "libcutils",
-        "libdl",
-        "libhardware",
-        "libhardware_legacy",
-        "libhidlbase",
-        "libhidltransport",
-        "liblog",
-        "libutils",
-        "libchrome"
-    ],
-}
-
-cc_library_shared {
     name: "nfc_nci.nqx.default.hw",
     defaults: ["hidl_defaults"],
     vendor: true,
 
     cflags: [
-        "-DNXP_EXTNS=TRUE",
         "-Wall",
         "-Werror",
         "-Wextra",
@@ -140,7 +60,7 @@ cc_library_shared {
         "halimpl/self-test",
         "halimpl/tml",
         "halimpl/utils",
-        "halimpl/ese-clients/inc",
+        "halimpl/eseclients_extns/inc",
         "halimpl/src/include"
     ],
 
@@ -168,6 +88,5 @@ cc_library_shared {
         "libhidltransport",
         "liblog",
         "libutils",
-        "libchrome"
     ],
 }

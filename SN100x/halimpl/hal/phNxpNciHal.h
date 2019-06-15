@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2018 NXP Semiconductors
+ * Copyright (C) 2010-2019 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@
 #include <phNxpNciHal_utils.h>
 #include "NxpNfcCapability.h"
 #include "hal_nxpnfc.h"
+#ifdef ENABLE_ESE_CLIENT
+#include "eSEClientIntf.h"
+#endif
 
 /********************* Definitions and structures *****************************/
 #define MAX_RETRY_COUNT 5
@@ -31,6 +34,7 @@
 #define NCI_VERSION_1_1 0x11
 #define NCI_VERSION_1_0 0x10
 #define NCI_VERSION_UNKNOWN 0x00
+#define NXP_AUTH_TIMEOUT_BUF_LEN 0x04
 #define SN100_CHIPID "0xa4"
 
 /* Uncomment define ENABLE_ESE_CLIENT to
@@ -220,7 +224,8 @@ typedef enum {
   EEPROM_SWP1_INTF,
   EEPROM_SWP1A_INTF,
   EEPROM_SWP2_INTF,
-  EEPROM_FLASH_UPDATE
+  EEPROM_FLASH_UPDATE,
+  EEPROM_AUTH_CMD_TIMEOUT
 } phNxpNci_EEPROM_request_type_t;
 
 typedef struct phNxpNci_EEPROM_info {
@@ -241,6 +246,8 @@ typedef struct phNxpNci_getCfg_info {
   uint8_t atr_res_gen_bytes_len;
   uint8_t pmid_wt[3];
   uint8_t pmid_wt_len;
+  uint8_t auth_cmd_timeout[NXP_AUTH_TIMEOUT_BUF_LEN];
+  uint8_t auth_cmd_timeoutlen;
 } phNxpNci_getCfg_info_t;
 typedef enum {
   NFC_FORUM_PROFILE,
@@ -277,7 +284,6 @@ NFCSTATUS phNxpNciHal_send_get_cfgs();
 int phNxpNciHal_write_unlocked(uint16_t data_len, const uint8_t* p_data);
 NFCSTATUS request_EEPROM(phNxpNci_EEPROM_info_t* mEEPROM_info);
 NFCSTATUS phNxpNciHal_send_nfcee_pwr_cntl_cmd(uint8_t type);
-
 /*******************************************************************************
 **
 ** Function         phNxpNciHal_configFeatureList

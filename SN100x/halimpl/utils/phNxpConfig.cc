@@ -147,6 +147,7 @@ typedef enum
   TARGET_SDM845                        = 321, /**< SDM845 target */
   TARGET_SM8150                        = 339, /**< SM8150 target */
   TARGET_KONA                          = 356, /**< KONA target */
+  TARGET_LITO                          = 400, /**< LITO target */
   TARGET_DEFAULT                       = TARGET_GENERIC, /**< new targets */
   TARGET_INVALID                       = 0xFF
 } TARGETTYPE;
@@ -166,7 +167,7 @@ size_t readConfigFile(const char* fileName, uint8_t** p_data) {
   rewind(fd);
 
   if (file_size > 0) {
-    buffer = new uint8_t[file_size];
+    buffer = new uint8_t[file_size + 1];
     read = fread(buffer, file_size, 1, fd);
   } else {
     ALOGE("%s Invalid file size file_size = %zu\n", __func__, file_size);
@@ -174,8 +175,9 @@ size_t readConfigFile(const char* fileName, uint8_t** p_data) {
   fclose(fd);
 
   if (read == 1) {
+    buffer[file_size] = '\n';
     *p_data = buffer;
-    return file_size;
+    return file_size+1;
   }
 
   if(buffer)
@@ -418,6 +420,7 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_SM6150:
         case TARGET_SM7150:
         case TARGET_KONA:
+        case TARGET_LITO:
             config_id = QRD_TYPE_SN100;
             strlcpy(config_file, config_name_qrd_SN100, MAX_DATA_CONFIG_PATH_LEN);
             break;
@@ -475,6 +478,7 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_SM6150:
         case TARGET_SM7150:
         case TARGET_KONA:
+        case TARGET_LITO:
             config_id = MTP_TYPE_SN100;
             strlcpy(config_file, config_name_mtp_SN100, MAX_DATA_CONFIG_PATH_LEN);
             break;

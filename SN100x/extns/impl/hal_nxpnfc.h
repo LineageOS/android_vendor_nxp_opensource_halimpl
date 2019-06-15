@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2018 NXP
+ *  Copyright 2018-2019 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,10 +22,12 @@
 #define MAX_IOCTL_TRANSCEIVE_CMD_LEN  256
 #define MAX_IOCTL_TRANSCEIVE_RESP_LEN 256
 #define MAX_ATR_INFO_LEN              128
+#define NCI_ESE_HARD_RESET_IOCTL 5
 #define HAL_NFC_IOCTL_FIRST_EVT 0xA0
 enum {
-    HAL_NFC_IOCTL_NCI_TRANSCEIVE = 0xF1,
-    HAL_NFC_IOCTL_NFC_JCOP_DWNLD,
+  HAL_NFC_IOCTL_NCI_TRANSCEIVE = 0xF1,
+  HAL_NFC_IOCTL_NFC_JCOP_DWNLD,
+  HAL_NFC_IOCTL_ESE_HARD_RESET,
 };
 
 enum {
@@ -58,21 +60,17 @@ enum {
   HAL_NFC_SET_DWNLD_STATUS,
   HAL_NFC_INHIBIT_PWR_CNTRL,
   HAL_NFC_IOCTL_ESE_JCOP_DWNLD,
-  HAL_NFC_IOCTL_ESE_UPDATE_COMPLETE,
+  HAL_NFC_IOCTL_ESE_UPDATE_COMPLETE
 #if (NXP_EXTNS == TRUE)
-  HAL_NFC_IOCTL_SET_TRANSIT_CONFIG,
+ ,HAL_NFC_IOCTL_SET_TRANSIT_CONFIG,
   HAL_NFC_IOCTL_GET_ESE_UPDATE_STATE,
   HAL_NFC_IOCTL_GET_NXP_CONFIG,
 #endif
- HAL_NFC_GET_NXP_CONFIG,
- HAL_NFC_IOCTL_NFCEE_SESSION_RESET,
- HAL_NFC_IOCTL_P61_REL_ESE_PWR,
- HAL_NFC_IOCTL_P61_SET_ESE_PWR
 };
-
 enum {
-    HAL_NFC_ENABLE_I2C_FRAGMENTATION_EVT = 0x08,
-    HAL_NFC_POST_MIN_INIT_CPLT_EVT       = 0x09
+  //HAL_NFC_ENABLE_I2C_FRAGMENTATION_EVT = 0x07,
+  HAL_NFC_POST_MIN_INIT_CPLT_EVT = 0x08,
+  HAL_NFC_WRITE_COMPLETE = 0x09
 };
 /*
  * Data structures provided below are used of Hal Ioctl calls
@@ -117,6 +115,8 @@ typedef struct {
   uint8_t nxpLogFwDnldLogLevel;
   uint8_t nxpLogNcixLogLevel;
   uint8_t nxpLogNcirLogLevel;
+  uint8_t seApduGateEnabled;
+  uint8_t pollEfdDelay;
 } nxp_nfc_config_t;
 #endif
 /*
