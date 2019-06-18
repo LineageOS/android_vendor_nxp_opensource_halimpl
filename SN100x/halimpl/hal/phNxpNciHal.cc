@@ -1596,7 +1596,7 @@ int phNxpNciHal_core_initialized(uint8_t* p_core_init_rsp_params) {
       mEEPROM_info.bufflen = sizeof(auth_timeout_buffer);
       mEEPROM_info.request_type = EEPROM_AUTH_CMD_TIMEOUT;
       status = request_EEPROM(&mEEPROM_info);
-      if (NFCSTATUS_SUCCESS == status) {
+      if (NFCSTATUS_SUCCESS == status && mGetCfg_info != NULL) {
         memcpy(&mGetCfg_info->auth_cmd_timeout, mEEPROM_info.buffer,
                mEEPROM_info.bufflen);
         mGetCfg_info->auth_cmd_timeoutlen = mEEPROM_info.bufflen;
@@ -1725,8 +1725,9 @@ int phNxpNciHal_core_initialized(uint8_t* p_core_init_rsp_params) {
         for(loopcnt = 0; loopcnt < maxBlocks; loopcnt++)
         {
             char rf_conf_block[22] = {'\0'};
-            strcpy(rf_conf_block, rf_block_name);
-            isfound = GetNxpByteArrayValue(strcat(rf_conf_block, rf_block_num[loopcnt]), (char*)buffer,
+            strlcpy(rf_conf_block, rf_block_name, sizeof(rf_conf_block));
+            strlcat(rf_conf_block, rf_block_num[loopcnt], sizeof(rf_conf_block));
+            isfound = GetNxpByteArrayValue(rf_conf_block, (char*)buffer,
                     bufflen, &retlen);
             if (retlen > 0) {
               NXPLOG_NCIHAL_D("Performing RF Settings BLK %ld", loopcnt+1);
@@ -2722,7 +2723,7 @@ std::string phNxpNciHal_getNfcFirmwareVersion() {
   ret = __system_property_get("vendor.qti.nfc.fwver", nq_fw_ver);
   if(ret <= 0) {
       NXPLOG_NCIHAL_E("%s: Failure in getting firmware version.", __func__);
-      return NULL;
+      return "";
   }
   else {
       NXPLOG_NCIHAL_D("%s: Got vendor.qti.nfc.fwver: %s ", __func__, nq_fw_ver);
@@ -3926,7 +3927,9 @@ NFCSTATUS phNxpNciHal_send_get_cfgs() {
     cfg_count++;
     retry_cnt = 0;
   }
-  mGetCfg_info->isGetcfg = false;
+  if (mGetCfg_info != NULL) {
+      mGetCfg_info->isGetcfg = false;
+  }
   return status;
 }
 /*******************************************************************************
