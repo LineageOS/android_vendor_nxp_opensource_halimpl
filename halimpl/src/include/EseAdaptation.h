@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  *
- *  Copyright (C) 2018 NXP Semiconductors
+ *  Copyright (C) 2018-2019 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,12 +21,16 @@
 
 #include "ese_hal_api.h"
 #include "hal_nxpese.h"
-#include <utils/RefBase.h>
 #include <android/hardware/secure_element/1.0/ISecureElement.h>
 #include <android/hardware/secure_element/1.0/ISecureElementHalCallback.h>
 #include <android/hardware/secure_element/1.0/types.h>
+#include <utils/RefBase.h>
+#include <vendor/nxp/eventprocessor/1.0/INxpEseEvtProcessor.h>
 #include <vendor/nxp/nxpese/1.0/INxpEse.h>
 using vendor::nxp::nxpese::V1_0::INxpEse;
+using vendor::nxp::eventprocessor::V1_0::INxpEseEvtProcessor;
+using ::android::sp;
+class NxpEseDeathRecipient;
 
 class ThreadMutex {
  public:
@@ -77,11 +81,15 @@ class EseAdaptation {
   tHAL_ESE_ENTRY* GetHalEntryFuncs();
   ese_nxp_IoctlInOutData_t* mCurrentIoctlData;
   tHAL_ESE_ENTRY mSpiHalEntryFuncs;  // function pointers for HAL entry points
+  static android::sp<vendor::nxp::nxpese::V1_0::INxpEse> mHalNxpEse;
+  static android::sp<vendor::nxp::eventprocessor::V1_0::INxpEseEvtProcessor>
+      mHalNxpEseEvtProcessor;
 
- private:
+private:
   EseAdaptation();
   void signal();
   static EseAdaptation* mpInstance;
+  sp<NxpEseDeathRecipient> mNxpEseDeathRecipient;
   static ThreadMutex sLock;
   static ThreadMutex sIoctlLock;
   ThreadCondVar mCondVar;
@@ -92,9 +100,7 @@ class EseAdaptation {
   static ThreadCondVar mHalIoctlEvent;
   static android::sp<android::hardware::secure_element::V1_0::ISecureElement>
       mHal;
-  static android::sp<vendor::nxp::nxpese::V1_0::INxpEse> mHalNxpEse;
 #if (NXP_EXTNS == TRUE)
-  pthread_t mThreadId;
   static ThreadCondVar mHalCoreResetCompletedEvent;
   static ThreadCondVar mHalCoreInitCompletedEvent;
   static ThreadCondVar mHalInitCompletedEvent;

@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2018 NXP
+ *  Copyright 2018-2019 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ Return<V1_0::NfcStatus> Nfc::powerCycle() {
 
 // Methods from ::android::hardware::nfc::V1_1::INfc follow.
 Return<void> Nfc::factoryReset() {
-  phNxpNciHal_reset_nfcee_session(false);
+  phNxpNciHal_reset_nfcee_session(true);
   return Void();
 }
 
