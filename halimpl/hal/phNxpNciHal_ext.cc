@@ -25,7 +25,9 @@
 #include <phDnldNfc.h>
 #include "phNxpNciHal_nciParser.h"
 #include <cutils/properties.h>
+#ifdef ENABLE_ESE_CLIENT
 #include "hal_nxpese.h"
+#endif
 #include <phNxpNciHal_Adaptation.h>
 
 /* Timeout value to wait for response from PN548AD */

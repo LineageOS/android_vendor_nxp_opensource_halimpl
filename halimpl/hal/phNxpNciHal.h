@@ -20,7 +20,9 @@
 #include <phNxpNciHal_utils.h>
 #include "NxpNfcCapability.h"
 #include "hal_nxpnfc.h"
+#ifdef ENABLE_ESE_CLIENT
 #include "EseUpdateChecker.h"
+#endif
 
 /********************* Definitions and structures *****************************/
 #define MAX_RETRY_COUNT 5
@@ -98,8 +100,10 @@ typedef struct phNxpNciGpioInfo {
   uint8_t values[2];
 } phNxpNciGpioInfo_t;
 
+#ifdef ENABLE_ESE_CLIENT
 extern ESE_UPDATE_STATE eseUpdateSpi;
 extern ESE_UPDATE_STATE eseUpdateDwp;
+#endif
 
 /* Macros to enable and disable extensions */
 #define HAL_ENABLE_EXT() (nxpncihal_ctrl.hal_ext_enabled = 1)

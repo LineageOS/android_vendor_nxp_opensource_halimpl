@@ -44,10 +44,10 @@
 #include <android/hardware/nfc/1.0/types.h>
 #include <hardware/nfc.h>
 #include <utils/RefBase.h>
-#include <vendor/nxp/nxpnfc/1.0/INxpNfc.h>
+#include <vendor/nxp/hardware/nfc/1.0/INqNfc.h>
 
 using ::android::sp;
-using vendor::nxp::nxpnfc::V1_0::INxpNfc;
+using vendor::nxp::hardware::nfc::V1_0::INqNfc;
 
 namespace android {
 namespace hardware {
@@ -136,7 +136,7 @@ private:
   static HalAdaptationThreadCondVar mHalIoctlEvent;
   static android::sp<android::hardware::nfc::V1_0::INfc> mHal;
   static android::sp<android::hardware::nfc::V1_1::INfc> mHal_1_1;
-  static android::sp<vendor::nxp::nxpnfc::V1_0::INxpNfc> mHalNxpNfc;
+  static android::sp<vendor::nxp::hardware::nfc::V1_0::INqNfc> mNqHal;
   static android::hardware::nfc::V1_1::INfcClientCallback *mCallback;
   sp<NfcDeathRecipient> mNfcHalDeathRecipient;
 #if (NXP_EXTNS == TRUE)

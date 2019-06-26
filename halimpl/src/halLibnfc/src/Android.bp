@@ -19,10 +19,11 @@ cc_library_shared {
         "libhidltransport",
         "libhwbinder",
         "libutils",
-        "ese_client",
         "android.hardware.nfc@1.0",
         "android.hardware.nfc@1.1",
-        "vendor.nxp.nxpnfc@1.0",
+        "android.hardware.nfc@1.2",
+        "vendor.nxp.hardware.nfc@1.0",
+        "vendor.nxp.hardware.nfc@1.1",
     ],
     cflags: [
         "-DBUILDCFG=1",
@@ -42,8 +43,7 @@ cc_library_shared {
         "gki/common",
     ],
     include_dirs: [
-        "hardware/nxp/nfc/extns/impl/",
-        "hardware/nxp/secure_element/extns/impl/",
+        "vendor/nxp/opensource/halimpl/extns/impl/",
     ],
     srcs: [
         "nfa/dm/*.cc",

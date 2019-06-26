@@ -20,17 +20,23 @@
 #include <pthread.h>
 
 #include "ese_hal_api.h"
+#ifdef ENABLE_ESE_CLIENT
 #include "hal_nxpese.h"
+#endif
 #include <android/hardware/secure_element/1.0/ISecureElement.h>
 #include <android/hardware/secure_element/1.0/ISecureElementHalCallback.h>
 #include <android/hardware/secure_element/1.0/types.h>
 #include <utils/RefBase.h>
+#ifdef ENABLE_ESE_CLIENT
 #include <vendor/nxp/eventprocessor/1.0/INxpEseEvtProcessor.h>
 #include <vendor/nxp/nxpese/1.0/INxpEse.h>
 using vendor::nxp::nxpese::V1_0::INxpEse;
 using vendor::nxp::eventprocessor::V1_0::INxpEseEvtProcessor;
+#endif
 using ::android::sp;
+#ifdef ENABLE_ESE_CLIENT
 class NxpEseDeathRecipient;
+#endif
 
 class ThreadMutex {
  public:
@@ -79,17 +85,23 @@ class EseAdaptation {
   static int HalIoctl(long arg, void* p_data);
   static void HalNfccNtf(long arg, void *p_data);
   tHAL_ESE_ENTRY* GetHalEntryFuncs();
+#ifdef ENABLE_ESE_CLIENT
   ese_nxp_IoctlInOutData_t* mCurrentIoctlData;
+#endif
   tHAL_ESE_ENTRY mSpiHalEntryFuncs;  // function pointers for HAL entry points
+#ifdef ENABLE_ESE_CLIENT
   static android::sp<vendor::nxp::nxpese::V1_0::INxpEse> mHalNxpEse;
   static android::sp<vendor::nxp::eventprocessor::V1_0::INxpEseEvtProcessor>
       mHalNxpEseEvtProcessor;
+#endif
 
 private:
   EseAdaptation();
   void signal();
   static EseAdaptation* mpInstance;
+#ifdef ENABLE_ESE_CLIENT
   sp<NxpEseDeathRecipient> mNxpEseDeathRecipient;
+#endif
   static ThreadMutex sLock;
   static ThreadMutex sIoctlLock;
   ThreadCondVar mCondVar;

@@ -100,8 +100,7 @@ cc_library_shared {
 }
 
 cc_library_shared {
-    name: "nfc_nci.nqx.default",
-    relative_install_path: "hw",
+    name: "nfc_nci.nqx.default.hw",
     defaults: ["hidl_defaults"],
     vendor: true,
 
@@ -116,10 +115,6 @@ cc_library_shared {
         "halimpl/utils/*.cc",
         "halimpl/utils/*.cpp",
         "halimpl/configs/*.cpp",
-        "halimpl/ese-clients/src/DwpEseUpdater.cc",
-        "halimpl/ese-clients/src/DwpSeChannelCallback.cc",
-        "halimpl/ese-clients/src/DwpSeEvtCallback.cc",
-        "halimpl/ese-clients/src/HalLibnfcInteface.cc",
     ],
     shared_libs: [
         "libbase",
@@ -134,6 +129,8 @@ cc_library_shared {
         "android.hardware.nfc@1.0",
         "android.hardware.nfc@1.1",
         "android.hardware.nfc@1.2",
+        "vendor.nxp.hardware.nfc@1.0",
+        "vendor.nxp.hardware.nfc@1.1",
         "android.hardware.secure_element@1.0",
         "hal_libnfc"
     ],
@@ -145,6 +142,7 @@ cc_library_shared {
         "halimpl/tml",
         "halimpl/src/include",
         "halimpl/configs",
+        "jcos_client/inc",
     ],
     export_include_dirs: [
         "extns/impl",
@@ -157,68 +155,6 @@ cc_library_shared {
         "-DBUILDCFG=1",
         "-Wall",
         "-Werror",
-        "-DNFC_HAL_TARGET=TRUE",
-        "-DNFC_RW_ONLY=TRUE",
-        "-DNXP_EXTNS=TRUE",
-        "-DNFC_NXP_AID_MAX_SIZE_DYN=TRUE",
-        "-DNXP_NFCC_HCE_F=TRUE",
-        "-DNFC_NXP_LISTEN_ROUTE_TBL_OPTIMIZATION=TRUE",
-        "-DNFC_NXP_HFO_SETTINGS=FALSE",
-        "-DANDROID",
-        "-DNXP_HW_SELF_TEST"
-    ],
-}
-
-cc_library_shared {
-    name: "nfc_nci.nqx.default.hw",
-    defaults: ["hidl_defaults"],
-    vendor: true,
-
-    srcs: [
-        "halimpl/common/*.cc",
-        "halimpl/dnld/*.cc",
-        "halimpl/hal/*.cc",
-        "halimpl/log/*.cc",
-        "halimpl/self-test/*.cc",
-        "halimpl/tml/*.cc",
-        "halimpl/utils/*.cc",
-        "halimpl/utils/*.cpp",
-        "halimpl/configs/*.cpp",
-    ],
-    shared_libs: [
-        "libbase",
-        "libcutils",
-        "liblog",
-        "libhwbinder",
-        "libhardware",
-        "libhardware_legacy",
-        "libhidlbase",
-        "libhidltransport",
-        "libutils",
-        "android.hardware.nfc@1.0",
-        "android.hardware.nfc@1.1",
-        "android.hardware.secure_element@1.0",
-    ],
-    local_include_dirs: [
-        "halimpl/dnld",
-        "halimpl/hal",
-        "halimpl/log",
-        "halimpl/self-test",
-        "halimpl/tml",
-        "halimpl/src/include",
-        "halimpl/configs",
-    ],
-    export_include_dirs: [
-        "extns/impl",
-        "halimpl/inc",
-        "halimpl/common",
-        "halimpl/utils",
-    ],
-    cflags: [
-        "-DBUILDCFG=1",
-        "-Wno-deprecated-register",
-        "-Wno-unused-parameter",
-        "-Wno-missing-field-initializers",
         "-DNFC_HAL_TARGET=TRUE",
         "-DNFC_RW_ONLY=TRUE",
         "-DNXP_EXTNS=TRUE",

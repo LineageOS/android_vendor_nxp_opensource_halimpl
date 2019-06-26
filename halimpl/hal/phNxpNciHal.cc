@@ -29,13 +29,13 @@
 #include <phNxpNciHal_NfcDepSWPrio.h>
 #include <phTmlNfc_i2c.h>
 #include "phNxpNciHal_nciParser.h"
-#ifdef ENABLE_ESE_CLIENT
 #include <EseAdaptation.h>
+#ifdef ENABLE_ESE_CLIENT
 #include "hal_nxpese.h"
 #endif
 #include "hal_nxpnfc.h"
 #include "spi_spm.h"
-#include <vendor/nxp/nxpnfc/1.0/types.h>
+#include <vendor/nxp/hardware/nfc/1.0/types.h>
 
 using namespace android::hardware::nfc::V1_1;
 using namespace android::hardware::nfc::V1_2;
@@ -107,8 +107,10 @@ uint32_t gSvddSyncOff_Delay = 10;
 bool_t force_fw_download_req = false;
 bool_t gParserCreated = FALSE;
 bool nfc_debug_enabled = true;
+#ifdef ENABLE_ESE_CLIENT
 ESE_UPDATE_STATE eseUpdateSpi = ESE_UPDATE_COMPLETED;
 ESE_UPDATE_STATE eseUpdateDwp = ESE_UPDATE_COMPLETED;
+#endif
 nfc_stack_callback_t* p_nfc_stack_cback_backup;
 /* global variable to get FW version from NCI response*/
 uint32_t wFwVerRsp;
@@ -1111,7 +1113,7 @@ int phNxpNciHal_open(nfc_stack_callback_t* p_cback,
                      nfc_stack_data_callback_t* p_data_cback) {
   AutoThreadMutex a(gsHalOpenCloseLock);
   NFCSTATUS wConfigStatus = NFCSTATUS_SUCCESS;
-
+#ifdef ENABLE_ESE_CLIENT
   if((eseUpdateSpi != ESE_UPDATE_COMPLETED) || (eseUpdateDwp != ESE_UPDATE_COMPLETED))
   {
     ALOGD("%s BLOCK NFC HAL OPEN", __func__);
@@ -1122,7 +1124,7 @@ int phNxpNciHal_open(nfc_stack_callback_t* p_cback,
       }
     return NFCSTATUS_FAILED;
   }
-
+#endif
   if (nxpncihal_ctrl.hal_boot_mode == NFC_FAST_BOOT_MODE ) {
     NXPLOG_NCIHAL_E(" HAL NFC fast init mode calling min_open %d",
                     nxpncihal_ctrl.hal_boot_mode);
@@ -3874,6 +3876,7 @@ int phNxpNciHal_ioctl(long arg, void* p_data) {
       pInpOutData->out.data.chipType = (uint8_t)phNxpNciHal_getChipType();
       ret = 0;
       break;
+#ifdef ENABLE_ESE_CLIENT
     case HAL_ESE_IOCTL_NFC_JCOP_DWNLD :
         NXPLOG_NCIHAL_D("HAL_ESE_IOCTL_NFC_JCOP_DWNLD Enter value is %d: \n",pInpOutData->inp.data.nciCmd.p_cmd[0]);
         if(gpEseAdapt !=  NULL)
@@ -3902,6 +3905,7 @@ int phNxpNciHal_ioctl(long arg, void* p_data) {
         }
         ret = 0;
         break;
+#endif
     case HAL_NFC_IOCTL_SPI_DWP_SYNC: {
       ALOGD_IF(
           nfc_debug_enabled,
@@ -4023,8 +4027,10 @@ int phNxpNciHal_ioctl(long arg, void* p_data) {
       nxpncihal_ctrl.isHciCfgEvtRequested = true;
       NXPLOG_NCIHAL_D("HAL_NFC_IOCTL_HCI_INIT_STATUS_UPDATE value is %d: \n",
                       pInpOutData->inp.data.nciCmd.p_cmd[0]);
+#ifdef ENABLE_ESE_CLIENT
       if (gpEseAdapt != NULL)
         gpEseAdapt->HalNfccNtf(HAL_NFC_IOCTL_HCI_INIT_STATUS_UPDATE, pInpOutData);
+#endif
       ret = 0;
       break;
       case HAL_NFC_IOCTL_HCI_INIT_STATUS_UPDATE_COMPLETE:

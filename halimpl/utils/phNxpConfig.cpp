@@ -183,6 +183,7 @@ using namespace ::std;
 
 namespace nxp {
 
+void findConfigFilePathFromTransportConfigPaths(const string& configName, string& filePath);
 
 class CNfcParam : public string {
  public:
@@ -794,7 +795,8 @@ bool CNfcConfig::readConfig(const char* name, bool bResetContent) {
 ** Returns:     none
 **
 *******************************************************************************/
-CNfcConfig::CNfcConfig() : mValidFile(true), mDynamConfig(true), state(0) {}
+CNfcConfig::CNfcConfig() : mValidFile(true), mDynamConfig(true), config_crc32_(0),
+      config_crc32_rf_(0), config_crc32_tr_(0), state(0) {}
 
 /*******************************************************************************
 **
@@ -873,19 +875,6 @@ CNfcConfig& CNfcConfig::GetInstance() {
         theInstance.readConfig(strPath.c_str(), true);
 #if(NXP_EXTNS == TRUE)
 
-        int rc = 0;
-        char nq_fw_ver[PROPERTY_VALUE_MAX] = {0};
-
-        rc = __system_property_get("vendor.qti.nfc.fwver", nq_fw_ver);
-        if (rc <= 0)
-            ALOGE("get vendor.qti.nfc.fwver fail, rc = %d\n", rc);
-        else
-            ALOGD("vendor.qti.nfc.fwver = %s\n", nq_fw_ver);
-
-        if (!strncmp(nq_fw_ver, FW_MAJOR_NUM_NQ4xx, FW_MAJOR_NUM_LENGTH))
-           readOptionalConfig("brcm_NCI2_0");
-        else
-           readOptionalConfig("brcm");
 
         theInstance.readNxpTransitConfig("nxpTransit");
         theInstance.readNxpTransitConfig(transit_config_path);

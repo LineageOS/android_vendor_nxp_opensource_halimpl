@@ -67,7 +67,7 @@ using ::android::hardware::hidl_death_recipient;
 using android::hardware::hidl_vec;
 using android::hardware::nfc::V1_1::INfcClientCallback;
 using ::android::hidl::base::V1_0::IBase;
-using vendor::nxp::nxpnfc::V1_0::INxpNfc;
+using vendor::nxp::hardware::nfc::V1_0::INqNfc;
 
 extern bool nfc_debug_enabled;
 
@@ -76,7 +76,7 @@ extern void GKI_shutdown();
 HalNfcAdaptation *HalNfcAdaptation::mpInstance = NULL;
 HalAdaptationThreadMutex HalNfcAdaptation::sLock;
 HalAdaptationThreadMutex HalNfcAdaptation::sIoctlLock;
-sp<INxpNfc> HalNfcAdaptation::mHalNxpNfc;
+sp<INqNfc> HalNfcAdaptation::mNqHal;
 sp<INfc> HalNfcAdaptation::mHal;
 sp<INfcV1_1> HalNfcAdaptation::mHal_1_1;
 INfcClientCallback *HalNfcAdaptation::mCallback;
@@ -422,14 +422,14 @@ void HalNfcAdaptation::InitializeHalDeviceContext() {
                               (mHal->isRemote() ? "remote" : "local"));
   }
   mHal->linkToDeath(mNfcHalDeathRecipient, 0);
-  LOG(INFO) << StringPrintf("%s: INxpNfc::getService()", func);
-  mHalNxpNfc = INxpNfc::tryGetService();
-  if (mHalNxpNfc == nullptr) {
-    LOG(INFO) << StringPrintf("Failed to retrieve the NXPNFC HAL!");
+  LOG(INFO) << StringPrintf("%s: INqNfc::getService()", func);
+  mNqHal = INqNfc::tryGetService();
+  if (mNqHal == nullptr) {
+    LOG(INFO) << StringPrintf("Failed to retrieve the NQNFC HAL!");
   } else {
-    LOG(INFO) << StringPrintf("%s: INxpNfc::getService() returned %p (%s)",
-                              func, mHalNxpNfc.get(),
-                              (mHalNxpNfc->isRemote() ? "remote" : "local"));
+    LOG(INFO) << StringPrintf("%s: INqNfc::getService() returned %p (%s)",
+                              func, mNqHal.get(),
+                              (mNqHal->isRemote() ? "remote" : "local"));
   }
 }
 
@@ -610,8 +610,8 @@ int HalNfcAdaptation::HalIoctl(long arg, void *p_data) {
                           (pInpOutData->inp.data.transitConfig.len));
     data = tempStdVec;
   }
-  if (mHalNxpNfc != nullptr)
-    mHalNxpNfc->ioctl(arg, data, IoctlCallback);
+  if (mNqHal != nullptr)
+    mNqHal->ioctl(arg, data, IoctlCallback);
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s Ioctl Completed for Type=%llu", func,
                       (unsigned long long)pInpOutData->out.ioctlType);

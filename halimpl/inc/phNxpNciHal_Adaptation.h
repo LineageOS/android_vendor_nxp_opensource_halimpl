@@ -17,7 +17,9 @@
 #ifndef _PHNXPNCIHAL_ADAPTATION_H_
 #define _PHNXPNCIHAL_ADAPTATION_H_
 
+#ifdef ENABLE_ESE_CLIENT
 #include "EseUpdateChecker.h"
+#endif
 #include <android/hardware/nfc/1.2/INfc.h>
 #include <android/hardware/nfc/1.2/types.h>
 #include <hardware/hardware.h>
@@ -37,10 +39,10 @@ typedef struct
     int(*check_fw_dwnld_flag)(const struct nfc_nci_device *p_dev, uint8_t* param1);
 } pn547_dev_t;
 
-using ::android::hardware::nfc::V1_2::NfcConfig;
-
+#ifdef ENABLE_ESE_CLIENT
 extern ESE_UPDATE_STATE eseUpdateSpi;
 extern ESE_UPDATE_STATE eseUpdateDwp;
+#endif
 
 /* NXP HAL functions */
 
