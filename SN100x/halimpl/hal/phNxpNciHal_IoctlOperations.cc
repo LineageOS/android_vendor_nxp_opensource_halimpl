@@ -37,7 +37,9 @@ extern uint16_t wFwVer;
 /* NCI HAL Control structure */
 extern phNxpNciHal_Control_t nxpncihal_ctrl;
 extern phNxpNci_getCfg_info_t *mGetCfg_info;
+#ifdef ENABLE_ESE_CLIENT
 extern EseAdaptation *gpEseAdapt;
+#endif
 extern nfc_stack_callback_t *p_nfc_stack_cback_backup;
 #ifndef FW_DWNLD_FLAG
 extern uint8_t fw_dwnld_flag;
@@ -136,6 +138,7 @@ int phNxpNciHal_ioctlIf(long arg, void *p_data) {
   case HAL_NFC_IOCTL_GET_FEATURE_LIST:
     ret = phNxpNciHal_GetFeatureList(pInpOutData);
     break;
+#ifdef ENABLE_ESE_CLIENT
   case HAL_ESE_IOCTL_NFC_JCOP_DWNLD:
     if (pInpOutData == NULL) {
       NXPLOG_NCIHAL_E("%s : received invalid param", __func__);
@@ -150,6 +153,7 @@ int phNxpNciHal_ioctlIf(long arg, void *p_data) {
     if (gpEseAdapt != NULL)
       ret = gpEseAdapt->HalIoctl(HAL_ESE_IOCTL_NFC_JCOP_DWNLD, pInpOutData);
     [[fallthrough]];
+#endif
   case HAL_NFC_IOCTL_ESE_JCOP_DWNLD:
     if (pInpOutData == NULL) {
       NXPLOG_NCIHAL_E("%s : received invalid param", __func__);
@@ -164,7 +168,9 @@ int phNxpNciHal_ioctlIf(long arg, void *p_data) {
     ret = 0;
     break;
   case HAL_NFC_IOCTL_ESE_UPDATE_COMPLETE:
+#ifdef ENABLE_ESE_CLIENT
     ese_update = ESE_UPDATE_COMPLETED;
+#endif
     NXPLOG_NCIHAL_D("HAL_NFC_IOCTL_ESE_UPDATE_COMPLETE \n");
     phNxpNciHal_nfcStackCb(p_nfc_stack_cback_backup, HAL_NFC_STATUS_RESTART);
     ret = 0;

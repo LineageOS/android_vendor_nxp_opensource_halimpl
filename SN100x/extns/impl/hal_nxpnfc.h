@@ -190,15 +190,6 @@ typedef struct {
     long level;
 }nfc_nci_ExtnInputData_t;
 
-typedef struct {
-  uint8_t ese_listen_tech_mask;
-  uint8_t default_nfcee_disc_timeout;
-  uint8_t default_nfcee_timeout;
-  uint8_t ese_wired_prt_mask;
-  uint8_t uicc_wired_prt_mask;
-  uint8_t wired_mode_rf_field_enable;
-  uint8_t aid_block_route;
-} nq_nfc_config_t;
 
 /*
  * outputData_t :ioctl has multiple commands/responses
@@ -215,7 +206,6 @@ typedef union{
     uint8_t             chipType;
 #if(NXP_EXTNS == TRUE)
     nxp_nfc_config_t nxpConfigs;
-    nq_nfc_config_t nqConfigs;
 #endif
 }outputData_t;
 
