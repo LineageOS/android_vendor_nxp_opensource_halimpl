@@ -22,7 +22,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013-2018 NXP Semiconductors
+ *  Copyright (C) 2013-2019 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -159,20 +159,22 @@ namespace {
 
 size_t readConfigFile(const char* fileName, uint8_t** p_data) {
   FILE* fd = fopen(fileName, "rb");
-  uint8_t* buffer = NULL;
-  size_t read = 0;
   if (fd == nullptr) return 0;
 
   fseek(fd, 0L, SEEK_END);
   const size_t file_size = ftell(fd);
   rewind(fd);
-
-  if (file_size > 0) {
-    buffer = new uint8_t[file_size + 1];
-    read = fread(buffer, file_size, 1, fd);
-  } else {
-    ALOGE("%s Invalid file size file_size = %zu\n", __func__, file_size);
+  if((long)file_size < 0) {
+    ALOGE("%s Invalid file size file_size = %zu\n",__func__,file_size);
+    fclose(fd);
+    return 0;
   }
+  uint8_t* buffer = new uint8_t[file_size + 1];
+  if (!buffer) {
+    fclose(fd);
+    return 0;
+  }
+  size_t read = fread(buffer, file_size, 1, fd);
   fclose(fd);
 
   if (read == 1) {
@@ -180,9 +182,7 @@ size_t readConfigFile(const char* fileName, uint8_t** p_data) {
     *p_data = buffer;
     return file_size+1;
   }
-
-  if(buffer)
-    delete[] buffer;
+  delete[] buffer;
   return 0;
 }
 

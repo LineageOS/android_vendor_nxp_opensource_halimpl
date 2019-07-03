@@ -406,36 +406,6 @@ NFCSTATUS phNxpNciHal_process_ext_rsp(uint8_t* p_ntf, uint16_t* p_len) {
     }
   }
 
-  if(nfcFL.chipType != sn100u) {
-  if (*p_len == 4 && p_ntf[0] == 0x61 && p_ntf[1] == 0x07 ) {
-    unsigned long rf_update_enable = 0;
-    if(GetNxpNumValue(NAME_RF_STATUS_UPDATE_ENABLE, &rf_update_enable, sizeof(unsigned long))) {
-      NXPLOG_NCIHAL_D(
-        "RF_STATUS_UPDATE_ENABLE : %lu",rf_update_enable);
-    }
-    if(rf_update_enable == 0x01) {
-      nfc_nci_IoctlInOutData_t inpOutData;
-      uint8_t rf_state_update[] = {0x00};
-      memset(&inpOutData, 0x00, sizeof(nfc_nci_IoctlInOutData_t));
-      inpOutData.inp.data.nciCmd.cmd_len = sizeof(rf_state_update);
-      rf_state_update[0]=p_ntf[3];
-      memcpy(inpOutData.inp.data.nciCmd.p_cmd, rf_state_update,sizeof(rf_state_update));
-      inpOutData.inp.data_source = 2;
-      phNxpNciHal_ioctl(HAL_NFC_IOCTL_RF_STATUS_UPDATE, &inpOutData);
-    }
-  }
-  }
-  /*
-  else if(p_ntf[0] == 0x61 && p_ntf[1] == 0x05 && p_ntf[4] == 0x01 && p_ntf[5]
-  == 0x00 && p_ntf[6] == 0x01)
-  {
-      NXPLOG_NCIHAL_D("Picopass type 3-B with undefined protocol is not
-  supported, disabling");
-      p_ntf[4] = 0xFF;
-      p_ntf[5] = 0xFF;
-      p_ntf[6] = 0xFF;
-  }*/
-
   return status;
 }
 
@@ -470,8 +440,7 @@ static NFCSTATUS phNxpNciHal_ext_process_nfc_init_rsp(uint8_t* p_ntf, uint16_t* 
       } else
           status = NFCSTATUS_FAILED;
     } else if (p_ntf[0] == NCI_MT_NTF && ((p_ntf[1] & NCI_OID_MASK) == NCI_MSG_CORE_RESET)) {
-        if(p_ntf[3] == CORE_RESET_TRIGGER_TYPE_CORE_RESET_CMD_RECEIVED ||
-           p_ntf[3] == CORE_RESET_TRIGGER_TYPE_POWERED_ON) {
+        if(p_ntf[3] == CORE_RESET_TRIGGER_TYPE_CORE_RESET_CMD_RECEIVED) {
           NXPLOG_NCIHAL_D("CORE_RESET_NTF NCI2.0 reason CORE_RESET_CMD received !");
           nxpncihal_ctrl.nci_info.nci_version  = p_ntf[5];
           if(!nxpncihal_ctrl.hal_open_status)
@@ -545,13 +514,11 @@ static NFCSTATUS phNxpNciHal_process_ext_cmd_rsp(uint16_t cmd_len,
   nxpncihal_ctrl.ext_cb_data.status = NFCSTATUS_SUCCESS;
 
   /* Send ext command */
-  data_written = phNxpNciHal_write_unlocked(cmd_len, p_cmd);
+  data_written = phNxpNciHal_write_unlocked(cmd_len, p_cmd, ORIG_NXPHAL);
   if (data_written != cmd_len) {
     NXPLOG_NCIHAL_D("phNxpNciHal_write failed for hal ext");
     goto clean_and_return;
   }
-
-  HAL_ENABLE_EXT();
 
   /* Start timer */
   status = phOsalNfc_Timer_Start(timeoutTimerId, HAL_EXTNS_WRITE_RSP_TIMEOUT,
@@ -611,7 +578,7 @@ static NFCSTATUS phNxpNciHal_process_ext_cmd_rsp(uint16_t cmd_len,
     }
   }
 
-  if (nxpncihal_ctrl.ext_cb_data.status != NFCSTATUS_SUCCESS && p_cmd[0] != 0x2F && p_cmd[1] != 0x1 &&  p_cmd[2] == 0x01) {
+  if (nxpncihal_ctrl.ext_cb_data.status != NFCSTATUS_SUCCESS) {
     NXPLOG_NCIHAL_E(
         "Callback Status is failed!! Timer Expired!! Couldn't read it! 0x%x",
         nxpncihal_ctrl.ext_cb_data.status);
@@ -726,8 +693,9 @@ NFCSTATUS phNxpNciHal_write_ext(uint16_t* cmd_len, uint8_t* p_cmd_data,
       NXPLOG_NCIHAL_D(
           "Going through extns - Adding Mifare in RF Discovery - END");
     }
-  } else if (p_cmd_data[3] == 0x81 && p_cmd_data[4] == 0x01 &&
-             p_cmd_data[5] == 0x03) {
+  } else if ((*cmd_len >= 6) &&
+             (p_cmd_data[3] == 0x81 && p_cmd_data[4] == 0x01 &&
+              p_cmd_data[5] == 0x03)) {
     NXPLOG_NCIHAL_D("> Going through the set host list");
         if(nfcFL.chipType == sn100u)
         {
@@ -1195,64 +1163,6 @@ retryget:
     base_addr = NULL;
   }
   retry_cnt = 0;
-  return status;
-}
-
-/*******************************************************************************
- **
- ** Function:        phNxpNciHal_CheckFwRegFlashRequired()
- **
- ** Description:     Updates FW and Reg configurations if required
- **
- ** Returns:         status
- **
- ********************************************************************************/
-int phNxpNciHal_CheckFwRegFlashRequired(uint8_t* fw_update_req,
-                                        uint8_t* rf_update_req,
-                                        uint8_t skipEEPROMRead) {
-  NXPLOG_NCIHAL_D("phNxpNciHal_CheckFwRegFlashRequired() : enter");
-  UNUSED_PROP(rf_update_req);
-  int status = NFCSTATUS_OK;
-  long option;
-  if (fpRegRfFwDndl != NULL) {
-    status = fpRegRfFwDndl(fw_update_req, rf_update_req, skipEEPROMRead);
-  } else {
-    status = phDnldNfc_InitImgInfo();
-    NXPLOG_NCIHAL_D("FW version of the libsn100u.so binary = 0x%x", wFwVer);
-    NXPLOG_NCIHAL_D("FW version found on the device = 0x%x", wFwVerRsp);
-
-  if (!GetNxpNumValue(NAME_NXP_FLASH_CONFIG, &option, sizeof(unsigned long))) {
-    NXPLOG_NCIHAL_D("Flash option not found; giving default value");
-    option = 1;
-  }
-    switch (option) {
-      case FLASH_UPPER_VERSION:
-        wFwUpdateReq = (utf8_t)wFwVer > (utf8_t)wFwVerRsp ? true : false;
-        break;
-      case FLASH_DIFFERENT_VERSION:
-        wFwUpdateReq = ((wFwVerRsp & 0x0000FFFF) != wFwVer) ? true : false;
-        break;
-      case FLASH_ALWAYS:
-        wFwUpdateReq = true;
-        break;
-      default:
-        NXPLOG_NCIHAL_D("Invalid flash option selected");
-        status = NFCSTATUS_INVALID_PARAMETER;
-        break;
-    }
-  }
-  *fw_update_req = wFwUpdateReq;
-
-  if (false == wFwUpdateReq) {
-    NXPLOG_NCIHAL_D("FW update not required");
-    phDnldNfc_ReSetHwDevHandle();
-  } else {
-    property_set("nfc.fw.downloadmode_force", "1");
-  }
-
-  NXPLOG_NCIHAL_D("phNxpNciHal_CheckFwRegFlashRequired() : exit - status = %x "
-                   "wFwUpdateReq=%u, wRfUpdateReq=%u", status, *fw_update_req,
-                  *rf_update_req);
   return status;
 }
 
