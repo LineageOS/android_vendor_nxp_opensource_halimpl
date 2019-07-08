@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "hal_nxpnfc.h"
 #include <phNxpNciHal_ext.h>
 #include <phNxpNciHal.h>
+#include <log/log.h>
 #include <phTmlNfc.h>
 #include <phDal4Nfc_messageQueueLib.h>
 #include <phNxpNciHal_NfcDepSWPrio.h>
@@ -22,6 +24,10 @@
 #include <phNxpConfig.h>
 #include <phDnldNfc.h>
 #include "phNxpNciHal_nciParser.h"
+#include <cutils/properties.h>
+#ifdef ENABLE_ESE_CLIENT
+#include "hal_nxpese.h"
+#endif
 #include <phNxpNciHal_Adaptation.h>
 
 /* Timeout value to wait for response from PN548AD */
@@ -62,7 +68,8 @@ extern uint32_t timeoutTimerId;
 extern uint32_t gSvddSyncOff_Delay; /*default delay*/
 tNfc_featureList nfcFL;
 
-extern NFCSTATUS read_retry();
+void phNxpNciHal_sendRfEvtToEseHal(uint8_t rfEvtType);
+
 /************** HAL extension functions ***************************************/
 static void hal_extns_write_rsp_timeout_cb(uint32_t TimerId, void* pContext);
 
@@ -93,6 +100,27 @@ void phNxpNciHal_ext_init(void) {
 
 /*******************************************************************************
 **
+** Function         phNxpNciHal_sendRfEvtToEseHal
+**
+** Description      send RF Events to Ese Hal.
+**                  rfEvtType : 0x00 for RF OFF
+**                            : 0X01 for RF ON
+**
+*******************************************************************************/
+void phNxpNciHal_sendRfEvtToEseHal(uint8_t rfEvtType) {
+  nfc_nci_IoctlInOutData_t inpOutData;
+  uint8_t rf_state_update[] = {0x00};
+  memset(&inpOutData, 0x00, sizeof(nfc_nci_IoctlInOutData_t));
+  inpOutData.inp.data.nciCmd.cmd_len = sizeof(rf_state_update);
+  rf_state_update[0] = rfEvtType;
+  memcpy(inpOutData.inp.data.nciCmd.p_cmd, rf_state_update,
+         sizeof(rf_state_update));
+  inpOutData.inp.data_source = 2;
+  phNxpNciHal_ioctl(HAL_NFC_IOCTL_RF_STATUS_UPDATE, &inpOutData);
+}
+
+/*******************************************************************************
+**
 ** Function         phNxpNciHal_process_ext_rsp
 **
 ** Description      Process extension function response
@@ -110,6 +138,15 @@ NFCSTATUS phNxpNciHal_process_ext_rsp(uint8_t* p_ntf, uint16_t* p_len) {
         if(gParserCreated)
             phNxpNciHal_parsePacket(p_ntf,*p_len);
     }
+
+  if (p_ntf[0] == 0x61 && p_ntf[1] == 0x05 && *p_len < 14) {
+    if(*p_len <= 6) {
+      android_errorWriteLog(0x534e4554, "118152591");
+    }
+    NXPLOG_NCIHAL_E("RF_INTF_ACTIVATED_NTF length error!");
+    status = NFCSTATUS_FAILED;
+    return status;
+  }
 
   if (p_ntf[0] == 0x61 && p_ntf[1] == 0x05 && p_ntf[4] == 0x03 &&
       p_ntf[5] == 0x05 && nxpprofile_ctrl.profile_type == EMV_CO_PROFILE) {
@@ -300,15 +337,7 @@ NFCSTATUS phNxpNciHal_process_ext_rsp(uint8_t* p_ntf, uint16_t* p_len) {
       NXPLOG_NCIHAL_D("RF_STATUS_UPDATE_ENABLE : %lu", rf_update_enable);
     }
     if (rf_update_enable == 0x01) {
-      nfc_nci_IoctlInOutData_t inpOutData;
-      uint8_t rf_state_update[] = {0x00};
-      memset(&inpOutData, 0x00, sizeof(nfc_nci_IoctlInOutData_t));
-      inpOutData.inp.data.nciCmd.cmd_len = sizeof(rf_state_update);
-      rf_state_update[0] = p_ntf[3];
-      memcpy(inpOutData.inp.data.nciCmd.p_cmd, rf_state_update,
-             sizeof(rf_state_update));
-      inpOutData.inp.data_source = 2;
-      phNxpNciHal_ioctl(HAL_NFC_IOCTL_RF_STATUS_UPDATE, &inpOutData);
+      phNxpNciHal_sendRfEvtToEseHal(p_ntf[3]);
     }
   } else if (p_ntf[0] == 0x61 && p_ntf[1] == 0x09) {
     unsigned long rf_update_enable = 0;
@@ -372,7 +401,8 @@ if(nfcFL.nfccFL._NFCC_FORCE_NCI1_0_INIT == true) {
   }
   /*Retreive reset ntf reason code irrespective of NCI 1.0 or 2.0*/
   if (p_ntf[0] == 0x60 && p_ntf[1] == 0x00 ){
-    nxpncihal_ctrl.nci_info.lastResetNtfReason = p_ntf[3];
+    if ( p_ntf[3] == FW_DBG_REASON_AVAILABLE)
+      property_set("persist.nfc.core_reset_debug_info", "true");
   }
 }
 
@@ -469,7 +499,7 @@ if (((nfcFL.nfccFL._NFCC_FORCE_NCI1_0_INIT) &&
 ******************************************************************************/
 static NFCSTATUS phNxpNciHal_ext_process_nfc_init_rsp(uint8_t* p_ntf, uint16_t* p_len) {
    NFCSTATUS status = NFCSTATUS_SUCCESS;
-   uint8_t nfcdep_detected = 0x00;
+
     /* Parsing CORE_RESET_RSP and CORE_RESET_NTF to update NCI version.*/
     if(p_ntf == NULL || *p_len == 0x00) {
       return NFCSTATUS_FAILED;
@@ -504,18 +534,12 @@ static NFCSTATUS phNxpNciHal_ext_process_nfc_init_rsp(uint8_t* p_ntf, uint16_t* 
             for (i = 0; i < *p_len; i++) {
               snprintf(&print_buffer[i * 2], 3, "%02X", p_ntf[i]);
             }
-            NXPLOG_NCIHAL_E("CORE_RESET_NTF received !");
+            NXPLOG_NCIHAL_D("CORE_RESET_NTF received !");
             NXPLOG_NCIR_E("len = %3d > %s", *p_len, print_buffer);
-              if(nfcFL.chipType == pn548C2) {
-                  if (nfcdep_detected &&
-                          !(p_ntf[2] == 0x06 && p_ntf[3] == 0xA0 && p_ntf[4] == 0x00 &&
-                                  ((p_ntf[5] == 0xC9 && p_ntf[6] == 0x95 && p_ntf[7] == 0x00 &&
-                                          p_ntf[8] == 0x00) ||
-                                          (p_ntf[5] == 0x07 && p_ntf[6] == 0x39 && p_ntf[7] == 0xF2 &&
-                                                  p_ntf[8] == 0x00)))) {
-                      nfcdep_detected = 0x00;
-                  }
-              }
+
+            /*Retreive reset ntf reason code irrespective of NCI 1.0 or 2.0*/
+            if (p_ntf[3] == FW_DBG_REASON_AVAILABLE)
+              property_set("persist.nfc.core_reset_debug_info", "true");
         phNxpNciHal_emergency_recovery();
         status = NFCSTATUS_FAILED;
       } /* Parsing CORE_INIT_RSP*/
@@ -719,8 +743,10 @@ NFCSTATUS phNxpNciHal_write_ext(uint16_t* cmd_len, uint8_t* p_cmd_data,
   NFCSTATUS status = NFCSTATUS_SUCCESS;
 
   unsigned long retval = 0;
-  GetNxpNumValue(NAME_MIFARE_READER_ENABLE, &retval, sizeof(unsigned long));
-
+  if (GetNxpNumValue(NAME_MIFARE_READER_ENABLE, &retval,
+                     sizeof(unsigned long))) {
+    NXPLOG_NCIHAL_D("NAME_MIFARE_READER_ENABLE : %lu", retval);
+  }
   phNxpNciHal_NfcDep_cmd_ext(p_cmd_data, cmd_len);
 
   if (phNxpDta_IsEnable() == true) {
@@ -1136,9 +1162,10 @@ bool_t phNxpNciHal_check_wait_for_ntf() {
 static void hal_extns_write_rsp_timeout_cb(uint32_t timerId, void* pContext) {
   UNUSED(timerId);
   UNUSED(pContext);
-  NXPLOG_NCIHAL_E("hal_extns_write_rsp_timeout_cb - write timeout!!!");
+  NXPLOG_NCIHAL_D("hal_extns_write_rsp_timeout_cb - write timeout!!!");
   nxpncihal_ctrl.ext_cb_data.status = NFCSTATUS_FAILED;
   usleep(1);
+  sem_post(&(nxpncihal_ctrl.syncSpiNfc));
   SEM_POST(&(nxpncihal_ctrl.ext_cb_data));
 
   return;

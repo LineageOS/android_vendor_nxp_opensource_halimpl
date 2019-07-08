@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2018 NXP
+ *  Copyright 2018-2019 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,14 +24,15 @@
 #define MAX_IOCTL_TRANSCEIVE_CMD_LEN 256
 #define MAX_IOCTL_TRANSCEIVE_RESP_LEN 256
 #define MAX_ATR_INFO_LEN              128
-#define HAL_NFC_IOCTL_FIRST_EVT 0xA0
+
 enum {
-    HAL_NFC_IOCTL_NCI_TRANSCEIVE = 0xF1,
-    HAL_NFC_IOCTL_NFC_JCOP_DWNLD,
+    HAL_NFC_ENABLE_I2C_FRAGMENTATION_EVT = 0x08,
+    HAL_NFC_POST_MIN_INIT_CPLT_EVT       = 0x09,
+    HAL_NFC_WRITE_COMPLETE = 0x0A
 };
 
 enum {
-  HAL_NFC_IOCTL_P61_IDLE_MODE = HAL_NFC_IOCTL_FIRST_EVT,
+  HAL_NFC_IOCTL_P61_IDLE_MODE = 0,
   HAL_NFC_IOCTL_P61_WIRED_MODE,
   HAL_NFC_IOCTL_P61_PWR_MODE,
   HAL_NFC_IOCTL_P61_DISABLE_MODE,
@@ -41,42 +42,39 @@ enum {
   HAL_NFC_IOCTL_CHECK_FLASH_REQ,
   HAL_NFC_IOCTL_FW_DWNLD,
   HAL_NFC_IOCTL_FW_MW_VER_CHECK,
-  HAL_NFC_IOCTL_DISABLE_HAL_LOG,
+  HAL_NFC_IOCTL_DISABLE_HAL_LOG, /* 10 */
+  HAL_NFC_IOCTL_NCI_TRANSCEIVE,
   HAL_NFC_IOCTL_P61_GET_ACCESS,
   HAL_NFC_IOCTL_P61_REL_ACCESS,
+  HAL_NFC_IOCTL_P61_REL_ESE_PWR,
+  HAL_NFC_IOCTL_P61_SET_ESE_PWR,
   HAL_NFC_IOCTL_ESE_CHIP_RST,
+  HAL_NFC_SET_SPM_PWR,
+  HAL_NFC_INHIBIT_PWR_CNTRL,
   HAL_NFC_IOCTL_REL_SVDD_WAIT,
-  HAL_NFC_IOCTL_SET_JCP_DWNLD_ENABLE,
+  HAL_NFC_IOCTL_SET_JCP_DWNLD_ENABLE, /* 20 */
+  HAL_NFC_IOCTL_SPI_DWP_SYNC,
+  HAL_NFC_IOCTL_RF_STATUS_UPDATE,
   HAL_NFC_IOCTL_SET_JCP_DWNLD_DISABLE,
   HAL_NFC_IOCTL_SET_NFC_SERVICE_PID,
   HAL_NFC_IOCTL_REL_DWP_WAIT,
   HAL_NFC_IOCTL_GET_FEATURE_LIST,
-  HAL_NFC_IOCTL_SPI_DWP_SYNC,
-  HAL_NFC_IOCTL_RF_STATUS_UPDATE,
-  HAL_NFC_SET_SPM_PWR,
   HAL_NFC_SET_POWER_SCHEME,
   HAL_NFC_GET_SPM_STATUS,
   HAL_NFC_GET_ESE_ACCESS,
-  HAL_NFC_SET_DWNLD_STATUS,
-  HAL_NFC_INHIBIT_PWR_CNTRL,
+  HAL_NFC_SET_DWNLD_STATUS, /* 30 */
+  HAL_NFC_GET_NXP_CONFIG,
+  HAL_NFC_IOCTL_RF_ACTION_NTF,
+  HAL_NFC_IOCTL_SET_TRANSIT_CONFIG,
+  HAL_NFC_IOCTL_NFCEE_SESSION_RESET,
+  HAL_ESE_IOCTL_OMAPI_TRY_GET_ESE_SESSION,
+  HAL_ESE_IOCTL_OMAPI_RELEASE_ESE_SESSION,
   HAL_NFC_IOCTL_ESE_JCOP_DWNLD,
   HAL_NFC_IOCTL_ESE_UPDATE_COMPLETE,
-#if (NXP_EXTNS == TRUE)
-  HAL_NFC_IOCTL_SET_TRANSIT_CONFIG,
-  HAL_NFC_IOCTL_GET_ESE_UPDATE_STATE,
-  HAL_NFC_IOCTL_GET_NXP_CONFIG,
-#endif
- HAL_NFC_GET_NXP_CONFIG,
-  HAL_NFC_IOCTL_NFCEE_SESSION_RESET,
-  HAL_NFC_IOCTL_P61_REL_ESE_PWR,
-  HAL_NFC_IOCTL_P61_SET_ESE_PWR,
-  HAL_NFC_IOCTL_RF_ACTION_NTF,
+  HAL_NFC_IOCTL_HCI_INIT_STATUS_UPDATE,
+  HAL_NFC_IOCTL_HCI_INIT_STATUS_UPDATE_COMPLETE /* 40 */
 };
 
-enum {
-    HAL_NFC_ENABLE_I2C_FRAGMENTATION_EVT = 0x08,
-    HAL_NFC_POST_MIN_INIT_CPLT_EVT       = 0x09
-};
 /*
  * Data structures provided below are used of Hal Ioctl calls
  */
@@ -230,24 +228,11 @@ typedef struct {
   nfc_nci_ExtnOutputData_t out;
 } nfc_nci_IoctlInOutData_t;
 
-/*
- * nxpnfc_nci_device_t :data structure for nxp's extended nfc_nci_device
- * Extra features added are
- * -ioctl(manage sync between  and DWP & SPI)
- * -check request for fw download
- */
-typedef struct nxpnfc_nci_device {
-  // nfc_nci_device_t nci_device;
-  /*
-  * (*ioctl)() For P61 power management synchronization
-  * between NFC Wired and SPI.
-  */
-  int (*ioctl)(const struct nxpnfc_nci_device* p_dev, long arg, void* p_data);
-  /*
-  * (*check_fw_dwnld_flag)() Is called to get FW downlaod request.
-  */
-  int (*check_fw_dwnld_flag)(const struct nxpnfc_nci_device* p_dev,
-                             uint8_t* param1);
-} nxpnfc_nci_device_t;
+enum NxpNfcHalStatus {
+    /** In case of an error, HCI network needs to be re-initialized */
+    HAL_NFC_STATUS_RESTART = 0x30,
+    HAL_NFC_HCI_NV_RESET = 0x40,
+    HAL_NFC_CONFIG_ESE_LINK_COMPLETE = 0x50
+};
 
 #endif  // ANDROID_HARDWARE_HAL_NXPNFC_V1_0_H

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 NXP Semiconductors
+ * Copyright (C) 2015-2019 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,16 @@
 #ifndef _PHNXPNCIHAL_ADAPTATION_H_
 #define _PHNXPNCIHAL_ADAPTATION_H_
 
+#ifdef ENABLE_ESE_CLIENT
+#include "EseUpdateChecker.h"
+#endif
+#include <android/hardware/nfc/1.2/INfc.h>
+#include <android/hardware/nfc/1.2/types.h>
 #include <hardware/hardware.h>
 #include <hardware/nfc.h>
 
-#include <android/hardware/nfc/1.1/INfc.h>
-#include <android/hardware/nfc/1.1/types.h>
-
 using namespace std;
-using ::android::hardware::nfc::V1_1::NfcConfig;
+using ::android::hardware::nfc::V1_2::NfcConfig;
 
 #define NFC_NCI_NXP_PN54X_HARDWARE_MODULE_ID "nfc_nci.nqx"
 
@@ -37,7 +39,10 @@ typedef struct
     int(*check_fw_dwnld_flag)(const struct nfc_nci_device *p_dev, uint8_t* param1);
 } pn547_dev_t;
 
-
+#ifdef ENABLE_ESE_CLIENT
+extern ESE_UPDATE_STATE eseUpdateSpi;
+extern ESE_UPDATE_STATE eseUpdateDwp;
+#endif
 
 /* NXP HAL functions */
 
@@ -53,7 +58,9 @@ int phNxpNciHal_control_granted(void);
 int phNxpNciHal_power_cycle(void);
 string phNxpNciHal_getNfcChipId();
 string phNxpNciHal_getNfcFirmwareVersion();
-void phNxpNciHal_getVendorConfig(NfcConfig& config);
+void phNxpNciHal_getVendorConfig(
+    android::hardware::nfc::V1_1::NfcConfig &config);
+void phNxpNciHal_getVendorConfig_1_2(NfcConfig &config);
 int phNxpNciHal_MinInit(nfc_stack_callback_t* p_cback,
                         nfc_stack_data_callback_t* p_data_cback);
 void phNxpNciHal_reset_nfcee_session(bool force_session_reset);

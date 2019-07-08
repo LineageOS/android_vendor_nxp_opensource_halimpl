@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  *
- *  Copyright (C) 2018 NXP Semiconductors
+ *  Copyright (C) 2018-2019 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,7 +32,14 @@ using android::hardware::secure_element::V1_0::ISecureElementHalCallback;
 using android::hardware::hidl_vec;
 using android::sp;
 
+#ifdef ENABLE_ESE_CLIENT
 using vendor::nxp::nxpese::V1_0::INxpEse;
+using vendor::nxp::eventprocessor::V1_0::INxpEseEvtProcessor;
+#endif
+using ::android::hardware::hidl_death_recipient;
+using ::android::wp;
+using ::android::hidl::base::V1_0::IBase;
+
 
 extern bool nfc_debug_enabled;
 
@@ -44,7 +51,10 @@ extern "C" void delete_stack_non_volatile_store(bool forceDelete);
 EseAdaptation* EseAdaptation::mpInstance = NULL;
 ThreadMutex EseAdaptation::sLock;
 ThreadMutex EseAdaptation::sIoctlLock;
+#ifdef ENABLE_ESE_CLIENT
 sp<INxpEse> EseAdaptation::mHalNxpEse;
+sp<INxpEseEvtProcessor> EseAdaptation::mHalNxpEseEvtProcessor;
+#endif
 sp<ISecureElement> EseAdaptation::mHal;
 tHAL_ESE_CBACK* EseAdaptation::mHalCallback = NULL;
 tHAL_ESE_DATA_CBACK* EseAdaptation::mHalDataCallback = NULL;
@@ -61,6 +71,29 @@ ThreadCondVar EseAdaptation::mHalInitCompletedEvent;
 //static uint8_t evt_status;
 #endif
 
+#ifdef ENABLE_ESE_CLIENT
+class NxpEseDeathRecipient : public hidl_death_recipient {
+ public:
+  sp<INxpEse> mHalNxpEseDeathRsp;
+  NxpEseDeathRecipient(sp<INxpEse>& mHalNxpEse) {
+    mHalNxpEseDeathRsp = mHalNxpEse;
+  }
+  virtual void serviceDied(
+      uint64_t /* cookie */,
+      const wp<::android::hidl::base::V1_0::IBase>& /* who */) {
+    ALOGE("NxpEseDeathRecipient::serviceDied - Ese HalService died");
+    mHalNxpEseDeathRsp->unlinkToDeath(this);
+    mHalNxpEseDeathRsp = nullptr;
+    EseAdaptation::mHalNxpEse = nullptr;
+    /* mHalNxpEseEvtProcessor & mHalNxpEse are Interfaces of
+     * android.hardware.secure_element hidl-service. So seperate HIDL
+     * DeathRecipient Implementation is not needed for each Intf. */
+    EseAdaptation::mHalNxpEseEvtProcessor = nullptr;
+    EseAdaptation::GetInstance().InitializeHalDeviceContext();
+  }
+};
+#endif
+
 /*******************************************************************************
 **
 ** Function:    EseAdaptation::EseAdaptation()
@@ -71,6 +104,9 @@ ThreadCondVar EseAdaptation::mHalInitCompletedEvent;
 **
 *******************************************************************************/
 EseAdaptation::EseAdaptation() {
+#ifdef ENABLE_ESE_CLIENT
+  mCurrentIoctlData = NULL;
+#endif
   memset(&mSpiHalEntryFuncs, 0, sizeof(mSpiHalEntryFuncs));
 }
 
@@ -112,18 +148,11 @@ EseAdaptation& EseAdaptation::GetInstance() {
 *******************************************************************************/
 void EseAdaptation::Initialize() {
   const char* func = "EseAdaptation::Initialize";
-  uint8_t cmd_ese_nxp[] = {0x2F, 0x01, 0x01, 0x01};
   ALOGD_IF(nfc_debug_enabled, "%s: enter", func);
 
   mHalCallback = NULL;
-  ese_nxp_IoctlInOutData_t* pInpOutData;
-  pInpOutData =
-      (ese_nxp_IoctlInOutData_t*)malloc(sizeof(ese_nxp_IoctlInOutData_t));
-  memset(pInpOutData, 0x00, sizeof(ese_nxp_IoctlInOutData_t));
-  pInpOutData->inp.data.nxpCmd.cmd_len = sizeof(cmd_ese_nxp);
-  memcpy(pInpOutData->inp.data.nxpCmd.p_cmd, cmd_ese_nxp, sizeof(cmd_ese_nxp));
   InitializeHalDeviceContext();
-  if (pInpOutData != NULL) free(pInpOutData);
+
   ALOGD_IF(nfc_debug_enabled, "%s: exit", func);
 }
 
@@ -186,14 +215,36 @@ tHAL_ESE_ENTRY* EseAdaptation::GetHalEntryFuncs() {
 void EseAdaptation::InitializeHalDeviceContext() {
   const char* func = "EseAdaptation::InitializeHalDeviceContext";
   ALOGD_IF(nfc_debug_enabled, "%s: enter", func);
+#ifdef ENABLE_ESE_CLIENT
   ALOGD_IF(nfc_debug_enabled, "%s: INxpEse::tryGetService()", func);
-  mHalNxpEse = INxpEse::tryGetService();
-  ALOGD_IF(mHalNxpEse == nullptr, "%s: Failed to retrieve the NXP ESE HAL!", func);
+  for (int cnt = 0; ((mHalNxpEse == nullptr) && (cnt < 3)); cnt++) {
+    mHalNxpEse = INxpEse::tryGetService();
+    ALOGD_IF(mHalNxpEse == nullptr, "%s: Failed to retrieve the NXP ESE HAL!", func);
+    if(mHalNxpEse == nullptr)
+      usleep(100 * 1000);
+  }
   if(mHalNxpEse != nullptr) {
     ALOGD_IF(nfc_debug_enabled, "%s: INxpEse::getService() returned %p (%s)",
              func, mHalNxpEse.get(),
              (mHalNxpEse->isRemote() ? "remote" : "local"));
+    mNxpEseDeathRecipient = new NxpEseDeathRecipient(mHalNxpEse);
+    mHalNxpEse->linkToDeath(mNxpEseDeathRecipient, 0);
   }
+
+  for (int cnt = 0; ((mHalNxpEseEvtProcessor == nullptr) && (cnt < 3)); cnt++) {
+    mHalNxpEseEvtProcessor = INxpEseEvtProcessor::tryGetService();
+    ALOGD_IF(mHalNxpEseEvtProcessor == nullptr,
+             "%s: Failed to retrieve the NXP ESE EVT PROCESSOR!", func);
+    if (mHalNxpEseEvtProcessor == nullptr)
+      usleep(100 * 1000);
+  }
+  if (mHalNxpEseEvtProcessor != nullptr) {
+    ALOGD_IF(nfc_debug_enabled,
+             "%s: INxpEseEvtProcessor::getService() returned %p (%s)", func,
+             mHalNxpEseEvtProcessor.get(),
+             (mHalNxpEseEvtProcessor->isRemote() ? "remote" : "local"));
+  }
+#endif
   /*Transceive NCI_INIT_CMD*/
   ALOGD_IF(nfc_debug_enabled, "%s: exit", func);
 }
@@ -224,7 +275,8 @@ void EseAdaptation::HalDeviceContextDataCallback(uint16_t data_len,
 ** Returns:     None.
 **
 *******************************************************************************/
-void IoctlCallback(hidl_vec<uint8_t> outputData) {
+void IoctlCallback(hidl_vec<uint8_t> /* outputData */) {
+#ifdef ENABLE_ESE_CLIENT
   const char* func = "IoctlCallback";
   ese_nxp_ExtnOutputData_t* pOutData =
       (ese_nxp_ExtnOutputData_t*)&outputData[0];
@@ -235,6 +287,7 @@ void IoctlCallback(hidl_vec<uint8_t> outputData) {
    * This data will be sent back to libese*/
   memcpy(&pAdaptation->mCurrentIoctlData->out, &outputData[0],
          sizeof(ese_nxp_ExtnOutputData_t));
+#endif
 }
 /*******************************************************************************
 **
@@ -251,7 +304,9 @@ void IoctlCallback(hidl_vec<uint8_t> outputData) {
 ** Returns:     -1 or 0.
 **
 *******************************************************************************/
-int EseAdaptation::HalIoctl(long arg, void* p_data) {
+int EseAdaptation::HalIoctl(long /* arg */ , void* /* p_data */) {
+  int ret = -1;
+#ifdef ENABLE_ESE_CLIENT
   const char* func = "EseAdaptation::HalIoctl";
   hidl_vec<uint8_t> data;
   AutoThreadMutex a(sIoctlLock);
@@ -264,6 +319,8 @@ int EseAdaptation::HalIoctl(long arg, void* p_data) {
   ALOGD_IF(nfc_debug_enabled, "%s Ioctl Completed for Type=%lu", func,
            (unsigned long)pInpOutData->out.ioctlType);
   return (pInpOutData->out.result);
+#endif
+  return ret;
 }
 
 /*******************************************************************************
@@ -276,7 +333,8 @@ int EseAdaptation::HalIoctl(long arg, void* p_data) {
 ** Returns:     none
 **
 *******************************************************************************/
-void EseAdaptation::HalNfccNtf(long arg, void *p_data) {
+void EseAdaptation::HalNfccNtf(long  /* arg */, void * /* p_data */) {
+#ifdef ENABLE_ESE_CLIENT
   const char *func = "EseAdaptation::HalNfccNtf";
   hidl_vec<uint8_t> data;
   AutoThreadMutex a(sIoctlLock);
@@ -285,11 +343,12 @@ void EseAdaptation::HalNfccNtf(long arg, void *p_data) {
   pInpOutData->inp.context = &EseAdaptation::GetInstance();
   EseAdaptation::GetInstance().mCurrentIoctlData = pInpOutData;
   data.setToExternal((uint8_t *)pInpOutData, sizeof(ese_nxp_IoctlInOutData_t));
-  if (mHalNxpEse != nullptr)
-    mHalNxpEse->nfccNtf(arg, data);
+  if (mHalNxpEseEvtProcessor != nullptr)
+    mHalNxpEseEvtProcessor->nfccNtf(arg, data);
   ALOGD_IF(nfc_debug_enabled, "%s Ioctl Completed for Type=%lu", func,
            (unsigned long)pInpOutData->out.ioctlType);
   return;
+#endif
 }
 
 /*******************************************************************************

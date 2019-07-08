@@ -88,7 +88,7 @@ uint32_t phOsalNfc_Timer_Create(void) {
     dwTimerId += PH_NFC_TIMER_BASE_ADDRESS;
     se.sigev_value.sival_int = (int)dwTimerId;
     /* Create POSIX timer */
-    if (timer_create(CLOCK_MONOTONIC, &se, &(pTimerHandle->hTimerHandle)) ==
+    if (timer_create(CLOCK_REALTIME, &se, &(pTimerHandle->hTimerHandle)) ==
         -1) {
       dwTimerId = PH_NFC_TIMER_ID_INVALID;
     } else {

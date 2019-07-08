@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 NXP Semiconductors
+ * Copyright (C) 2015-2019 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,5 +28,6 @@ bool_t phNxpNciHal_check_wait_for_ntf(void);
 NFCSTATUS phNxpNciHal_send_ese_hal_cmd(uint16_t cmd_len, uint8_t* p_cmd);
 NFCSTATUS phNxpNciHal_write_ext(uint16_t* cmd_len, uint8_t* p_cmd_data,
                                 uint16_t* rsp_len, uint8_t* p_rsp_data);
+void phNxpNciHal_sendRfEvtToEseHal(uint8_t rfEvtType);
 
 #endif /* _PHNXPNICHAL_EXT_H_ */

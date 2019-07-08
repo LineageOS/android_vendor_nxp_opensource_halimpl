@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 NXP Semiconductors
+ * Copyright (C) 2018-2019 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ typedef enum {
   phPalEse_e_SetPowerScheme,              /*!< Set power scheme */
   phPalEse_e_GetSPMStatus,                /*!< Get SPM(power mgt) status */
   phPalEse_e_DisablePwrCntrl,
-  phPalEse_e_SetJcopDwnldState, /*!< Set Jcop Download state */
 } phPalEse_ControlCode_t;
 
 /*******************************************************************************

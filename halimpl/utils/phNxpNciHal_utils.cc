@@ -148,7 +148,7 @@ int listRemove(struct listHead* pList, void* pData) {
 
   if (pList->pFirst == NULL) {
     /* Empty list */
-    NXPLOG_NCIHAL_E("Failed to deallocate (list empty)");
+    NXPLOG_NCIHAL_D("Failed to deallocate (list empty)");
     result = 0;
     goto clean_and_return;
   }
@@ -471,5 +471,5 @@ void phNxpNciHal_print_packet(const char* pString, const uint8_t* p_data,
 
 void phNxpNciHal_emergency_recovery(void) {
   NXPLOG_NCIHAL_E("%s: abort()", __func__);
-  //    abort();
+  abort();
 }
