@@ -26,43 +26,18 @@
 #define HAL_NFC_IOCTL_FIRST_EVT 0xA0
 enum {
   HAL_NFC_IOCTL_NCI_TRANSCEIVE = 0xF1,
-  HAL_NFC_IOCTL_NFC_JCOP_DWNLD,
   HAL_NFC_IOCTL_ESE_HARD_RESET,
 };
 
 enum {
-  HAL_NFC_IOCTL_P61_IDLE_MODE = HAL_NFC_IOCTL_FIRST_EVT,
-  HAL_NFC_IOCTL_P61_WIRED_MODE,
-  HAL_NFC_IOCTL_P61_PWR_MODE,
-  HAL_NFC_IOCTL_P61_DISABLE_MODE,
-  HAL_NFC_IOCTL_P61_ENABLE_MODE,
-  HAL_NFC_IOCTL_SET_BOOT_MODE,
-  HAL_NFC_IOCTL_GET_CONFIG_INFO,
-  HAL_NFC_IOCTL_CHECK_FLASH_REQ,
-  HAL_NFC_IOCTL_FW_DWNLD,
-  HAL_NFC_IOCTL_FW_MW_VER_CHECK,
-  HAL_NFC_IOCTL_DISABLE_HAL_LOG,
-  HAL_NFC_IOCTL_P61_GET_ACCESS,
-  HAL_NFC_IOCTL_P61_REL_ACCESS,
-  HAL_NFC_IOCTL_ESE_CHIP_RST,
-  HAL_NFC_IOCTL_REL_SVDD_WAIT,
-  HAL_NFC_IOCTL_SET_JCP_DWNLD_ENABLE,
-  HAL_NFC_IOCTL_SET_JCP_DWNLD_DISABLE,
-  HAL_NFC_IOCTL_SET_NFC_SERVICE_PID,
-  HAL_NFC_IOCTL_REL_DWP_WAIT,
+  HAL_NFC_IOCTL_CHECK_FLASH_REQ = HAL_NFC_IOCTL_FIRST_EVT,
   HAL_NFC_IOCTL_GET_FEATURE_LIST,
-  HAL_NFC_IOCTL_SPI_DWP_SYNC,
-  HAL_NFC_IOCTL_RF_STATUS_UPDATE,
   HAL_NFC_SET_SPM_PWR,
-  HAL_NFC_SET_POWER_SCHEME,
-  HAL_NFC_GET_SPM_STATUS,
-  HAL_NFC_GET_ESE_ACCESS,
-  HAL_NFC_SET_DWNLD_STATUS,
-  HAL_NFC_INHIBIT_PWR_CNTRL,
   HAL_NFC_IOCTL_ESE_JCOP_DWNLD,
   HAL_NFC_IOCTL_ESE_UPDATE_COMPLETE
 #if (NXP_EXTNS == TRUE)
- ,HAL_NFC_IOCTL_SET_TRANSIT_CONFIG,
+  ,
+  HAL_NFC_IOCTL_SET_TRANSIT_CONFIG,
   HAL_NFC_IOCTL_GET_ESE_UPDATE_STATE,
   HAL_NFC_IOCTL_GET_NXP_CONFIG,
 #endif
@@ -85,6 +60,38 @@ typedef struct
 } nfc_nci_ExtnCmd_t;
 
 #if(NXP_EXTNS == TRUE)
+/*
+ * nxp_nfc_rfStorage_t shall contain rf config file storage path and
+ * length of the path
+ */
+typedef struct {
+  long len;
+  char path[264];
+}nxp_nfc_rfStorage_t;
+/*
+ * nxp_nfc_fwStorage_t shall contain fw config file storage path and
+ * length of the path
+ */
+typedef struct {
+  long len;
+  char path[264];
+}nxp_nfc_fwStorage_t;
+/*
+ * nxp_nfc_coreConf_t shall contain core conf command and
+ * length of the command
+ */
+typedef struct {
+  long len;
+  uint8_t cmd[264];
+}nxp_nfc_coreConf_t;
+/*
+ * nxp_nfc_rfFileVerInfo_t shall contain rf file version info and
+ *length of it
+ */
+typedef struct {
+  long len;
+  uint8_t ver[2];
+}nxp_nfc_rfFileVerInfo_t;
 /*
  * nxp_nfc_config_t shall contain the respective flag value from the
  * libnfc-nxp.conf
@@ -117,6 +124,12 @@ typedef struct {
   uint8_t nxpLogNcirLogLevel;
   uint8_t seApduGateEnabled;
   uint8_t pollEfdDelay;
+  uint8_t mergeSakEnable;
+  uint8_t stagTimeoutCfg;
+  nxp_nfc_rfStorage_t rfStorage;
+  nxp_nfc_fwStorage_t fwStorage;
+  nxp_nfc_coreConf_t coreConf;
+  nxp_nfc_rfFileVerInfo_t rfFileVersInfo;
 } nxp_nfc_config_t;
 #endif
 /*
@@ -127,6 +140,16 @@ typedef struct
     uint16_t rsp_len;
     uint8_t  p_rsp[MAX_IOCTL_TRANSCEIVE_RESP_LEN];
 } nfc_nci_ExtnRsp_t;
+#if(NXP_EXTNS == TRUE)
+/*
+ * NxpConfig_t shall contain Nxp config value and
+ * Configuration length
+ */
+typedef struct {
+  long len;
+  char *val;
+} NxpConfig_t;
+#endif
 /*
  * TransitConfig_t shall contain transit config value and transit
  * Configuration length
@@ -146,6 +169,9 @@ typedef union {
     uint32_t          timeoutMilliSec;
     long              nfcServicePid;
     TransitConfig_t transitConfig;
+#if(NXP_EXTNS == TRUE)
+    NxpConfig_t nxpConfig;
+#endif
 }InputData_t;
 /*
  * nfc_nci_ExtnInputData_t :Apart from InputData_t, there are context data
@@ -164,15 +190,6 @@ typedef struct {
     long level;
 }nfc_nci_ExtnInputData_t;
 
-typedef struct {
-  uint8_t ese_listen_tech_mask;
-  uint8_t default_nfcee_disc_timeout;
-  uint8_t default_nfcee_timeout;
-  uint8_t ese_wired_prt_mask;
-  uint8_t uicc_wired_prt_mask;
-  uint8_t wired_mode_rf_field_enable;
-  uint8_t aid_block_route;
-} nq_nfc_config_t;
 
 /*
  * outputData_t :ioctl has multiple commands/responses
@@ -189,7 +206,6 @@ typedef union{
     uint8_t             chipType;
 #if(NXP_EXTNS == TRUE)
     nxp_nfc_config_t nxpConfigs;
-    nq_nfc_config_t nqConfigs;
 #endif
 }outputData_t;
 

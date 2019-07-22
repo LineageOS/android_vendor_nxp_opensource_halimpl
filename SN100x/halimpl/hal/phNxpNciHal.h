@@ -75,6 +75,8 @@ typedef void(phNxpNciHal_control_granted_callback_t)();
 #if (NXP_EXTNS == TRUE)
 /* GID: Group Identifier (byte 0) */
 #define NCI_GID_MASK                 0x0F
+#define ORIG_NXPHAL 0x01
+#define ORIG_LIBNFC 0x02
 #endif
 #define NXP_PROPCMD_GID              0x2F
 #define NXP_FLUSH_SRAM_AO_TO_FLASH   0x21
@@ -195,7 +197,6 @@ typedef int (*fpRegRfFwDndl_t)(uint8_t* fw_update_req,
 void phNxpNciHal_initializeRegRfFwDnld();
 void phNxpNciHal_deinitializeRegRfFwDnld();
 #if(NXP_EXTNS == true)
-NFCSTATUS phNxpNciHal_PropEsePowerCycle(void);
 void phNxpNciHal_getNxpConfig(nfc_nci_IoctlInOutData_t *pInpOutData);
 #endif
 /*set config management*/
@@ -281,8 +282,17 @@ int phNxpNciHal_check_ncicmd_write_window(uint16_t cmd_len, uint8_t* p_cmd);
 void phNxpNciHal_request_control(void);
 void phNxpNciHal_release_control(void);
 NFCSTATUS phNxpNciHal_send_get_cfgs();
-int phNxpNciHal_write_unlocked(uint16_t data_len, const uint8_t* p_data);
+int phNxpNciHal_write_unlocked(uint16_t data_len, const uint8_t *p_data,
+                               int origin);
 NFCSTATUS request_EEPROM(phNxpNci_EEPROM_info_t* mEEPROM_info);
+int phNxpNciHal_check_config_parameter();
+NFCSTATUS phNxpNciHal_fw_download(void);
+NFCSTATUS phNxpNciHal_nfcc_core_reset_init();
+int phNxpNciHal_fw_mw_ver_check();
+NFCSTATUS phNxpNciHal_check_clock_config(void);
+NFCSTATUS phNxpNciHal_china_tianjin_rf_setting(void);
+NFCSTATUS phNxpNciHal_CheckValidFwVersion(void);
+
 NFCSTATUS phNxpNciHal_send_nfcee_pwr_cntl_cmd(uint8_t type);
 /*******************************************************************************
 **
@@ -298,17 +308,5 @@ NFCSTATUS phNxpNciHal_send_nfcee_pwr_cntl_cmd(uint8_t type);
 ** Returns          none
 *******************************************************************************/
 void phNxpNciHal_configFeatureList(uint8_t* init_rsp, uint16_t rsp_len);
-
-/*******************************************************************************
-**
-** Function         phNxpNciHal_getChipType
-**
-** Description      Gets the chipType which is configured during bootup
-**
-** Parameters       none
-**
-** Returns          chipType
-*******************************************************************************/
-tNFC_chipType phNxpNciHal_getChipType();
 
 #endif /* _PHNXPNCIHAL_H_ */

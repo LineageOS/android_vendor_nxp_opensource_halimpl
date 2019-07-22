@@ -22,7 +22,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013-2018 NXP Semiconductors
+ *  Copyright (C) 2013-2019 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -146,8 +146,10 @@ typedef enum
   TARGET_SDM630                        = 318, /**< SDM630 target */
   TARGET_SDM845                        = 321, /**< SDM845 target */
   TARGET_SM8150                        = 339, /**< SM8150 target */
-  TARGET_KONA                          = 356, /**< KONA target */
-  TARGET_LITO                          = 400, /**< LITO target */
+  TARGET_SM8150_SDx55                  = 361, /**< SM8150_SDx55 target */
+  TARGET_SM8250                        = 356, /**< SM8250 target */
+  TARGET_SM7250                        = 400, /**< SM7250 target */
+  TARGET_SM6125                        = 394, /**< SM6125 target */
   TARGET_DEFAULT                       = TARGET_GENERIC, /**< new targets */
   TARGET_INVALID                       = 0xFF
 } TARGETTYPE;
@@ -158,20 +160,22 @@ namespace {
 
 size_t readConfigFile(const char* fileName, uint8_t** p_data) {
   FILE* fd = fopen(fileName, "rb");
-  uint8_t* buffer = NULL;
-  size_t read = 0;
   if (fd == nullptr) return 0;
 
   fseek(fd, 0L, SEEK_END);
   const size_t file_size = ftell(fd);
   rewind(fd);
-
-  if (file_size > 0) {
-    buffer = new uint8_t[file_size + 1];
-    read = fread(buffer, file_size, 1, fd);
-  } else {
-    ALOGE("%s Invalid file size file_size = %zu\n", __func__, file_size);
+  if((long)file_size < 0) {
+    ALOGE("%s Invalid file size file_size = %zu\n",__func__,file_size);
+    fclose(fd);
+    return 0;
   }
+  uint8_t* buffer = new uint8_t[file_size + 1];
+  if (!buffer) {
+    fclose(fd);
+    return 0;
+  }
+  size_t read = fread(buffer, file_size, 1, fd);
   fclose(fd);
 
   if (read == 1) {
@@ -179,9 +183,7 @@ size_t readConfigFile(const char* fileName, uint8_t** p_data) {
     *p_data = buffer;
     return file_size+1;
   }
-
-  if(buffer)
-    delete[] buffer;
+  delete[] buffer;
   return 0;
 }
 
@@ -419,8 +421,10 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_SM8150:
         case TARGET_SM6150:
         case TARGET_SM7150:
-        case TARGET_KONA:
-        case TARGET_LITO:
+        case TARGET_SM8250:
+        case TARGET_SM7250:
+        case TARGET_SM8150_SDx55:
+        case TARGET_SM6125:
             config_id = QRD_TYPE_SN100;
             strlcpy(config_file, config_name_qrd_SN100, MAX_DATA_CONFIG_PATH_LEN);
             break;
@@ -477,8 +481,10 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_SM8150:
         case TARGET_SM6150:
         case TARGET_SM7150:
-        case TARGET_KONA:
-        case TARGET_LITO:
+        case TARGET_SM8250:
+        case TARGET_SM7250:
+        case TARGET_SM8150_SDx55:
+        case TARGET_SM6125:
             config_id = MTP_TYPE_SN100;
             strlcpy(config_file, config_name_mtp_SN100, MAX_DATA_CONFIG_PATH_LEN);
             break;
