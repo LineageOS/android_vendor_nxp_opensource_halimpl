@@ -1078,6 +1078,7 @@ force_download:
   if (status == NFCSTATUS_SUCCESS) {
     uint8_t p_core_init_rsp_params = 0;
     phNxpNciHal_core_initialized(&p_core_init_rsp_params);
+    wConfigStatus = NFCSTATUS_SUCCESS;
   }
   goto init_retry;
 
@@ -2463,6 +2464,9 @@ int phNxpNciHal_core_initialized(uint8_t* p_core_init_rsp_params) {
                                                nxpncihal_ctrl.p_rx_data);
     }
   }
+  if (isNxpRFConfigModified() || isNxpConfigModified()) {
+    updateNxpConfigTimestamp();
+  }
   if (config_success == false)
     return NFCSTATUS_FAILED;
   else
@@ -3172,16 +3176,13 @@ void phNxpNciHal_getNxpConfig(nfc_nci_IoctlInOutData_t *pInpOutData) {
   if (GetNxpNumValue(NAME_OS_DOWNLOAD_TIMEOUT_VALUE, &num, sizeof(num))) {
     pInpOutData->out.data.nxpConfigs.osDownloadTimeoutValue = num;
   }
-  if (GetNxpNumValue(NAME_NXP_DEFAULT_SE, &num, sizeof(num))) {
-    pInpOutData->out.data.nxpConfigs.nxpDefaultSe = num;
-  }
   if (GetNxpNumValue(NAME_DEFAULT_AID_ROUTE, &num, sizeof(num))) {
     pInpOutData->out.data.nxpConfigs.defaultAidRoute = num;
   }
   if (GetNxpNumValue(NAME_DEFAULT_AID_PWR_STATE, &num, sizeof(num))) {
     pInpOutData->out.data.nxpConfigs.defaultAidPwrState = num;
   }
-  if (GetNxpNumValue(NAME_DEFAULT_ROUTE_PWR_STATE, &num, sizeof(num))) {
+  if (GetNxpNumValue(NAME_DEFAULT_ISODEP_PWR_STATE, &num, sizeof(num))) {
     pInpOutData->out.data.nxpConfigs.defaultRoutePwrState = num;
   }
   if (GetNxpNumValue(NAME_DEFAULT_OFFHOST_PWR_STATE, &num, sizeof(num))) {
@@ -3209,7 +3210,7 @@ void phNxpNciHal_getNxpConfig(nfc_nci_IoctlInOutData_t *pInpOutData) {
   if (GetNxpNumValue(NAME_NXP_AGC_DEBUG_ENABLE, &num, sizeof(num))) {
     pInpOutData->out.data.nxpConfigs.agcDebugEnable = num;
   }
-  if (GetNxpNumValue(NAME_DEFAULT_FELICA_CLT_PWR_STATE, &num, sizeof(num))) {
+  if (GetNxpNumValue(NAME_DEFAULT_NFCF_PWR_STATE, &num, sizeof(num))) {
     pInpOutData->out.data.nxpConfigs.felicaCltPowerState = num;
   } else {
     pInpOutData->out.data.nxpConfigs.felicaCltPowerState = 0x3F;
