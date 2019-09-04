@@ -24,7 +24,6 @@
 #include <phNxpLog.h>
 #include <dlfcn.h>
 #include <phNxpConfig.h>
-#include <cutils/properties.h>
 
 static void*
     pFwLibHandle;    /* Global firmware lib handle used in this file only */

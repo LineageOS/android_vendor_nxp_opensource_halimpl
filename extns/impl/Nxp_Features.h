@@ -24,7 +24,15 @@
 
 #define STRMAX_1 40
 #define STRMAX_2 100
+
+#ifndef FW_DLL_ROOT_DIR
+#ifdef __LP64__
+#define FW_DLL_ROOT_DIR "/system/vendor/lib64/"
+#else
 #define FW_DLL_ROOT_DIR "/system/vendor/lib/"
+#endif
+#endif
+
 #define FW_DLL_EXTENSION ".so"
 
 #define FW_MOBILE_MAJOR_NUMBER_PN553 0x01
@@ -346,6 +354,7 @@ extern tNfc_featureList nfcFL;
             nfcFL.nfccFL._UICC_CREATE_CONNECTIVITY_PIPE = true;             \
             nfcFL.nfccFL._NXP_NFC_UICC_ETSI12 = false;                      \
             nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED = 3;                      \
+            nfcFL.nfccFL._NFCC_ROUTING_BLOCK_BIT = true;                    \
             \
             \
             nfcFL.eseFL._ESE_ETSI12_PROP_INIT = true;                       \
