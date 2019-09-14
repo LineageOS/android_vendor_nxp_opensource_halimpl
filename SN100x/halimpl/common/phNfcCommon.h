@@ -40,13 +40,6 @@
 #define FW_LIB_EXTENSION ".so"
 #define FW_BIN_EXTENSION ".bin"
 
-/* Actual FW library name*/
-/* Restore Corrupted PLL Settings/etc */
-#define PLATFORM_LIB_PATH \
-  FW_DLL_ROOT_DIR "libsn100u_fw_platform" FW_DLL_EXTENSION
-/* Upgrade the public Key */
-#define PKU_LIB_PATH FW_DLL_ROOT_DIR "libsn100u_fw_pku" FW_DLL_EXTENSION
-
 /* HAL Version number (Updated as per release) */
 #define NXP_MW_VERSION_MAJ (0x03)
 #define NXP_MW_VERSION_MIN (0x02)

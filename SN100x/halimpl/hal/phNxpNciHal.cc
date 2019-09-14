@@ -435,8 +435,6 @@ NFCSTATUS phNxpNciHal_CheckValidFwVersion(void) {
   else if (wFwVerRsp == 0) {
     NXPLOG_NCIHAL_E(
         "FW Version not received by NCI command >>> Force Firmware download");
-    tNFC_chipType chipType = sn100u;
-    CONFIGURE_FEATURELIST(chipType);
     status = NFCSTATUS_SUCCESS;
   } else {
     NXPLOG_NCIHAL_E("Wrong FW Version >>> Firmware download not allowed");
@@ -534,7 +532,6 @@ int phNxpNciHal_MinOpen (){
     return NFCSTATUS_SUCCESS;
   }
   setNxpRfConfigPath("/system/vendor/libnfc-nxp_RF.conf");
-  setNxpFwConfigPath("/system/vendor/lib/libsn100u_fw.so");
   phNxpNciHal_initializeRegRfFwDnld();
 
   int init_retry_cnt = 0;
@@ -714,9 +711,6 @@ init_retry:
   NXPLOG_NCIHAL_E("FW version for FW file = 0x%x", wFwVer);
   NXPLOG_NCIHAL_E("FW version from device = 0x%x", wFwVerRsp);
     if (wFwVerRsp == 0) {
-      nfcFL.chipType = sn100u;
-      tNFC_chipType chipType = sn100u;
-      CONFIGURE_FEATURELIST(chipType);
       nfcFL.nfccFL._NFCC_DWNLD_MODE = NFCC_DWNLD_WITH_VEN_RESET;
       phDnldNfc_InitImgInfo();
     }
