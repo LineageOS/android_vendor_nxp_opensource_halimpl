@@ -755,9 +755,9 @@ NFCSTATUS phDnldNfc_InitImgInfo(void) {
   } else if(fwType == FW_FORMAT_SO) {
     gpphDnldContext->FwFormat = FW_FORMAT_SO;
     if (gRecFWDwnld == true) {
-      wStatus = phDnldNfc_LoadRecoveryFW(Fw_Lib_Path, &pImageInfo, &ImageInfoLen);
+      wStatus = phDnldNfc_LoadRecoveryFW(nfcFL._FW_LIB_PATH.c_str(), &pImageInfo, &ImageInfoLen);
     } else {
-      wStatus = phDnldNfc_LoadFW(Fw_Lib_Path, &pImageInfo, &ImageInfoLen);
+      wStatus = phDnldNfc_LoadFW(nfcFL._FW_LIB_PATH.c_str(), &pImageInfo, &ImageInfoLen);
     }
   } else {
     NXPLOG_FWDNLD_E("firmware file format mismatch!!!\n");
@@ -831,9 +831,9 @@ NFCSTATUS phDnldNfc_LoadRecInfo(void) {
    * structure */
   phDnldNfc_SetHwDevHandle();
   if (gRecFWDwnld == true)
-      wStatus = phDnldNfc_LoadRecoveryFW(PLATFORM_LIB_PATH, &pImageInfo, &ImageInfoLen);
+      wStatus = phDnldNfc_LoadRecoveryFW(nfcFL._PLATFORM_LIB_PATH.c_str(), &pImageInfo, &ImageInfoLen);
   else
-      wStatus = phDnldNfc_LoadFW(PLATFORM_LIB_PATH, &pImageInfo, &ImageInfoLen);
+      wStatus = phDnldNfc_LoadFW(nfcFL._PLATFORM_LIB_PATH.c_str(), &pImageInfo, &ImageInfoLen);
   if ((pImageInfo == NULL) || (ImageInfoLen == 0)) {
     NXPLOG_FWDNLD_E(
         "Image extraction Failed - invalid imginfo or imginfolen!!");
@@ -887,10 +887,10 @@ NFCSTATUS phDnldNfc_LoadPKInfo(void) {
 
 /* load the PKU image library */
   if (gRecFWDwnld == true)
-      wStatus =phDnldNfc_LoadRecoveryFW(PKU_LIB_PATH, &pImageInfo, &ImageInfoLen);
+      wStatus =phDnldNfc_LoadRecoveryFW(nfcFL._PKU_LIB_PATH.c_str(), &pImageInfo, &ImageInfoLen);
   else
       wStatus = phDnldNfc_LoadFW(
-            PKU_LIB_PATH, &pImageInfo, &ImageInfoLen);
+            nfcFL._PKU_LIB_PATH.c_str(), &pImageInfo, &ImageInfoLen);
   if ((pImageInfo == NULL) || (ImageInfoLen == 0)) {
     NXPLOG_FWDNLD_E(
         "Image extraction Failed - invalid imginfo or imginfolen!!");
