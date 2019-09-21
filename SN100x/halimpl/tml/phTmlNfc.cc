@@ -581,6 +581,7 @@ void phTmlNfc_CleanUp(void) {
               (void)phTmlNfc_i2c_reset(gpphTmlNfc_Context->pDevHandle, MODE_POWER_OFF);
           }
       }
+    (void)phTmlNfc_i2c_reset(gpphTmlNfc_Context->pDevHandle, MODE_NFC_DISABLED);
     gpphTmlNfc_Context->bThreadDone = 0;
   }
   sem_destroy(&gpphTmlNfc_Context->rxSemaphore);

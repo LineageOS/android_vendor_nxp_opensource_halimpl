@@ -43,9 +43,10 @@ enum {
 #endif
 };
 enum {
-  //HAL_NFC_ENABLE_I2C_FRAGMENTATION_EVT = 0x07,
+  // HAL_NFC_ENABLE_I2C_FRAGMENTATION_EVT = 0x07,
   HAL_NFC_POST_MIN_INIT_CPLT_EVT = 0x08,
-  HAL_NFC_WRITE_COMPLETE = 0x09
+  HAL_NFC_WRITE_COMPLETE = 0x09,
+  HAL_NFC_FW_UPDATE_STATUS_EVT,
 };
 /*
  * Data structures provided below are used of Hal Ioctl calls
@@ -84,6 +85,14 @@ typedef struct {
   long len;
   uint8_t cmd[264];
 }nxp_nfc_coreConf_t;
+/*
+ * nxp_nfc_scrResetEmvcoCmd_t shall contain core set conf command to reset EMVCO
+ * mode and the length of the command
+ */
+typedef struct {
+  long len;
+  uint8_t cmd[10];
+}nxp_nfc_scrResetEmvcoCmd_t;
 /*
  * nxp_nfc_rfFileVerInfo_t shall contain rf file version info and
  *length of it
@@ -126,10 +135,13 @@ typedef struct {
   uint8_t pollEfdDelay;
   uint8_t mergeSakEnable;
   uint8_t stagTimeoutCfg;
+  uint8_t t4tNfceePwrState;
+  uint8_t scrCfgFormat;
   nxp_nfc_rfStorage_t rfStorage;
   nxp_nfc_fwStorage_t fwStorage;
   nxp_nfc_coreConf_t coreConf;
   nxp_nfc_rfFileVerInfo_t rfFileVersInfo;
+  nxp_nfc_scrResetEmvcoCmd_t scrResetEmvco;
 } nxp_nfc_config_t;
 #endif
 /*
@@ -267,4 +279,12 @@ typedef struct nxpnfc_nci_device{
     int (*check_fw_dwnld_flag)(const struct nxpnfc_nci_device *p_dev, uint8_t* param1);
 }nxpnfc_nci_device_t;
 
+/*
+ * NfcFwUpdateStatus: enumerates the FW update status of NFCC.
+ */
+enum NfcFwUpdateStatus {
+  HAL_NFC_FW_UPDATE_START = 0x01,
+  HAL_NFC_FW_UPDATE_SCUCCESS,
+  HAL_NFC_FW_UPDATE_FAILED,
+};
 #endif  // ANDROID_HARDWARE_HAL_NXPNFC_V1_0_H

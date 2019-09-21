@@ -1,5 +1,5 @@
  /*
-  * Copyright (C) 2015-2018 NXP Semiconductors
+  * Copyright (C) 2015-2019 NXP Semiconductors
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ bool (*transceive) (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBu
 **
 ** Function:        transceiveRaw
 **
-** Description:     Send native/non-gp commands to the secure element; read it's response.
+** Description:     Send data to the secure element; read it's response.
 **                  xmitBuffer: Data to transmit.
 **                  xmitBufferSize: Length of data.
 **                  recvBuffer: Buffer to receive response.
