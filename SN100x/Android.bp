@@ -70,7 +70,7 @@ cc_library_shared {
     ],
 
     include_dirs: [
-        "vendor/nxp/opensource/halimpl/SN100x/extns/impl",
+        "vendor/nxp/opensource/sn100x/halimpl/SN100x/extns/impl",
     ],
 
     export_include_dirs: [
