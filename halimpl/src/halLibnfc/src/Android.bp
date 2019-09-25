@@ -43,7 +43,7 @@ cc_library_shared {
         "gki/common",
     ],
     include_dirs: [
-        "vendor/nxp/opensource/halimpl/extns/impl/",
+        "vendor/nxp/opensource/pn5xx/halimpl/extns/impl/",
     ],
     srcs: [
         "nfa/dm/*.cc",
