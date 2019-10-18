@@ -634,7 +634,7 @@ NFCSTATUS phNxpNciHal_write_ext(uint16_t* cmd_len, uint8_t* p_cmd_data,
   } else if (p_cmd_data[0] == 0x20 && p_cmd_data[1] == 0x02 &&
              p_cmd_data[2] == 0x05 && p_cmd_data[3] == 0x01 &&
              p_cmd_data[4] == 0xA0 && p_cmd_data[5] == 0x44 &&
-             p_cmd_data[6] == 0x01 && p_cmd_data[7] == 0x01) {
+             p_cmd_data[6] == 0x01 && p_cmd_data[7] & 0x01) {
     nxpprofile_ctrl.profile_type = EMV_CO_PROFILE;
     NXPLOG_NCIHAL_D("EMV_CO_PROFILE mode - Enabled");
     status = NFCSTATUS_SUCCESS;
@@ -1067,6 +1067,25 @@ NFCSTATUS request_EEPROM(phNxpNci_EEPROM_info_t* mEEPROM_info) {
       addr[0] = 0xA0;
       addr[1] = 0xF7;
       break;
+    case EEPROM_GUARD_TIMER:
+      mEEPROM_info->update_mode = BYTEWISE;
+      memIndex = 0x00;
+      addr[0] = 0xA1;
+      addr[1] = 0x0B;
+      break;
+    case EEPROM_AUTONOMOUS_MODE:
+      mEEPROM_info->update_mode = BYTEWISE;
+      memIndex = 0x00;
+      addr[0] = 0xA0;
+      addr[1] = 0x15;
+      break;
+    case EEPROM_T4T_NFCEE_ENABLE:
+     mEEPROM_info->update_mode = BYTEWISE;
+      b_position = 0;
+      memIndex = 0x00;
+      addr[0] = 0xA0;
+      addr[1] = 0x95;
+      break;
     default:
       ALOGE("No valid request information found");
       break;
@@ -1203,4 +1222,46 @@ NFCSTATUS phNxpNciHal_enableDefaultUICC2SWPline(uint8_t uicc2_sel) {
     if(p_data[PARAM_INDEX] > 0x00)
       status = phNxpNciHal_send_ext_cmd(p-p_data, p_data);
   return status;
+}
+
+/******************************************************************************
+ * Function         phNxpNciHal_conf_nfc_forum_mode
+ *
+ * Description      If NFCC is not in Nfc Forum mode, then this function will
+ *                  configure it back to the Nfc Forum mode.
+ *
+ * Returns          none
+ *
+ ******************************************************************************/
+void phNxpNciHal_conf_nfc_forum_mode() {
+  uint8_t cmd_get_emvcocfg[] = {0x20, 0x03, 0x03, 0x01, 0xA0, 0x44};
+  uint8_t cmd_reset_emvcocfg[8];
+  long cmdlen = 8;
+  long retlen = 0;
+
+  if (GetNxpByteArrayValue(NAME_NXP_PROP_RESET_EMVCO_CMD, (char *)cmd_reset_emvcocfg,
+          cmdlen, &retlen)) {
+  }
+  if(retlen != 0x08) {
+    NXPLOG_NCIHAL_E("%s: command is not provided", __func__);
+    return;
+  }
+  /* Update the flag address from the Nxp config file */
+  cmd_get_emvcocfg[4] = cmd_reset_emvcocfg[4];
+  cmd_get_emvcocfg[5] = cmd_reset_emvcocfg[5];
+
+  if(NFCSTATUS_SUCCESS == phNxpNciHal_send_ext_cmd(sizeof(cmd_get_emvcocfg), cmd_get_emvcocfg)) {
+    if(NFCSTATUS_SUCCESS == nxpncihal_ctrl.p_rx_data[3]) {
+      if(0x01 & nxpncihal_ctrl.p_rx_data[8]) {
+        if(NFCSTATUS_SUCCESS == phNxpNciHal_send_ext_cmd(sizeof(cmd_reset_emvcocfg),
+                cmd_reset_emvcocfg)) {
+          return;
+        }
+      } else {
+        return;
+      }
+    }
+  }
+  NXPLOG_NCIHAL_E("%s: failed!!", __func__);
+  return;
 }

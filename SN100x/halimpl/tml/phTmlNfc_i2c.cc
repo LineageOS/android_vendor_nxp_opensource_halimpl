@@ -101,6 +101,8 @@ NFCSTATUS phTmlNfc_i2c_open_and_configure(pphTmlNfc_Config_t pConfig,
   }
 
   *pLinkHandle = (void*)((intptr_t)nHandle);
+  phTmlNfc_i2c_reset(*pLinkHandle, MODE_NFC_ENABLED);
+
 #if(NXP_EXTNS == TRUE)
   if (0 != sem_init(&txrxSemaphore, 0, 1)) {
     NXPLOG_TML_E("_i2c_open() Failed: reason sem_init : retval %x", nHandle);
