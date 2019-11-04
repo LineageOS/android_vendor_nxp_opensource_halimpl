@@ -4,7 +4,6 @@ TARGET_USES_NQ_NFC := true
 endif
 
 NQ_VENDOR_NFC += vendor.nxp.hardware.nfc@1.2-service
-NQ_VENDOR_NFC += nfc_nci.nqx.default
 NQ_VENDOR_NFC += nfc_nci.nqx.default.hw
 
 ifeq ($(strip $(TARGET_USES_NQ_NFC)),true)
