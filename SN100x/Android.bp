@@ -92,5 +92,6 @@ cc_library_shared {
     ],
     sanitize: {
         cfi: true,
+        integer_overflow: true,
     },
 }
