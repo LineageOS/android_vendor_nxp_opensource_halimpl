@@ -61,6 +61,10 @@ cc_library_shared {
         "libdl",
         "libhidlbase",
     ],
+    sanitize: {
+        cfi: true,
+        integer_overflow: true,
+    },
 }
 
 cc_library_shared {
@@ -90,6 +94,10 @@ cc_library_shared {
         "libdl",
         "libhidlbase",
     ],
+    sanitize: {
+        cfi: true,
+        integer_overflow: true,
+    },
 }
 
 cc_library_shared {
@@ -120,4 +128,8 @@ cc_library_shared {
         "libhidlbase",
         "se_nq_extn_client"
     ],
+    sanitize: {
+        cfi: true,
+        integer_overflow: true,
+    },
 }
