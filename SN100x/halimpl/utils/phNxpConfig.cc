@@ -157,8 +157,6 @@ typedef enum
 
 void readOptionalConfig(const char* optional);
 
-namespace {
-
 size_t readConfigFile(const char* fileName, uint8_t** p_data) {
   FILE* fd = fopen(fileName, "rb");
   if (fd == nullptr) return 0;
@@ -187,8 +185,6 @@ size_t readConfigFile(const char* fileName, uint8_t** p_data) {
   delete[] buffer;
   return 0;
 }
-
-}  // namespace
 
 using namespace ::std;
 
@@ -1409,8 +1405,8 @@ extern "C" int GetNxpNumValue(const char* name, void* pValue,
 **
 *******************************************************************************/
 extern "C" void setNxpRfConfigPath(const char* name) {
-  memset((void *)nxp_rf_config_path, 0, sizeof(nxp_rf_config_path));
-  strlcpy((char *)nxp_rf_config_path, name, sizeof(nxp_rf_config_path));
+  memset(nxp_rf_config_path, 0, sizeof(nxp_rf_config_path));
+  strlcpy(nxp_rf_config_path, name, sizeof(nxp_rf_config_path));
   ALOGD("nxp_rf_config_path=%s", nxp_rf_config_path);
 }
 
@@ -1424,8 +1420,8 @@ extern "C" void setNxpRfConfigPath(const char* name) {
 **
 *******************************************************************************/
 extern "C" void setNxpFwConfigPath(const char* name) {
-  memset((void *)Fw_Lib_Path, 0, sizeof(Fw_Lib_Path));
-  strlcpy((char *)Fw_Lib_Path, name, sizeof(Fw_Lib_Path));
+  memset(Fw_Lib_Path, 0, sizeof(Fw_Lib_Path));
+  strlcpy(Fw_Lib_Path, name, sizeof(Fw_Lib_Path));
   ALOGD("Fw_Lib_Path=%s", Fw_Lib_Path);
 }
 

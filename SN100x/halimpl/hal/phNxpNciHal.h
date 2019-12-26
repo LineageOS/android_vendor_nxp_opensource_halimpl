@@ -188,6 +188,13 @@ typedef struct phNxpNciMwEepromArea {
   uint8_t p_rx_data[32];
 } phNxpNciMwEepromArea_t;
 
+enum {
+  SE_TYPE_ESE,
+  SE_TYPE_UICC,
+  SE_TYPE_UICC2,
+  NUM_SE_TYPES
+};
+
 typedef void (*fpVerInfoStoreInEeprom_t)();
 typedef int (*fpVerifyCscEfsTest_t)(char* nfcc_csc, char* rffilepath,
                               char* fwfilepath);
@@ -196,9 +203,6 @@ typedef int (*fpRegRfFwDndl_t)(uint8_t* fw_update_req,
                    uint8_t skipEEPROMRead);
 void phNxpNciHal_initializeRegRfFwDnld();
 void phNxpNciHal_deinitializeRegRfFwDnld();
-#if(NXP_EXTNS == true)
-void phNxpNciHal_getNxpConfig(nfc_nci_IoctlInOutData_t *pInpOutData);
-#endif
 /*set config management*/
 
 #define TOTAL_DURATION 0x00
@@ -229,7 +233,8 @@ typedef enum {
   EEPROM_AUTH_CMD_TIMEOUT,
   EEPROM_GUARD_TIMER,
   EEPROM_T4T_NFCEE_ENABLE,
-  EEPROM_AUTONOMOUS_MODE
+  EEPROM_AUTONOMOUS_MODE,
+  EEPROM_CE_PHONE_OFF_CFG,
 } phNxpNci_EEPROM_request_type_t;
 
 typedef struct phNxpNci_EEPROM_info {
@@ -311,4 +316,15 @@ NFCSTATUS phNxpNciHal_send_nfcee_pwr_cntl_cmd(uint8_t type);
 ** Returns          none
 *******************************************************************************/
 void phNxpNciHal_configFeatureList(uint8_t* init_rsp, uint16_t rsp_len);
+
+/******************************************************************************
+ * Function         phNxpNciHal_read_and_update_se_state
+ *
+ * Description      This will read NFCEE status from system properties
+ *                  and update to NFCC to enable/disable.
+ *
+ * Returns          none
+ *
+ ******************************************************************************/
+void phNxpNciHal_read_and_update_se_state();
 #endif /* _PHNXPNCIHAL_H_ */
