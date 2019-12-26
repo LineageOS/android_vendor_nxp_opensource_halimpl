@@ -2,7 +2,7 @@ cc_library_shared {
 
     name: "nxp_nci_parser",
     defaults: ["hidl_defaults"],
-    proprietary: true,
+    vendor: true,
 
     cflags: [
         "-Wall",

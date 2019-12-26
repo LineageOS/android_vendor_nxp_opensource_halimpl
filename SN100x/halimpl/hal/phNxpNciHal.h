@@ -16,10 +16,23 @@
 #ifndef _PHNXPNCIHAL_H_
 #define _PHNXPNCIHAL_H_
 
+#include <vendor/nxp/hardware/nfc/2.0/types.h>
+namespace vendor {
+namespace nxp {
+namespace hardware {
+namespace nfc {
+namespace V2_0 {
+struct INqNfc;
+} } } } }
+
+using vendor::nxp::hardware::nfc::V2_0::nfc_nci_IoctlInOutData_t;
+using vendor::nxp::hardware::nfc::V2_0::nfcIoctlData_t;
+using vendor::nxp::hardware::nfc::V2_0::NfcEvent3;
+using vendor::nxp::hardware::nfc::V2_0::NfcFwUpdateStatus;
+
 #include <hardware/nfc.h>
 #include <phNxpNciHal_utils.h>
 #include "NxpNfcCapability.h"
-#include "hal_nxpnfc.h"
 #ifdef ENABLE_ESE_CLIENT
 #include "eSEClientIntf.h"
 #endif

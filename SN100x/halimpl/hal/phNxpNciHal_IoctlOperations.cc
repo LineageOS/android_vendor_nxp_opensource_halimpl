@@ -146,7 +146,7 @@ systemProperty gsystemProperty = {
     {"nfc.fw.rfreg_display_ver", ""},
     {"nfc.fw.dfl_areacode", ""},
 };
-const char default_nxp_config_path[] = "/vendor/etc/libnfc-nxp.conf";
+char default_nxp_config_path[MAX_DATA_CONFIG_PATH_LEN] = "/vendor/etc/libnfc-nxp.conf";
 std::set<string> gNciConfigs = {"NXP_SE_COLD_TEMP_ERROR_DELAY",
                                 "NXP_SWP_RD_TAG_OP_TIMEOUT",
                                 "NXP_DUAL_UICC_ENABLE",
@@ -272,13 +272,13 @@ int phNxpNciHal_ioctlIf(long arg, void *p_data) {
   int ret = -1;
 
   switch (arg) {
-  case HAL_NFC_IOCTL_CHECK_FLASH_REQ:
+  case (long)NfcEvent2::HAL_NFC_IOCTL_CHECK_FLASH_REQ:
     ret = phNxpNciHal_CheckFlashReq(pInpOutData);
     break;
-  case HAL_NFC_IOCTL_NCI_TRANSCEIVE:
+  case (long)NfcEvent1::HAL_NFC_IOCTL_NCI_TRANSCEIVE:
     ret = phNxpNciHal_NciTransceive(pInpOutData);
     break;
-  case HAL_NFC_IOCTL_GET_FEATURE_LIST:
+  case (long)NfcEvent2::HAL_NFC_IOCTL_GET_FEATURE_LIST:
     ret = phNxpNciHal_GetFeatureList(pInpOutData);
     break;
 #ifdef ENABLE_ESE_CLIENT
@@ -297,39 +297,39 @@ int phNxpNciHal_ioctlIf(long arg, void *p_data) {
       ret = gpEseAdapt->HalIoctl(HAL_ESE_IOCTL_NFC_JCOP_DWNLD, pInpOutData);
     [[fallthrough]];
 #endif
-  case HAL_NFC_IOCTL_ESE_JCOP_DWNLD:
+  case (long)NfcEvent2::HAL_NFC_IOCTL_ESE_JCOP_DWNLD:
     if (pInpOutData == NULL) {
       NXPLOG_NCIHAL_E("%s : received invalid param", __func__);
     } else{
       NXPLOG_NCIHAL_D("HAL_NFC_IOCTL_ESE_JCOP_DWNLD Enter value is %d: \n",
-              pInpOutData->inp.data.nciCmd.p_cmd[0]);
+              pInpOutData->inp.data.nciCmd().p_cmd[0]);
     }
-    phNxpNciHal_nfcStackCb(p_nfc_stack_cback_backup, HAL_NFC_HCI_NV_RESET);
+    phNxpNciHal_nfcStackCb(p_nfc_stack_cback_backup, (int)NxpNfcHalStatus::HAL_NFC_HCI_NV_RESET);
     ret = 0;
     break;
-  case HAL_NFC_IOCTL_GET_ESE_UPDATE_STATE:
+  case (long)NfcEvent2::HAL_NFC_IOCTL_GET_ESE_UPDATE_STATE:
     ret = 0;
     break;
-  case HAL_NFC_IOCTL_ESE_UPDATE_COMPLETE:
+  case (long)NfcEvent2::HAL_NFC_IOCTL_ESE_UPDATE_COMPLETE:
 #ifdef ENABLE_ESE_CLIENT
     ese_update = ESE_UPDATE_COMPLETED;
 #endif
     NXPLOG_NCIHAL_D("HAL_NFC_IOCTL_ESE_UPDATE_COMPLETE \n");
-    phNxpNciHal_nfcStackCb(p_nfc_stack_cback_backup, HAL_NFC_STATUS_RESTART);
+    phNxpNciHal_nfcStackCb(p_nfc_stack_cback_backup, (int)NxpNfcHalStatus::HAL_NFC_STATUS_RESTART);
     ret = 0;
     break;
-  case HAL_NFC_IOCTL_ESE_HARD_RESET:
+  case (long)NfcEvent1::HAL_NFC_IOCTL_ESE_HARD_RESET:
     [[fallthrough]];
-  case HAL_NFC_SET_SPM_PWR: {
+  case (long)NfcEvent2::HAL_NFC_SET_SPM_PWR: {
     long level = pInpOutData->inp.level;
-    if (NCI_ESE_HARD_RESET_IOCTL == level) {
+    if ((long)Constants::NCI_ESE_HARD_RESET_IOCTL == level) {
       ret = phNxpNciHal_resetEse();
     }
     break;
   }
-  case HAL_NFC_IOCTL_SET_TRANSIT_CONFIG:
+  case (long)NfcEvent2::HAL_NFC_IOCTL_SET_TRANSIT_CONFIG:
     if (pInpOutData != NULL) {
-      phNxpNciHal_setNxpTransitConfig(pInpOutData->inp.data.transitConfig.val);
+      phNxpNciHal_setNxpTransitConfig((char *)&(pInpOutData->inp.data.transitConfig().val[0]));
       ret = 0;
     } else {
       NXPLOG_NCIHAL_E("%s : received invalid param", __func__);
@@ -854,27 +854,27 @@ static tNFC_chipType phNxpNciHal_getChipType() {
 static int phNxpNciHal_NciTransceive(nfc_nci_IoctlInOutData_t *pInpOutData) {
   int ret = -1;
 
-  if (pInpOutData == NULL || pInpOutData->inp.data.nciCmd.cmd_len == 0) {
+  if (pInpOutData == NULL || pInpOutData->inp.data.nciCmd().cmd_len == 0) {
     NXPLOG_NCIHAL_E("%s : received invalid arguments", __func__);
     return ret;
   }
 
   if (nxpncihal_ctrl.halStatus == HAL_STATUS_CLOSE) {
     if (NFCSTATUS_SUCCESS != phNxpNciHal_MinOpen()) {
-      pInpOutData->out.data.nciRsp.p_rsp[3] = 1;
+      pInpOutData->out.data.nciRsp().p_rsp[3] = 1;
       return ret;
     }
   }
 
-  ret = phNxpNciHal_send_ext_cmd(pInpOutData->inp.data.nciCmd.cmd_len,
-                                 pInpOutData->inp.data.nciCmd.p_cmd);
+  ret = phNxpNciHal_send_ext_cmd(pInpOutData->inp.data.nciCmd().cmd_len,
+                                &(pInpOutData->inp.data.nciCmd().p_cmd[0]));
 
-  pInpOutData->out.data.nciRsp.rsp_len = nxpncihal_ctrl.rx_data_len;
+  pInpOutData->out.data.nciRsp().rsp_len = nxpncihal_ctrl.rx_data_len;
 
   if ((nxpncihal_ctrl.rx_data_len > 0) &&
-      (nxpncihal_ctrl.rx_data_len <= MAX_IOCTL_TRANSCEIVE_RESP_LEN) &&
+      (nxpncihal_ctrl.rx_data_len <= (uint16_t)Constants::MAX_IOCTL_TRANSCEIVE_RESP_LEN) &&
       (nxpncihal_ctrl.p_rx_data != NULL)) {
-    memcpy(pInpOutData->out.data.nciRsp.p_rsp, nxpncihal_ctrl.p_rx_data,
+    memcpy(&(pInpOutData->out.data.nciRsp().p_rsp), nxpncihal_ctrl.p_rx_data,
            nxpncihal_ctrl.rx_data_len);
   }
 
@@ -908,7 +908,7 @@ static int phNxpNciHal_CheckFlashReq(nfc_nci_IoctlInOutData_t *pInpOutData) {
     }
   }
 
-  FwRfInfo = (phNxpNciHal_FwRfupdateInfo_t *)&pInpOutData->out.data.fwUpdateInf;
+  FwRfInfo = (phNxpNciHal_FwRfupdateInfo_t *)&pInpOutData->out.data.fwUpdateInf();
 
   if (NFCSTATUS_SUCCESS ==
       phNxpNciHal_CheckFwRegFlashRequired(&FwRfInfo->fw_update_reqd,
@@ -948,7 +948,7 @@ static int phNxpNciHal_GetFeatureList(nfc_nci_IoctlInOutData_t *pInpOutData) {
     }
   }
 
-  pInpOutData->out.data.chipType = (uint8_t)phNxpNciHal_getChipType();
+  pInpOutData->out.data.chipType((uint8_t)phNxpNciHal_getChipType());
   ret = 0;
   if (nxpncihal_ctrl.halStatus == HAL_STATUS_MIN_OPEN) {
     phNxpNciHal_close(false);

@@ -22,7 +22,6 @@
 #include <vendor/nxp/nxpnfc/1.0/INxpNfc.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
-#include "hal_nxpnfc.h"
 
 namespace vendor {
 namespace nxp {

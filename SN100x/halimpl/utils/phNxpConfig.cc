@@ -92,13 +92,14 @@ const char tr_config_timestamp_path[] =
     "/data/vendor/nfc/libnfc-nxpTransitConfigState.bin";
 const char config_timestamp_path[] =
         "/data/vendor/nfc/libnfc-nxpConfigState.bin";
-/*const char default_nxp_config_path[] =
-        "/vendor/etc/libnfc-nxp.conf";*/
 char nxp_rf_config_path[256] =
         "/system/vendor/libnfc-nxp_RF.conf";
 char Fw_Lib_Path[256] =
         "/vendor/lib/libsn100u_fw.so";
 const char transit_config_path[] = "/data/vendor/nfc/libnfc-nxpTransit.conf";
+
+extern char default_nxp_config_path[];
+
 /**
  *  @brief target platform ID values.
  */
@@ -877,6 +878,11 @@ CNfcConfig& CNfcConfig::GetInstance() {
         findConfigFilePathFromTransportConfigPaths(config_name_default, strPath);
     }
     ALOGI("config file used = %s\n",strPath.c_str());
+    /*
+     * overwrite default value with config file picked at runtime
+     * using dynamic config feature
+     */
+    strlcpy(default_nxp_config_path, strPath.c_str(), MAX_DATA_CONFIG_PATH_LEN);
     theInstance.readConfig(strPath.c_str(), true);
 #if (NXP_EXTNS == TRUE)
     theInstance.readNxpRFConfig(nxp_rf_config_path);
