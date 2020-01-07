@@ -84,12 +84,13 @@ int property_get_intf(const char *propName, char *valueStr,
   if (propValue.length() > 0) {
     NXPLOG_NCIHAL_D("property_get_intf , key[%s], propValue[%s], length[%zu]",
                     propName, propValue.c_str(), propValue.length());
-    len = propValue.length();
-    strncpy(valueStr, propValue.c_str(), len);
+    //Add + 1 to length to ensure that valueStr ends with null terminator
+    len = propValue.length() + 1;
+    strlcpy(valueStr, propValue.c_str(), len);
   } else {
     if (propValueDefault.length() > 0) {
-      len = propValueDefault.length();
-      strncpy(valueStr, propValueDefault.c_str(), len);
+      len = propValueDefault.length() + 1;
+      strlcpy(valueStr, propValueDefault.c_str(), len);
     }
   }
 
