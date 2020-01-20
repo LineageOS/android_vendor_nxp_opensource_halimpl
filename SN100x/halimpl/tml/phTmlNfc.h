@@ -109,6 +109,7 @@ typedef enum {
   phTmlNfc_e_EnableNormalMode, /* Hardware setting for normal mode of operation
                                  */
   phTmlNfc_e_PowerReset = 5,
+  phTmlNfc_e_SetFwDownloadHdrSize,
 } phTmlNfc_ControlCode_t;     /* Control code for IOCTL call */
 
 /*
@@ -137,6 +138,16 @@ typedef struct phTmlNfc_ReadWriteInfo {
   uint16_t wLength;      /*Length of data read/written */
   NFCSTATUS wWorkStatus; /*Status of the transaction performed */
 } phTmlNfc_ReadWriteInfo_t;
+
+/*
+ * NFCC platform interface type
+ */
+enum platform_interface_type {
+    /* I2C physical IF for NFCC */
+    PLATFORM_IF_I2C = 0,
+    /* I3C physical IF for NFCC */
+    PLATFORM_IF_I3C,
+};
 
 /*
  *Base Context Structure containing members required for entire session
@@ -169,6 +180,7 @@ typedef struct phTmlNfc_Context {
       gWriterCbflag; /* flag to indicate write callback message is pushed to
                         queue*/
   long    nfc_service_pid; /*NFC Service PID to be used by driver to signal*/
+  int platform_type; /* for common(i2c or i3c) mw implementation */
 } phTmlNfc_Context_t;
 
 /*

@@ -341,15 +341,52 @@ int phTmlNfc_i2c_reset(void* pDevHandle, long level) {
   ret = ioctl((intptr_t)pDevHandle, PN544_SET_PWR, level);
   if (ret < 0) {
     NXPLOG_TML_E("%s :failed errno = 0x%x", __func__, errno);
-    if ((level == MODE_FW_DWNLD_WITH_VEN || level == MODE_FW_DWND_HIGH) && errno == EBUSY) {
+    if ((level == MODE_FW_DWNLD_WITH_VEN || level == MODE_FW_DWND_HIGH || level == MODE_FW_DWND_HDR) && errno == EBUSY) {
          notifyFwrequest = true;
     } else {
          notifyFwrequest = false;
     }
   }
-  if ((level != MODE_FW_DWNLD_WITH_VEN && level != MODE_FW_DWND_HIGH)
+  if ((level != MODE_FW_DWNLD_WITH_VEN && level != MODE_FW_DWND_HIGH && level != MODE_FW_DWND_HDR)
       && ret == 0) {
     bFwDnldFlag = false;
+  }
+
+  return ret;
+}
+
+/*******************************************************************************
+**
+** Function         phTmlNfc_get_platform
+**
+** Description      Get platform interface type (i2c or i3c) for common mw
+**
+** Parameters       pDevHandle     - valid device handle
+**
+** Returns           0   - i2c
+**                   1   - i3c
+**
+*******************************************************************************/
+int phTmlNfc_get_platform(void* pDevHandle) {
+  int ret = -1;
+  unsigned char interface = PLATFORM_IF_I2C;
+
+  ret = ioctl((intptr_t)pDevHandle, P544_GET_PLATFORM_INTERFACE);
+
+  /* ret 0 -> I2C, 1 -> I3C interface */
+  if (ret < 0) {
+      NXPLOG_TML_D("%s: ioctl failed, getting value from config", __func__);
+
+      if (GetNxpNumValue(NAME_NFC_INTERFACE, &interface, sizeof(interface))) {
+        NXPLOG_TML_D("NFC_INTERFACE value: %d", interface);
+        ret = interface;
+      }
+  }
+  if ((ret == PLATFORM_IF_I2C) || (ret == PLATFORM_IF_I3C)) {
+    NXPLOG_TML_D("%s: interface = %d", __func__, ret);
+  } else {
+    ret = PLATFORM_IF_I2C;
+    NXPLOG_TML_E("%s: NFC_INTERFACE not present in config/invalid, setting to I2C", __func__);
   }
 
   return ret;

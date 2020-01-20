@@ -359,6 +359,11 @@ NFCSTATUS phNxpNciHal_fw_download(void) {
   /*phNxpNciHal_get_clk_freq();*/
   phNxpNciHal_nfccClockCfgRead();
   status = phTmlNfc_IoCtl(phTmlNfc_e_EnableDownloadMode);
+  if (NFCSTATUS_SUCCESS != status) {
+    nxpncihal_ctrl.fwdnld_mode_reqd = FALSE;
+    phNxpNciHal_UpdateFwStatus(NfcFwUpdateStatus::HAL_NFC_FW_UPDATE_FAILED);
+    return NFCSTATUS_FAILED;
+  }
   if (nfcFL.nfccFL._NFCC_DWNLD_MODE == NFCC_DWNLD_WITH_NCI_CMD) {
     /*NCI_RESET_CMD*/
     static uint8_t cmd_reset_nci_dwnld[] = { 0x20, 0x00, 0x01, 0x80 };
@@ -369,6 +374,10 @@ NFCSTATUS phNxpNciHal_fw_download(void) {
       NXPLOG_NCIHAL_E("Core reset FW download command failed \n");
     }
   }
+
+  if (PLATFORM_IF_I3C == gpphTmlNfc_Context->platform_type)
+    status = phTmlNfc_IoCtl(phTmlNfc_e_SetFwDownloadHdrSize);
+
   if (NFCSTATUS_SUCCESS == status) {
     phTmlNfc_EnableFwDnldMode(true);
     /* Set the obtained device handle to download module */
@@ -670,7 +679,8 @@ init_retry:
       goto init_retry;
     } else if(init_retry_cnt < MAX_RETRY_COUNT) {
           NXPLOG_NCIHAL_E("invlaid core reset rsp received. Trying Force FW download");
-          (void)phNxpNciHal_power_cycle();
+          if (PLATFORM_IF_I2C == gpphTmlNfc_Context->platform_type)
+            (void)phNxpNciHal_power_cycle();
           goto force_download;
     } else
       init_retry_cnt = 0;
@@ -709,7 +719,8 @@ init_retry:
     } else if (init_retry_cnt < MAX_RETRY_COUNT) {
       NXPLOG_NCIHAL_E(
           "invlaid core init rsp received. Trying Force FW download");
-      (void)phNxpNciHal_power_cycle();
+      if (PLATFORM_IF_I2C == gpphTmlNfc_Context->platform_type)
+        (void)phNxpNciHal_power_cycle();
       goto force_download;
     } else
       init_retry_cnt = 0;

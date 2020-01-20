@@ -114,6 +114,8 @@ NFCSTATUS phTmlNfc_Init(pphTmlNfc_Config_t pConfig) {
         wInitStatus = PHNFCSTVAL(CID_NFC_TML, NFCSTATUS_INVALID_DEVICE);
         gpphTmlNfc_Context->pDevHandle = NULL;
       } else {
+        gpphTmlNfc_Context->platform_type =
+            phTmlNfc_get_platform(gpphTmlNfc_Context->pDevHandle);
         gpphTmlNfc_Context->tReadInfo.bEnable = 0;
         gpphTmlNfc_Context->tWriteInfo.bEnable = 0;
         gpphTmlNfc_Context->tReadInfo.bThreadBusy = false;
@@ -470,14 +472,14 @@ static void * phTmlNfc_TmlWriterThread(void* pParam) {
         if (-1 == dwNoBytesWrRd) {
           if (getDownloadFlag() == true) {
             if (retry_cnt++ < MAX_WRITE_RETRY_COUNT) {
-              NXPLOG_TML_D("PN54X - Error in I2C Write  - Retry 0x%x",
+              NXPLOG_NCIHAL_E("PN54X - Error in I2C Write  - Retry 0x%x",
                               retry_cnt);
               // Add a 10 ms delay to ensure NFCC is not still in stand by mode.
               usleep(10 * 1000);
               goto retry;
             }
           }
-          NXPLOG_TML_D("PN54X - Error in I2C Write.....\n");
+          NXPLOG_TML_E("PN54X - Error in I2C Write.....\n");
           wStatus = PHNFCSTVAL(CID_NFC_TML, NFCSTATUS_FAILED);
         } else {
           phNxpNciHal_print_packet("SEND",
@@ -936,6 +938,10 @@ NFCSTATUS phTmlNfc_IoCtl(phTmlNfc_ControlCode_t eControlCode) {
         usleep(100 * 1000);
         gpphTmlNfc_Context->tReadInfo.bEnable = 1;
         sem_post(&gpphTmlNfc_Context->rxSemaphore);
+        break;
+      }
+      case phTmlNfc_e_SetFwDownloadHdrSize: {
+        wStatus = phTmlNfc_i2c_reset(gpphTmlNfc_Context->pDevHandle, MODE_FW_DWND_HDR);
         break;
       }
       default: {
