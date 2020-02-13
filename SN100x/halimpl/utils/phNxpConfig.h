@@ -84,7 +84,6 @@ extern char Fw_Lib_Path[256];
 #define NAME_NXP_EXT_TVDD_CFG_1 "NXP_EXT_TVDD_CFG_1"
 #define NAME_NXP_EXT_TVDD_CFG_2 "NXP_EXT_TVDD_CFG_2"
 #define NAME_NXP_EXT_TVDD_CFG_3 "NXP_EXT_TVDD_CFG_3"
-#define NAME_NXP_RF_CONF_BLK_MAX "NXP_RF_CONF_MAX_NUM"
 #define NAME_NXP_CORE_CONF_EXTN "NXP_CORE_CONF_EXTN"
 #define NAME_NXP_CORE_CONF "NXP_CORE_CONF"
 #define NAME_NXP_NFC_PROFILE_EXTN "NXP_NFC_PROFILE_EXTN"
@@ -141,6 +140,7 @@ extern char Fw_Lib_Path[256];
 #define NAME_OFFHOST_ROUTE_UICC "OFFHOST_ROUTE_UICC"
 #define NAME_DEFAULT_ISODEP_ROUTE "DEFAULT_ISODEP_ROUTE"
 #define NAME_ENABLE_VEN_TOGGLE "ENABLE_VEN_TOGGLE"
+#define NAME_NFC_INTERFACE "NFC_INTERFACE"
 #if(NXP_EXTNS == TRUE)
 #define NAME_NXP_SE_COLD_TEMP_ERROR_DELAY "NXP_SE_COLD_TEMP_ERROR_DELAY"
 #define NAME_P2P_LISTEN_TECH_MASK "P2P_LISTEN_TECH_MASK"
@@ -176,6 +176,8 @@ extern char Fw_Lib_Path[256];
 #define NAME_NXP_GUARD_TIMER_VALUE "NXP_GUARD_TIMER_VALUE"
 #define NAME_NXP_PROP_RESET_EMVCO_CMD "NXP_PROP_RESET_EMVCO_CMD"
 #define NAME_NFA_CONFIG_FORMAT "NFA_CONFIG_FORMAT"
+#define NAME_NXP_DISCONNECT_TAG_IN_SCRN_OFF "NXP_DISCONNECT_TAG_IN_SCRN_OFF"
+#define NAME_NXP_ENABLE_DISABLE_LOGS "NXP_ENABLE_DISABLE_LOGS"
 #endif
 
 /**
@@ -188,12 +190,14 @@ extern char Fw_Lib_Path[256];
 #define config_name_mtp_NQ3XX   "libnfc-mtp-NQ3XX.conf"
 #define config_name_mtp_NQ4XX   "libnfc-mtp-NQ4XX.conf"
 #define config_name_mtp_SN100   "libnfc-mtp-SN100.conf"
+#define config_name_mtp_SN100_38_4MHZ   "libnfc-mtp-SN100_38_4MHZ.conf"
 #define config_name_qrd         "libnfc-qrd_default.conf"
 #define config_name_qrd1        "libnfc-qrd_rf1.conf"
 #define config_name_qrd2        "libnfc-qrd_rf2.conf"
 #define config_name_qrd_NQ3XX   "libnfc-qrd-NQ3XX.conf"
 #define config_name_qrd_NQ4XX   "libnfc-qrd-NQ4XX.conf"
 #define config_name_qrd_SN100   "libnfc-qrd-SN100.conf"
+#define config_name_qrd_SN100_38_4MHZ   "libnfc-qrd-SN100_38_4MHZ.conf"
 #define config_name_default     "libnfc-nxp_default.conf"
 
 /**
