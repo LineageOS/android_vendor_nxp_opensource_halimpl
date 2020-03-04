@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 NXP Semiconductors
+ * Copyright (C) 2019-2020 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,22 +18,6 @@
 #include "phNxpConfig.h"
 #include "phNxpLog.h"
 #include <hardware/nfc.h>
-#include <vendor/nxp/hardware/nfc/2.0/types.h>
-namespace vendor {
-namespace nxp {
-namespace hardware {
-namespace nfc {
-namespace V2_0 {
-struct INqNfc;
-} } } } }
-
-using vendor::nxp::hardware::nfc::V2_0::Constants;
-using vendor::nxp::hardware::nfc::V2_0::nfc_nci_IoctlInOutData_t;
-using vendor::nxp::hardware::nfc::V2_0::NfcEvent1;
-using vendor::nxp::hardware::nfc::V2_0::NfcEvent2;
-using vendor::nxp::hardware::nfc::V2_0::NfcEvent3;
-using vendor::nxp::hardware::nfc::V2_0::NfcFwUpdateStatus;
-using vendor::nxp::hardware::nfc::V2_0::NxpNfcHalStatus;
 
 /******************************************************************************
  ** Function         phNxpNciHal_ioctlIf
@@ -126,10 +110,10 @@ NFCSTATUS phNxpNciHal_resetEse();
 ** Description      This function overwrite libnfc-nxpTransit.conf file
 **                  with transitConfValue.
 **
-** Returns          void.
+** Returns          bool.
 **
 *******************************************************************************/
-void phNxpNciHal_setNxpTransitConfig(char *transitConfValue);
+bool phNxpNciHal_setNxpTransitConfig(char *transitConfValue);
 
 /*******************************************************************************
  **
@@ -174,6 +158,19 @@ int property_get_intf(const char *propName, char *valueStr,
  **
  ********************************************************************************/
 int property_set_intf(const char *propName, const char *valueStr);
+
+/*******************************************************************************
+ **
+ ** Function:        phNxpNciHal_nfcTriggerSavedCb()
+ **
+ ** Description:     triggers the saved callback of p_nfc_stack_cback_backup
+ **
+ ** Parameters       evt : Name of the event
+ **
+ ** Returns:        returns 0 on success, < 0 on failure
+ **
+ ********************************************************************************/
+int phNxpNciHal_nfcTriggerSavedCb(int evt);
 
 #undef PROPERTY_VALUE_MAX
 #define PROPERTY_VALUE_MAX 92

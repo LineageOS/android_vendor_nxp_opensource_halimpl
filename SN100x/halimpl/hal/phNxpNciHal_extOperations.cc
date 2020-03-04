@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 NXP Semiconductors
+ * Copyright (C) 2019-2020 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ void phNxpNciHal_read_and_update_se_state()
   int8_t  val = -1;
   int16_t num_se = 0;
   uint8_t retry_cnt = 0;
-  uint8_t values[NUM_SE_TYPES];
+  int8_t values[NUM_SE_TYPES];
 
   for (i = 0; i < NUM_SE_TYPES; i++) {
     val = get_system_property_se_type(i);
@@ -207,4 +207,45 @@ void phNxpNciHal_read_and_update_se_state()
     retry_cnt++;
     NXPLOG_NCIHAL_E("Get Cfg Retry cnt=%x", retry_cnt);
   }
+}
+
+/******************************************************************************
+ * Function         phNxpNciHal_read_fw_dw_status
+ *
+ * Description      This will read the value of fw download status flag
+ *                  from eeprom
+ *
+ * Parameters       value - this parameter will be updated with the flag
+ *                  value from eeprom.
+ *
+ * Returns          status of the read
+ *
+ ******************************************************************************/
+NFCSTATUS phNxpNciHal_read_fw_dw_status(uint8_t &value) {
+  phNxpNci_EEPROM_info_t mEEPROM_info = {.request_mode = 0};
+  mEEPROM_info.buffer = &value;
+  mEEPROM_info.bufflen = sizeof(value);
+  mEEPROM_info.request_type = EEPROM_FW_DWNLD;
+  mEEPROM_info.request_mode = GET_EEPROM_DATA;
+  return request_EEPROM(&mEEPROM_info);
+}
+
+/******************************************************************************
+ * Function         phNxpNciHal_write_fw_dw_status
+ *
+ * Description      This will update value of fw download status flag
+ *                  to eeprom
+ *
+ * Parameters       value - this value will be updated to eeprom flag.
+ *
+ * Returns          status of the write
+ *
+ ******************************************************************************/
+NFCSTATUS phNxpNciHal_write_fw_dw_status(uint8_t value) {
+  phNxpNci_EEPROM_info_t mEEPROM_info = {.request_mode = 0};
+  mEEPROM_info.buffer = &value;
+  mEEPROM_info.bufflen = sizeof(value);
+  mEEPROM_info.request_type = EEPROM_FW_DWNLD;
+  mEEPROM_info.request_mode = SET_EEPROM_DATA;
+  return request_EEPROM(&mEEPROM_info);
 }
