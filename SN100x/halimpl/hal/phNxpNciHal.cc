@@ -98,7 +98,6 @@ uint32_t wFwVerRsp;
 EseAdaptation *gpEseAdapt = NULL;
 ese_update_state_t ese_update = ESE_UPDATE_COMPLETED;
 #endif
-nfcIoctlData_t  nfcioctldata;
 /* External global variable to get FW version */
 extern uint16_t wFwVer;
 extern uint16_t fw_maj_ver;

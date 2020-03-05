@@ -51,6 +51,7 @@ cc_library_shared {
         "halimpl/utils/sparse_crc32.cc",
         "halimpl/hal/phNxpNciHal_IoctlOperations.cc",
         "halimpl/hal/phNxpNciHal_extOperations.cc",
+        "halimpl/eseclients_extns/src/eSEClientExtns.cc",
         "halimpl/mifare/NxpMfcReader.cc",
     ],
 
@@ -79,6 +80,8 @@ cc_library_shared {
         "halimpl/utils",
         "halimpl/log",
         "halimpl/common",
+        "halimpl/mifare",
+        "halimpl/eseclients_extns/inc",
     ],
 
     shared_libs: [

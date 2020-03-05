@@ -220,10 +220,11 @@ static int phNxpNciHal_nfcStackCb(nfc_stack_callback_t *pCb, int evt);
  **
  ** Returns          return 0 on success and -1 on fail,
  ******************************************************************************/
-int phNxpNciHal_ioctlIf(long arg, void *p_data) {
+int phNxpNciHal_ioctlIf(long /* arg */, void* /* p_data */) {
+  int ret = -1;
+#ifdef ENABLE_ESE_CLIENT
   NXPLOG_NCIHAL_D("%s : enter - arg = %ld", __func__, arg);
   ese_nxp_IoctlInOutData_t *pInpOutData = (ese_nxp_IoctlInOutData_t *)p_data;
-  int ret = -1;
 
   switch (arg) {
   case HAL_ESE_IOCTL_NFC_JCOP_DWNLD:
@@ -255,6 +256,7 @@ int phNxpNciHal_ioctlIf(long arg, void *p_data) {
     break;
   }
   NXPLOG_NCIHAL_D("%s : exit - ret = %d", __func__, ret);
+#endif
   return ret;
 }
 
