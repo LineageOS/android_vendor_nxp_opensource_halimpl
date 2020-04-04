@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2018 NXP
+ *  Copyright 2020 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,13 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-package vendor.nxp.nxpnfc@1.0;
+package vendor.nxp.nxpnfc@2.0;
 
-typedef vec<uint8_t> NfcData;
+enum NxpNfcHalEseState : uint64_t {
+    HAL_NFC_ESE_UPDATE_COMPLETED = 0,
+    HAL_NFC_ESE_UPDATE_STARTED,
+    HAL_NFC_ESE_JCOP_UPDATE_REQUIRED,
+    HAL_NFC_ESE_JCOP_UPDATE_COMPLETED,
+    HAL_NFC_ESE_LS_UPDATE_REQUIRED,
+    HAL_NFC_ESE_LS_UPDATE_COMPLETED
+};
