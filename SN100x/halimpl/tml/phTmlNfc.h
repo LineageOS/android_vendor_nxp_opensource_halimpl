@@ -180,7 +180,7 @@ typedef struct phTmlNfc_Context {
       gWriterCbflag; /* flag to indicate write callback message is pushed to
                         queue*/
   long    nfc_service_pid; /*NFC Service PID to be used by driver to signal*/
-  int platform_type; /* for common(i2c or i3c) mw implementation */
+  int platform_type; /*for common(i2c or i3c) mw implementation*/
 } phTmlNfc_Context_t;
 
 /*

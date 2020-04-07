@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 NXP Semiconductors
+ * Copyright (C) 2010-2020 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,10 @@
 #ifndef _PHNXPNCIHAL_H_
 #define _PHNXPNCIHAL_H_
 
-#include <vendor/nxp/hardware/nfc/2.0/types.h>
-namespace vendor {
-namespace nxp {
-namespace hardware {
-namespace nfc {
-namespace V2_0 {
-struct INqNfc;
-} } } } }
-
-using vendor::nxp::hardware::nfc::V2_0::nfc_nci_IoctlInOutData_t;
-using vendor::nxp::hardware::nfc::V2_0::nfcIoctlData_t;
-using vendor::nxp::hardware::nfc::V2_0::NfcEvent3;
-using vendor::nxp::hardware::nfc::V2_0::NfcFwUpdateStatus;
-
+#include "NxpMfcReader.h"
+#include "NxpNfcCapability.h"
 #include <hardware/nfc.h>
 #include <phNxpNciHal_utils.h>
-#include "NxpNfcCapability.h"
 #ifdef ENABLE_ESE_CLIENT
 #include "eSEClientIntf.h"
 #endif
@@ -53,6 +40,7 @@ using vendor::nxp::hardware::nfc::V2_0::NfcFwUpdateStatus;
 /* Uncomment define ENABLE_ESE_CLIENT to
 enable eSE client */
 //#define ENABLE_ESE_CLIENT TRUE
+#define HAL_NFC_FW_UPDATE_STATUS_EVT 0xA
 
 /*Mem alloc with 8 byte alignment*/
 #define size_align(sz) ((((sz)-1) | 7) + 1)
@@ -96,6 +84,7 @@ typedef void(phNxpNciHal_control_granted_callback_t)();
 #define NXP_CORE_GET_CONFIG_CMD      0x03
 #define NXP_CORE_SET_CONFIG_CMD      0x02
 #define NXP_MAX_CONFIG_STRING_LEN 260
+#define NCI_HEADER_SIZE 3
 
 typedef struct nci_data {
   uint16_t len;
@@ -107,6 +96,13 @@ typedef enum {
   HAL_STATUS_OPEN,
   HAL_STATUS_MIN_OPEN
 } phNxpNci_HalStatus;
+
+typedef enum {
+    HAL_NFC_FW_UPDATE_INVALID = 0x00,
+    HAL_NFC_FW_UPDATE_START,
+    HAL_NFC_FW_UPDATE_SCUCCESS,
+    HAL_NFC_FW_UPDATE_FAILED,
+}HalNfcFwUpdateStatus;
 
 typedef enum {
   GPIO_UNKNOWN = 0x00,
@@ -214,6 +210,8 @@ typedef int (*fpVerifyCscEfsTest_t)(char* nfcc_csc, char* rffilepath,
 typedef int (*fpRegRfFwDndl_t)(uint8_t* fw_update_req,
                    uint8_t* rf_update_req,
                    uint8_t skipEEPROMRead);
+typedef int (*fpPropConfCover_t)(bool attached, int type);
+void phNxpNciHal_initializeRegRfFwDnld();
 void phNxpNciHal_initializeRegRfFwDnld();
 void phNxpNciHal_deinitializeRegRfFwDnld();
 /*set config management*/
@@ -340,4 +338,42 @@ void phNxpNciHal_configFeatureList(uint8_t* init_rsp, uint16_t rsp_len);
  *
  ******************************************************************************/
 void phNxpNciHal_read_and_update_se_state();
+
+/******************************************************************************
+ * Function         phNxpNciHal_nfcTriggerSavedCb
+ *
+ * Description      This will post the message to the upper layer
+ *                  using the callback p_nfc_stack_cback_backup.
+ *
+ * Returns          none
+ *
+ ******************************************************************************/
+extern int phNxpNciHal_nfcTriggerSavedCb(int evt);
+/******************************************************************************
+ * Function         phNxpNciHal_read_fw_dw_status
+ *
+ * Description      This will read the value of fw download status flag
+ *                  from eeprom
+ *
+ * Parameters       value - this parameter will be updated with the flag
+ *                  value from eeprom.
+ *
+ * Returns          status of the read
+ *
+ ******************************************************************************/
+NFCSTATUS phNxpNciHal_read_fw_dw_status(uint8_t &value);
+
+/******************************************************************************
+ * Function         phNxpNciHal_write_fw_dw_status
+ *
+ * Description      This will update value of fw download status flag
+ *                  to eeprom
+ *
+ * Parameters       value - this value will be updated to eeprom flag.
+ *
+ * Returns          status of the write
+ *
+ ******************************************************************************/
+NFCSTATUS phNxpNciHal_write_fw_dw_status(uint8_t value);
+
 #endif /* _PHNXPNCIHAL_H_ */

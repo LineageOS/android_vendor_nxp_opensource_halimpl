@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2019 NXP Semiconductors
+ * Copyright (C) 2012-2020 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,9 @@ uint8_t icode_detected = 0x00;
 uint8_t icode_send_eof = 0x00;
 static uint8_t ee_disc_done = 0x00;
 uint8_t EnableP2P_PrioLogic = false;
+extern bool bEnableMfcExtns;
+extern bool bEnableMfcReader;
+extern bool bDisableLegacyMfcExtns;
 static uint32_t RfDiscID = 1;
 static uint32_t RfProtocolType = 4;
 /* NFCEE Set mode */
@@ -177,8 +180,20 @@ NFCSTATUS phNxpNciHal_process_ext_rsp(uint8_t* p_ntf, uint16_t* p_len) {
 
   status = NFCSTATUS_SUCCESS;
 
-  if (p_ntf[0] == 0x61 && p_ntf[1] == 0x05) {
+  if (bDisableLegacyMfcExtns && bEnableMfcExtns && p_ntf[0] == 0) {
+    uint16_t extlen;
+    extlen = *p_len - NCI_HEADER_SIZE;
+    NxpMfcReaderInstance.AnalyzeMfcResp(&p_ntf[3], &extlen);
+    p_ntf[2] = extlen;
+    *p_len = extlen + NCI_HEADER_SIZE;
+  }
 
+  if (p_ntf[0] == 0x61 && p_ntf[1] == 0x05) {
+    bEnableMfcExtns = false;
+    if (bDisableLegacyMfcExtns && p_ntf[4] == 0x80 && p_ntf[5] == 0x80) {
+      bEnableMfcExtns = true;
+      NXPLOG_NCIHAL_D("NxpNci: RF Interface = Mifare Enable MifareExtns");
+    }
     switch (p_ntf[4]) {
       case 0x00:
         NXPLOG_NCIHAL_D("NxpNci: RF Interface = NFCEE Direct RF");
@@ -683,7 +698,7 @@ NFCSTATUS phNxpNciHal_write_ext(uint16_t* cmd_len, uint8_t* p_cmd_data,
     }
   }
 
-  if ((p_cmd_data[0] == 0x21 && p_cmd_data[1] == 0x00) &&
+  if (bEnableMfcReader && (p_cmd_data[0] == 0x21 && p_cmd_data[1] == 0x00) &&
       (nxpprofile_ctrl.profile_type == NFC_FORUM_PROFILE)) {
     unsigned long retval = 0;
 
@@ -699,6 +714,7 @@ NFCSTATUS phNxpNciHal_write_ext(uint16_t* cmd_len, uint8_t* p_cmd_data,
       p_cmd_data[*cmd_len + 2] = 0x80;
       *cmd_len += 3;
       status = NFCSTATUS_SUCCESS;
+      bEnableMfcExtns = false;
       NXPLOG_NCIHAL_D(
           "Going through extns - Adding Mifare in RF Discovery - END");
     }
@@ -1005,6 +1021,7 @@ NFCSTATUS request_EEPROM(phNxpNci_EEPROM_info_t* mEEPROM_info) {
       len = fieldLen + 4;
       addr[0] = 0xA0;
       addr[1] = 0x0F;
+      mEEPROM_info->update_mode = BYTEWISE;
       break;
 
     case EEPROM_WIREDMODE_RESUME_TIMEOUT:

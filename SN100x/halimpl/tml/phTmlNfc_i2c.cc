@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 NXP Semiconductors
+ * Copyright (C) 2010-2020 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@
 #define FW_DNLD_LEN_OFFSET 1
 #define NORMAL_MODE_LEN_OFFSET 2
 #define FRAGMENTSIZE_MAX PHNFC_I2C_FRAGMENT_SIZE
-
 static bool_t bFwDnldFlag = false;
 extern phTmlNfc_i2cfragmentation_t fragmentation_enabled;
 bool_t notifyFwrequest;
@@ -352,6 +351,33 @@ int phTmlNfc_i2c_reset(void* pDevHandle, long level) {
     bFwDnldFlag = false;
   }
 
+  return ret;
+}
+
+/*******************************************************************************
+**
+** Function         phTmlNfc_ese_reset
+**
+** Description      Request NFCC to reset the eSE
+**
+** Parameters       pDevHandle     - valid device handle
+**                  level          - reset level
+**
+** Returns           0   - reset operation success
+**                  else - reset operation failure
+**
+*******************************************************************************/
+int phTmlNfc_ese_reset(void* pDevHandle, long level) {
+  int ret = -1;;
+  NXPLOG_TML_D("phTmlNfc_ese_reset(), level %ld", level);
+
+  if (NULL == pDevHandle) {
+    return -1;
+  }
+  ret = ioctl((intptr_t)pDevHandle, ESE_SET_PWR, level);
+  if (ret < 0) {
+    NXPLOG_TML_E("%s :failed errno = 0x%x", __func__, errno);
+  }
   return ret;
 }
 
