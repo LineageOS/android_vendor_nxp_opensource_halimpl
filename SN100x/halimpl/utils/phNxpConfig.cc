@@ -22,7 +22,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2013-2019 NXP Semiconductors
+ *  Copyright (C) 2013-2020 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@
 #include <string>
 #include <vector>
 #include <log/log.h>
+#include <android-base/properties.h>
 
 #include <phNxpConfig.h>
 #include <phNxpLog.h>
@@ -194,7 +195,7 @@ size_t readConfigFile(const char* fileName, uint8_t** p_data) {
 
 using namespace ::std;
 
-void findConfigFilePathFromTransportConfigPaths(const string& configName, string& filePath);
+bool findConfigFilePathFromTransportConfigPaths(const string& configName, string& filePath);
 
 class CNfcParam : public string {
  public:
@@ -606,18 +607,19 @@ inline int getDigitValue(char c, int base) {
 ** Returns:     none
 **
 *******************************************************************************/
-void findConfigFilePathFromTransportConfigPaths(const string& configName,
+bool findConfigFilePathFromTransportConfigPaths(const string& configName,
                                                 string& filePath) {
   for (int i = 0; i < transport_config_path_size - 1; i++) {
+    if (configName.empty()) break;
     filePath.assign(transport_config_paths[i]);
     filePath += configName;
     struct stat file_stat;
     if (stat(filePath.c_str(), &file_stat) == 0 && S_ISREG(file_stat.st_mode)) {
-      return;
+      return true;
     }
   }
-  filePath.assign(transport_config_paths[transport_config_path_size - 1]);
-  filePath += configName;
+  filePath = "";
+  return false;
 }
 
 /*******************************************************************************
