@@ -107,7 +107,8 @@ void phNxpNciHal_ext_init(void) {
 **                            : 0X01 for RF ON
 **
 *******************************************************************************/
-void phNxpNciHal_sendRfEvtToEseHal(uint8_t rfEvtType) {
+void phNxpNciHal_sendRfEvtToEseHal(uint8_t /* rfEvtType */ ) {
+#ifdef ENABLE_ESE_CLIENT
   ese_nxp_IoctlInOutData_t inpOutData;
   gpEseAdapt = &EseAdaptation::GetInstance();
   gpEseAdapt->Initialize();
@@ -120,6 +121,7 @@ void phNxpNciHal_sendRfEvtToEseHal(uint8_t rfEvtType) {
   inpOutData.inp.data_source = 2;
   if (gpEseAdapt != NULL)
         gpEseAdapt->HalNfccNtf(HAL_ESE_IOCTL_RF_STATUS_UPDATE, &inpOutData);
+#endif
 }
 
 /*******************************************************************************
@@ -134,8 +136,10 @@ void phNxpNciHal_sendRfEvtToEseHal(uint8_t rfEvtType) {
 NFCSTATUS phNxpNciHal_process_ext_rsp(uint8_t* p_ntf, uint16_t* p_len) {
   NFCSTATUS status = NFCSTATUS_SUCCESS;
   uint16_t rf_technology_length_param = 0;
+#ifdef ENABLE_ESE_CLIENT
   gpEseAdapt = &EseAdaptation::GetInstance();
   gpEseAdapt->Initialize();
+#endif
   /*parse and decode LxDebug Notifications*/
     if(p_ntf[0] == 0x6F && (p_ntf[1] == 0x35 || p_ntf[1] == 0x36))
     {
@@ -362,6 +366,7 @@ NFCSTATUS phNxpNciHal_process_ext_rsp(uint8_t* p_ntf, uint16_t* p_len) {
                        sizeof(unsigned long))) {
       NXPLOG_NCIHAL_D("RF_STATUS_UPDATE_ENABLE : %lu", rf_update_enable);
     }
+#ifdef ENABLE_ESE_CLIENT
     if (rf_update_enable == 0x01) {
       ese_nxp_IoctlInOutData_t inpOutData;
       memset(&inpOutData, 0x00, sizeof(ese_nxp_IoctlInOutData_t));
@@ -371,6 +376,7 @@ NFCSTATUS phNxpNciHal_process_ext_rsp(uint8_t* p_ntf, uint16_t* p_len) {
       if (gpEseAdapt != NULL)
           gpEseAdapt->HalNfccNtf(HAL_ESE_IOCTL_RF_ACTION_NTF, &inpOutData);
     }
+#endif
   }
 
 if(nfcFL.nfccFL._NFCC_FORCE_NCI1_0_INIT == true) {

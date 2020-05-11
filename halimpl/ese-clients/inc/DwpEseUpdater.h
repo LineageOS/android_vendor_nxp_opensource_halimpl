@@ -17,6 +17,7 @@
  ******************************************************************************/
 
 #pragma once
+#ifdef ENABLE_ESE_CLIENT
 #include "EseUpdateChecker.h"
 #include "JcDnld.h"
 
@@ -132,3 +133,4 @@ class DwpEseUpdater {
   *******************************************************************************/
   void eSeClientUpdateHandler();
 };
+#endif

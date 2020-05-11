@@ -182,7 +182,7 @@ using namespace ::std;
 
 namespace nxp {
 
-void findConfigFilePathFromTransportConfigPaths(const string& configName, string& filePath);
+bool findConfigFilePathFromTransportConfigPaths(const string& configName, string& filePath);
 
 class CNfcParam : public string {
  public:

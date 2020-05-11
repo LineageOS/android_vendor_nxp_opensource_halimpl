@@ -22,7 +22,9 @@
 #include "NxpNfcCapability.h"
 #include <vendor/nxp/hardware/nfc/2.0/types.h>
 #include "DwpEseUpdater.h"
+#ifdef ENABLE_ESE_CLIENT
 #include "EseUpdateChecker.h"
+#endif
 
 using namespace std;
 

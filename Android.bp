@@ -116,10 +116,6 @@ cc_library_shared {
         "halimpl/utils/*.cpp",
         "halimpl/configs/*.cpp",
         "halimpl/mifare/*.cc",
-        "halimpl/ese-clients/src/DwpEseUpdater.cc",
-        "halimpl/ese-clients/src/DwpSeChannelCallback.cc",
-        "halimpl/ese-clients/src/DwpSeEvtCallback.cc",
-        "halimpl/ese-clients/src/HalLibnfcInteface.cc",
     ],
     shared_libs: [
         "libbase",
@@ -134,6 +130,7 @@ cc_library_shared {
         "android.hardware.nfc@1.2",
         "vendor.nxp.hardware.nfc@1.0",
         "vendor.nxp.hardware.nfc@1.1",
+        "vendor.nxp.hardware.nfc@2.0",
         "android.hardware.secure_element@1.0",
         "vendor.nxp.nxpnfclegacy@1.0",
         "hal_libnfc"
@@ -149,12 +146,15 @@ cc_library_shared {
         "jcos_client/inc",
     ],
     export_include_dirs: [
-        "extns/impl",
+        "extns/impl/nxpnfc/2.0/",
         "halimpl/inc",
         "halimpl/common",
         "halimpl/utils",
+        "halimpl/hal",
         "halimpl/mifare",
         "halimpl/ese-clients/inc",
+        "halimpl/configs",
+        "halimpl/tml",
     ],
     cflags: [
         "-DBUILDCFG=1",

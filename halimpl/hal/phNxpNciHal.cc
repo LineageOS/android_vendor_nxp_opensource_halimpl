@@ -33,7 +33,7 @@
 #include "spi_spm.h"
 #include <vendor/nxp/hardware/nfc/2.0/types.h>
 #include "Nxp_Features.h"
-#include "NxpNfc.h"
+#include <vendor/nxp/hardware/nfc/2.0/INqNfc.h>
 
 using namespace android::hardware::nfc::V1_1;
 using namespace android::hardware::nfc::V1_2;
@@ -475,16 +475,6 @@ retry:
 static NFCSTATUS phNxpNciHal_fw_download(void) {
   if (NFCSTATUS_SUCCESS != phNxpNciHal_CheckValidFwVersion()) {
     return NFCSTATUS_REJECTED;
-  }
-
-  if (nfcFL.nfcNxpEse == true) {
-    uint32_t level = 0x03;
-    int spi_current_state = phNxpNciHal_getSPMStatus(level);
-    NXPLOG_NCIHAL_D("spi_current_state  = %4x ", spi_current_state);
-    if (spi_current_state != P61_STATE_IDLE) {
-      NXPLOG_NCIHAL_E("FW download denied while SPI in use, Continue NFC init");
-      return NFCSTATUS_REJECTED;
-    }
   }
 
   nxpncihal_ctrl.phNxpNciGpioInfo.state = GPIO_UNKNOWN;
@@ -3736,7 +3726,8 @@ std::string phNxpNciHal_getNfcFirmwareVersion() {
  *                  update the acutual state of operation in arg pointer
  *
  ******************************************************************************/
-int phNxpNciHal_ioctl(long arg, void* p_data) {
+int phNxpNciHal_ioctl(long /* arg */, void* /* p_data */) {
+#ifdef ENABLE_ESE_CLIENT
   NXPLOG_NCIHAL_D("%s : enter - arg = %ld", __func__, arg);
   ese_nxp_IoctlInOutData_t* pInpOutData = (ese_nxp_IoctlInOutData_t*)p_data;
   int ret = -1;
@@ -3759,7 +3750,8 @@ int phNxpNciHal_ioctl(long arg, void* p_data) {
         break;
   }
   NXPLOG_NCIHAL_D("%s : exit - ret = %d", __func__, ret);
-  return ret;
+#endif
+  return -1;
 }
 
 /******************************************************************************
@@ -4424,6 +4416,19 @@ void phNxpNciHal_reset_nfcee_session(bool force_session_reset) {
 }
 
 /******************************************************************************
+ * Function         phNxpNciHal_do_factory_reset
+ *
+ * Description      This function is called during factory reset to clear/reset
+ *                  nfc sub-system persistant data.
+ *
+ * Returns          void.
+ *
+ *****************************************************************************/
+void phNxpNciHal_do_factory_reset(void) {
+  phNxpNciHal_reset_nfcee_session(false);
+}
+
+/******************************************************************************
  * Function         phNxpNciHal_print_res_status
  *
  * Description      This function is called to process the response status
@@ -4863,7 +4868,8 @@ int phNxpNciHal_getSPMStatus(uint32_t level){
  * Returns          0 as success -1 as failed.
  *
  *******************************************************************************/
-int32_t phNxpNciHal_hciInitUpdateState(phNxpNfcHciInitStatus HciStatus){
+int32_t phNxpNciHal_hciInitUpdateState(phNxpNfcHciInitStatus /* HciStatus */){
+#ifdef ENABLE_ESE_CLIENT
     int ret = -1;
     ese_nxp_IoctlInOutData_t InpOutData;
     NXPLOG_NCIHAL_D("%s Enter ", __func__);
@@ -4876,7 +4882,8 @@ int32_t phNxpNciHal_hciInitUpdateState(phNxpNfcHciInitStatus HciStatus){
       gpEseAdapt->HalNfccNtf(HAL_ESE_IOCTL_HCI_INIT_STATUS_UPDATE, &InpOutData);
 
     NXPLOG_NCIHAL_D("%s Exit ", __func__);
-    return ret;
+#endif
+    return -1;
 }
 
 /******************************************************************************
@@ -4931,6 +4938,7 @@ void phNxpNciHal_GetCachedNfccConfig(phNxpNci_getCfg_info_t *pGetCfg_info){
 *******************************************************************************/
 NFCSTATUS phNxpNciHal_resetEse() {
   NFCSTATUS status = NFCSTATUS_FAILED;
+#ifdef ENABLE_ESE_CLIENT
   int level = 0;
   NXPLOG_NCIHAL_D("%s Entry ", __func__);
   if (nfcFL.chipType == pn557) {
@@ -4946,12 +4954,14 @@ NFCSTATUS phNxpNciHal_resetEse() {
   } else {
     ALOGD("ESE Reset Feature not supported");
   }
-
+#endif
   return status;
 }
 
-void seteSEClientState(uint8_t state) {
+void seteSEClientState(uint8_t /* state */) {
+#ifdef ENABLE_ESE_CLIENT
   DwpEseUpdater::setSpiEseClientState(state);
+#endif
 }
 
 /******************************************************************************
@@ -4990,7 +5000,9 @@ string phNxpNciHal_getSystemProperty(string key) { key = ""; return key; }
 bool phNxpNciHal_setSystemProperty(string key, string value) { key = value = ""; return false; }
 
 void eSEClientUpdate_NFC_Thread() {
+#ifdef ENABLE_ESE_CLIENT
   DwpEseUpdater::eSEClientUpdate_NFC_Thread();
+#endif
 }
 
 /******************************************************************************
