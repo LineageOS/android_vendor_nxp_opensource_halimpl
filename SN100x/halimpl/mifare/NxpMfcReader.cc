@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2019 NXP
+ *  Copyright 2019-2020 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ void NxpMfcReader::BuildAuthCmd() {
   mMfcTagCmdIntfData.sendBufLen = 0x03;
   if (!isPreloadedKey) {
     byKey |= MFC_EMBEDDED_KEY;
-    memcpy(&mMfcTagCmdIntfData.sendBuf[3], &mMfcTagCmdIntfData.sendBuf[6],
+    memmove(&mMfcTagCmdIntfData.sendBuf[3], &mMfcTagCmdIntfData.sendBuf[6],
            MFC_AUTHKEYLEN);
     mMfcTagCmdIntfData.sendBufLen += MFC_AUTHKEYLEN;
   }

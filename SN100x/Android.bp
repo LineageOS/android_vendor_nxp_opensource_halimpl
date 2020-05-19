@@ -99,6 +99,11 @@ cc_library_shared {
         "liblog",
         "libutils",
     ],
+
+    header_libs: [
+        "libese_client_headers",
+    ],
+
     sanitize: {
         cfi: true,
         integer_overflow: true,

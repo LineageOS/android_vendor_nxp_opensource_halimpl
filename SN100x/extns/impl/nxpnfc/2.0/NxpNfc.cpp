@@ -19,11 +19,8 @@
 #include <log/log.h>
 
 #include "NxpNfc.h"
-#include "eSEClientExtns.h"
-#include "eSEClientIntf.h"
 #include "phNxpNciHal.h"
 #include "phNxpNciHal_Adaptation.h"
-#include "phNxpNciHal_IoctlOperations.h"
 
 extern bool nfc_debug_enabled;
 
@@ -52,32 +49,25 @@ NxpNfc::resetEse(uint64_t resetType) {
   NFCSTATUS status = NFCSTATUS_FAILED;
   bool ret = false;
   ALOGD("NxpNfc::resetEse Entry");
-  if((uint64_t)Constants::HAL_NFC_ESE_HARD_RESET == resetType) {
-    status = phNxpNciHal_resetEse();
-    if(NFCSTATUS_SUCCESS == status) {
-      ret = true;
-      status = NFCSTATUS_SUCCESS;
-      ALOGD("HAL_NFC_ESE_HARD_RESET completed");
-      } else {
-        ALOGD("HAL_NFC_ESE_HARD_RESET failed");
-      }
+
+  status = phNxpNciHal_resetEse(resetType);
+  if(NFCSTATUS_SUCCESS == status) {
+    ret = true;
+    status = NFCSTATUS_SUCCESS;
+    ALOGD("HAL_NFC_ESE_HARD_RESET completed");
     } else {
-      ALOGD("reset called with %lu type",resetType);
+        ALOGD("HAL_NFC_ESE_HARD_RESET failed");
     }
+
   ALOGD("NxpNfc::resetEse Exit");
   return ret;
 }
 
 Return<bool>
 NxpNfc::setEseUpdateState(NxpNfcHalEseState eSEState) {
-  int ret = -1;
   bool status = false;
 
   ALOGD("NxpNfc::setEseUpdateState Entry");
-  ret = phNxpNciHal_nfcTriggerSavedCb((uint8_t)NxpNfcEvents::HAL_NFC_HCI_RESET);
-  if(ret == 0){
-    status = true;
-  }
 
   if(eSEState == NxpNfcHalEseState::HAL_NFC_ESE_JCOP_UPDATE_COMPLETED
   || eSEState == NxpNfcHalEseState::HAL_NFC_ESE_LS_UPDATE_COMPLETED)
@@ -87,8 +77,9 @@ NxpNfc::setEseUpdateState(NxpNfcHalEseState eSEState) {
     eSEClientUpdate_NFC_Thread();
   }
   if (eSEState == NxpNfcHalEseState::HAL_NFC_ESE_UPDATE_COMPLETED) {
-        phNxpNciHal_nfcTriggerSavedCb((uint8_t)NxpNfcEvents::HAL_NFC_RESTART);
+        status = phNxpNciHal_Abort();
   }
+
   ALOGD("NxpNfc::setEseUpdateState Exit");
   return status;
 }
