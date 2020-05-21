@@ -20,9 +20,9 @@
 #include "NxpNfcCapability.h"
 #include <hardware/nfc.h>
 #include <phNxpNciHal_utils.h>
-#ifdef ENABLE_ESE_CLIENT
 #include "eSEClientIntf.h"
-#endif
+#include "eSEClientExtns.h"
+#include "phNxpNciHal_IoctlOperations.h"
 
 /********************* Definitions and structures *****************************/
 #define MAX_RETRY_COUNT 5
@@ -69,6 +69,10 @@ typedef void(phNxpNciHal_control_granted_callback_t)();
 #define CORE_RESET_TRIGGER_TYPE_CORE_RESET_CMD_RECEIVED 0x02
 #define CORE_RESET_TRIGGER_TYPE_POWERED_ON              0x01
 #define NCI2_0_CORE_RESET_TRIGGER_TYPE_OVER_TEMPERATURE ((uint8_t)0xA1)
+#define CORE_RESET_TRIGGER_TYPE_UNRECOVERABLE_ERROR 0x00
+#define CORE_RESET_TRIGGER_TYPE_FW_ASSERT ((uint8_t)0xA0)
+#define CORE_RESET_TRIGGER_TYPE_WATCHDOG_RESET ((uint8_t)0xA3)
+#define CORE_RESET_TRIGGER_TYPE_INPUT_CLOCK_LOST ((uint8_t)0xA4)
 //#define NCI_MSG_CORE_RESET           0x00
 //#define NCI_MSG_CORE_INIT            0x01
 #define NCI_MT_MASK                  0xE0
@@ -340,7 +344,7 @@ void phNxpNciHal_configFeatureList(uint8_t* init_rsp, uint16_t rsp_len);
 void phNxpNciHal_read_and_update_se_state();
 
 /******************************************************************************
- * Function         phNxpNciHal_nfcTriggerSavedCb
+ * Function         phNxpNciHal_Abort
  *
  * Description      This will post the message to the upper layer
  *                  using the callback p_nfc_stack_cback_backup.
@@ -348,7 +352,7 @@ void phNxpNciHal_read_and_update_se_state();
  * Returns          none
  *
  ******************************************************************************/
-extern int phNxpNciHal_nfcTriggerSavedCb(int evt);
+extern bool phNxpNciHal_Abort();
 /******************************************************************************
  * Function         phNxpNciHal_read_fw_dw_status
  *
