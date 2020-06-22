@@ -54,11 +54,11 @@
 #include <vector>
 #include <list>
 #include <sys/stat.h>
-#include <stdlib.h>
 
 #include <phNxpLog.h>
-#include <cutils/properties.h>
+#include <android-base/properties.h>
 #include "sparse_crc32.h"
+#include <cutils/properties.h>
 
 #if GENERIC_TARGET
 const char alternative_config_path[] = "/data/vendor/nfc/";
@@ -182,7 +182,7 @@ using namespace ::std;
 
 namespace nxp {
 
-void findConfigFilePathFromTransportConfigPaths(const string& configName, string& filePath);
+bool findConfigFilePathFromTransportConfigPaths(const string& configName, string& filePath);
 
 class CNfcParam : public string {
  public:
@@ -579,18 +579,20 @@ inline int getDigitValue(char c, int base) {
 ** Returns:     none
 **
 *******************************************************************************/
-void findConfigFilePathFromTransportConfigPaths(const string& configName,
+bool findConfigFilePathFromTransportConfigPaths(const string& configName,
                                                 string& filePath) {
   for (int i = 0; i < transport_config_path_size; i++) {
+    if (configName.empty()) break;
     filePath.assign(transport_config_paths[i]);
     filePath += configName;
     struct stat file_stat;
     if (stat(filePath.c_str(), &file_stat) == 0 && S_ISREG(file_stat.st_mode)) {
-      return;
+      return true;
     }
   }
   // Config file didnt exist in any of the transport config_paths.
-  filePath.assign("");
+  filePath = "";
+  return false;
 }
 
 /*******************************************************************************

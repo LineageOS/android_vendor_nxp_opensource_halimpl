@@ -52,7 +52,6 @@
 
 #include "bt_types.h"
 #include "gki.h"
-#include "hal_nxpnfc.h"
 #include "nci_hmsgs.h"
 #include "nfa_sys.h"
 #include "nfc_int.h"
@@ -498,19 +497,6 @@ void nfc_main_handle_hal_evt(tNFC_HAL_EVT_MSG *p_msg) {
                                                 0xA0, 0xD4, 0x01, 0x00};
           NFC_SetConfig(disableUiccCmd[2], disableUiccCmd);
           nfc_enabled(NCI_STATUS_OK, nfc_cb.p_nci_init_rsp);
-#if (NXP_EXTNS == TRUE)
-          /*
-           * reading requred EEPROM config vlaues from HAL
-           * and updating libnfc structure.
-           * During Setconfig request these stored values are compared
-           * If found same setconfigs will not be sent
-           * */
-          {
-            nfc_nci_IoctlInOutData_t inpOutData;
-            nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_GET_CONFIG_INFO,
-                                (void *)&inpOutData);
-          }
-#endif
         } else /* if post initailization failed */
         {
           nfc_enabled(NCI_STATUS_FAILED, NULL);
@@ -858,13 +844,6 @@ void NFC_Disable(void) {
     return;
   }
 
-#if (NXP_EXTNS == TRUE)
-  if (nfc_cb.boot_mode != NFC_NORMAL_BOOT_MODE) {
-    nfc_nci_IoctlInOutData_t inpOutData;
-    inpOutData.inp.data.bootMode = NFC_NORMAL_BOOT_MODE;
-    nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_BOOT_MODE, (void *)&inpOutData);
-  }
-#endif
   /* Close transport and clean up */
   nfc_task_shutdown_nfcc();
 }
@@ -1535,31 +1514,6 @@ int get_i2c_fragmentation_enabled() { return i2c_fragmentation_enabled; }
 #if (NXP_EXTNS == TRUE)
 /*******************************************************************************
 **
-** Function         NFC_ReqWiredAccess
-**
-** Description      This function request to pn54x driver to get access
-**                  of P61. Status would be updated to pdata
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_ReqWiredAccess(void *pdata) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFC_ReqWiredAccess");
-
-  if (!nfcFL.nfcNxpEse) {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("nfcNxpEse is not available.. Returning");
-    return -1;
-  }
-  nfc_nci_IoctlInOutData_t inpOutData;
-  int32_t status;
-  status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_WIRED_MODE, &inpOutData);
-  *(tNFC_STATUS *)pdata = inpOutData.out.data.status;
-  return status;
-}
-
-/*******************************************************************************
-**
 ** Function         NFC_GetNCIVersion
 **
 ** Description      Called by higher layer to get the current nci
@@ -1569,111 +1523,6 @@ int32_t NFC_ReqWiredAccess(void *pdata) {
 **
 *******************************************************************************/
 uint8_t NFC_GetNCIVersion() { return nfc_cb.nci_version; }
-
-/*******************************************************************************
-**
-** Function         NFC_RelWiredAccess
-**
-** Description      This function release access
-**                  of P61. Status would be updated to pdata
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_RelWiredAccess(void *pdata) {
-  nfc_nci_IoctlInOutData_t inpOutData;
-  int32_t status;
-  status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_IDLE_MODE, &inpOutData);
-  *(tNFC_STATUS *)pdata = inpOutData.out.data.status;
-  return status;
-}
-/*******************************************************************************
-**
-** Function         NFC_GetP61Status
-**
-** Description      This function gets the current access state
-**                  of P61. Current state would be updated to pdata
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_GetP61Status(void *pdata) {
-  nfc_nci_IoctlInOutData_t inpOutData;
-  int32_t status;
-  status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_PWR_MODE, &inpOutData);
-  *(uint32_t *)pdata = inpOutData.out.data.p61CurrentState;
-  return status;
-}
-/*******************************************************************************
- *
- ** Function         NFC_DisableWired
- **
- ** Description      This function request to pn54x driver to
- **                  disable ese vdd gpio
- **
- ** Returns          0 if api call success, else -1
- **
- *******************************************************************************/
-int32_t NFC_DisableWired(void *pdata) {
-  nfc_nci_IoctlInOutData_t inpOutData;
-  int32_t status;
-  status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_DISABLE_MODE, &inpOutData);
-  *(tNFC_STATUS *)pdata = inpOutData.out.data.status;
-  return status;
-}
-/*******************************************************************************
-**
-** Function         NFC_EnableWired
-**
-** Description      This function request to pn54x driver to
-**                  enable ese vdd gpio
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_EnableWired(void *pdata) {
-  nfc_nci_IoctlInOutData_t inpOutData;
-  int32_t status;
-  status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_ENABLE_MODE, &inpOutData);
-  *(tNFC_STATUS *)pdata = inpOutData.out.data.status;
-  return status;
-}
-
-/*******************************************************************************
-**
-** Function         NFC_ReleaseEsePwr
-**
-** Description      This function request to pn553 driver to
-**                  turn ese vdd gpio low
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_ReleaseEsePwr(void *pdata) {
-  nfc_nci_IoctlInOutData_t inpOutData;
-  int32_t status;
-  status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_REL_ESE_PWR, &inpOutData);
-  *(tNFC_STATUS *)pdata = inpOutData.out.data.status;
-  return status;
-}
-
-/*******************************************************************************
-**
-** Function         NFC_AcquireEsePwr
-**
-** Description      This function request to pn553 driver to
-**                  turn ese vdd gpio high
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_AcquireEsePwr(void *pdata) {
-  nfc_nci_IoctlInOutData_t inpOutData;
-  int32_t status;
-  status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_SET_ESE_PWR, &inpOutData);
-  *(tNFC_STATUS *)pdata = inpOutData.out.data.status;
-  return status;
-}
 
 #if (NXP_EXTNS == TRUE)
 /*******************************************************************************
@@ -1698,220 +1547,10 @@ void  check_nfcee_session_and_reset()
   NFC_SetConfig(resetEseSessionCmd[2], resetEseSessionCmd);
 }
 
-/*******************************************************************************
-**
-** Function         NFC_SetP61Status
-**
-** Description      This function set the JCOP download
-**                  state to pn544 driver.
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_SetP61Status(void *pdata, libnfc_jcop_dwnld_state_t isJcopState) {
-  if (!nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-        "NFC_SetP61Status :"
-        "ESE_JCOP_DWNLD_PROTECTION is not available.. Returning");
-    return -1;
-  }
-  nfc_nci_IoctlInOutData_t inpOutData;
-  if (isJcopState == LIBNFC_JCP_DWNLD_START)
-    isJcopState = (libnfc_jcop_dwnld_state_t)nfc_cb.p_hal->ioctl(
-        HAL_NFC_IOCTL_SET_JCP_DWNLD_ENABLE, &inpOutData);
-  else if (isJcopState == LIBNFC_JCP_DWP_DWNLD_COMPLETE)
-    isJcopState = (libnfc_jcop_dwnld_state_t)(
-        nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_JCP_DWNLD_DISABLE, &inpOutData));
-  *(tNFC_STATUS *)pdata = inpOutData.out.data.status;
-  return isJcopState;
-}
 #endif
-
-/*******************************************************************************
-**
-** Function         NFC_eSEChipReset
-**
-** Description      This function request to pn54x driver to
-**                  chip reset the ESE using ISO_RST pin configuration.
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_eSEChipReset(void *pdata) {
-  nfc_nci_IoctlInOutData_t inpOutData;
-  int32_t status;
-  status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_ESE_CHIP_RST, &inpOutData);
-  *(tNFC_STATUS *)pdata = inpOutData.out.data.status;
-  return status;
-}
-
-/*******************************************************************************
-**
-** Function         NFC_GetEseAccess
-**
-** Description      This function request to pn54x driver to get access
-**                  of P61. it returns 0 on success. This api waits maximum
-**                  defined timeout
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_GetEseAccess(void *pdata) {
-  int32_t status = NFC_STATUS_EPERM;
-  if ((nfcFL.eseFL._NXP_ESE_VER != JCOP_VER_3_1) &&
-      (nfcFL.eseFL._NXP_ESE_VER != JCOP_VER_3_2)) {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("NFC_GetEseAccess NXP_ESE_VER !="
-                        "JCOP_VER_3_1 or JCOP_VER_3_2 . Returning");
-    return status;
-  }
-  nfc_nci_IoctlInOutData_t inpOutData;
-
-  inpOutData.inp.data.timeoutMilliSec = *(uint32_t *)pdata;
-  status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_GET_ACCESS, &inpOutData);
-  return status;
-}
-/*******************************************************************************
-**
-** Function         NFC_RelEseAccess
-**
-** Description      This function release access of P61.
-**                  it returns 0 on success.
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_RelEseAccess(void *pdata) {
-  int32_t status = NFC_STATUS_EPERM;
-  if ((nfcFL.eseFL._NXP_ESE_VER != JCOP_VER_3_1) &&
-      (nfcFL.eseFL._NXP_ESE_VER != JCOP_VER_3_2)) {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("NFC_RelEseAccess NXP_ESE_VER !="
-                        "JCOP_VER_3_1 or JCOP_VER_3_2 . Returning");
-    return status;
-  }
-  nfc_nci_IoctlInOutData_t inpOutData;
-
-  status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_P61_REL_ACCESS, &inpOutData);
-  *(tNFC_STATUS *)pdata = inpOutData.out.data.status;
-  return status;
-}
-
-/*******************************************************************************
-**
-** Function         NFC_RelSvddWait
-**
-** Description      This function release wait for svdd change
-**                  of P61. Status would be updated to pdata
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_RelSvddWait(void *pdata) {
-  if (!nfcFL.eseFL._ESE_SVDD_SYNC) {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("NFC_RelSvddWait :"
-                        "ESE_SVDD_SYNC is not available.. Returning");
-    return NFC_STATUS_EPERM;
-  }
-  nfc_nci_IoctlInOutData_t inpOutData;
-  int32_t status;
-  status = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_REL_SVDD_WAIT, &inpOutData);
-  *(tNFC_STATUS *)pdata = inpOutData.out.data.status;
-  return status;
-}
-/*******************************************************************************
-**
-** Function         NFC_RelForceDwpOnOffWait
-**
-** Description      This function release wait for DWP On/Off
-**                  of P73. Status would be updated to pdata
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_RelForceDwpOnOffWait(void *pdata) {
-  return (nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_REL_DWP_WAIT, pdata));
-}
 #endif
 
 #if (NXP_EXTNS == TRUE)
-/*******************************************************************************
-**
-** Function         NFC_EnableDisableHalLog
-**
-** Description      This function is used to enable/disable
-**                  HAL log level.
-**
-*******************************************************************************/
-void NFC_EnableDisableHalLog(uint8_t type) {
-  if (0x01 == type || 0x00 == type) {
-    nfc_nci_IoctlInOutData_t inpOutData;
-    inpOutData.inp.data.halType = type;
-    nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_DISABLE_HAL_LOG, &inpOutData);
-  }
-}
-
-/*******************************************************************************
-**
-** Function         NFC_SetNfcServicePid
-**
-** Description      This function request to pn54x driver to
-**                  update NFC service process ID for signalling.
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_SetNfcServicePid() {
-  tNFC_STATUS setPidStatus = NFC_STATUS_OK;
-  nfc_nci_IoctlInOutData_t inpOutData;
-  if (NFC_IsLowRamDevice()) {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("NFC_SetNfcServicePid: Not valid for low RAM device");
-    return setPidStatus;
-  }
-  inpOutData.inp.data.nfcServicePid = getpid();
-  setPidStatus = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_NFC_SERVICE_PID,
-                                     (void *)&inpOutData);
-  if (setPidStatus == NFC_STATUS_OK) {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("nfc service set pid done");
-  } else {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("nfc service set pid failed");
-  }
-  return setPidStatus;
-}
-/*******************************************************************************
-**
-** Function         NFC_ResetNfcServicePid
-**
-** Description      This function request to pn54x driver to
-**                  update NFC service process ID for signalling.
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_ResetNfcServicePid() {
-  tNFC_STATUS setPidStatus = NFC_STATUS_OK;
-  nfc_nci_IoctlInOutData_t inpOutData;
-  inpOutData.inp.data.nfcServicePid = 0;
-  if (NFC_IsLowRamDevice()) {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("NFC_ResetNfcServicePid: Not valid for low RAM device");
-    return setPidStatus;
-  }
-  setPidStatus = nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_SET_NFC_SERVICE_PID,
-                                     (void *)&inpOutData);
-  if (setPidStatus == NFC_STATUS_OK) {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("nfc service set pid done");
-  } else {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("nfc service set pid failed");
-  }
-  return setPidStatus;
-}
 
 /*******************************************************************************
 **
@@ -1974,16 +1613,10 @@ void NFC_SetStaticHciCback(tNFC_CONN_CBACK *p_cback) {
 void NFC_GetFeatureList() {
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("NFC_GetFeatureList() Enter");
-  tNFC_STATUS status = NFC_STATUS_FAILED;
-  nfc_nci_IoctlInOutData_t inpOutData;
-  status =
-      nfc_cb.p_hal->ioctl(HAL_NFC_IOCTL_GET_FEATURE_LIST, (void *)&inpOutData);
-  if (status == NFC_STATUS_OK) {
-    chipType = (tNFC_chipType)inpOutData.out.data.chipType;
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("NFC_GetFeatureList ()chipType = %d", chipType);
-
-  } else {
+  chipType = (tNFC_chipType)nfc_cb.p_hal->getchipType();
+  if(chipType != 0x00) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFC_GetFeatureList ()chipType = %d", chipType);
+  } else{
     chipType = pn553;
   }
   CONFIGURE_FEATURELIST(chipType);

@@ -49,6 +49,7 @@ extern ESE_UPDATE_STATE eseUpdateDwp;
 int phNxpNciHal_open(nfc_stack_callback_t* p_cback,
                      nfc_stack_data_callback_t* p_data_cback);
 int phNxpNciHal_write(uint16_t data_len, const uint8_t* p_data);
+int phNxpNciHal_write_internal(uint16_t data_len, const uint8_t* p_data);
 int phNxpNciHal_ioctl(long arg, void* p_data);
 int phNxpNciHal_core_initialized(uint8_t* p_core_init_rsp_params);
 int phNxpNciHal_pre_discover(void);
@@ -64,6 +65,7 @@ void phNxpNciHal_getVendorConfig_1_2(NfcConfig &config);
 int phNxpNciHal_MinInit(nfc_stack_callback_t* p_cback,
                         nfc_stack_data_callback_t* p_data_cback);
 void phNxpNciHal_reset_nfcee_session(bool force_session_reset);
+void phNxpNciHal_do_factory_reset(void);
 int phNxpNciHal_Minclose(void);
 int phNxpNciHal_getFWDownloadFlag(uint8_t* fwDnldRequest);
 #endif /* _PHNXPNCIHAL_ADAPTATION_H_ */

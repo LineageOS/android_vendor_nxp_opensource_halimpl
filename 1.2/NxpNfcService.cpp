@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2018-2019 NXP
+ *  Copyright 2018-2020 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,13 +18,15 @@
 
 #define LOG_TAG "nxpnfc@1.2-service"
 #include <android/hardware/nfc/1.2/INfc.h>
-#include <vendor/nxp/nxpnfc/1.0/INxpNfc.h>
+#include <vendor/nxp/nxpnfc/2.0/INxpNfc.h>
+#include <vendor/nxp/nxpnfclegacy/1.0/INxpNfcLegacy.h>
 
 #include "DwpEseUpdater.h"
 #include "DwpSeChannelCallback.h"
 #include "DwpSeEvtCallback.h"
 #include "Nfc.h"
 #include "NxpNfc.h"
+#include "nxpnfclegacy/1.0/NxpNfcLegacy.h"
 #include <hidl/LegacySupport.h>
 
 // Generated HIDL files
@@ -35,8 +37,10 @@ using android::hardware::configureRpcThreadpool;
 using android::hardware::joinRpcThreadpool;
 using android::hardware::nfc::V1_2::INfc;
 using android::hardware::nfc::V1_2::implementation::Nfc;
-using vendor::nxp::nxpnfc::V1_0::INxpNfc;
-using vendor::nxp::nxpnfc::V1_0::implementation::NxpNfc;
+using vendor::nxp::nxpnfc::V2_0::INxpNfc;
+using vendor::nxp::nxpnfc::V2_0::implementation::NxpNfc;
+using vendor::nxp::nxpnfclegacy::V1_0::INxpNfcLegacy;
+using vendor::nxp::nxpnfclegacy::V1_0::implementation::NxpNfcLegacy;
 
 int main() {
   ALOGD("Registering NFC HALIMPL Service v1.2...");
@@ -56,6 +60,13 @@ int main() {
   status = nxp_nfc_service->registerAsService();
   if (status != OK) {
     ALOGD("Could not register service for NXP NFC Extn Iface (%d).", status);
+  }
+
+  ALOGD("Registering NFC HAL Legacy Service v1.0...");
+  sp<INxpNfcLegacy> nxp_nfc_legacy_service = new NxpNfcLegacy();
+  status = nxp_nfc_legacy_service->registerAsService();
+  if (status != OK) {
+    ALOGD("Could not register service for NXP NFC Legacy Extn Iface (%d).", status);
   }
   ALOGE("Before calling JCOP JCOS_doDownload");
   eseClient.doEseUpdateIfReqd();

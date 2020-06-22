@@ -363,6 +363,12 @@ enum {
 };
 typedef uint16_t tNFC_CONN_EVT;
 
+enum {
+  HAL_NFC_ENABLE_I2C_FRAGMENTATION_EVT = 0x08,
+  HAL_NFC_POST_MIN_INIT_CPLT_EVT       = 0x09,
+  HAL_NFC_WRITE_COMPLETE = 0x0A
+};
+
 #define NFC_NFCC_INFO_LEN 4
 #ifndef NFC_NFCC_MAX_NUM_VS_INTERFACE
 #define NFC_NFCC_MAX_NUM_VS_INTERFACE 5
@@ -1469,20 +1475,6 @@ extern tNFC_STATUS NFC_SendVsCommand(uint8_t oid, NFC_HDR *p_data,
 extern tNFC_STATUS NFC_SendRawVsCommand(NFC_HDR *p_data,
                                         tNFC_VS_CBACK *p_cback);
 
-#if (NXP_EXTNS == TRUE)
-/*******************************************************************************
-**
-** Function         NFC_SetP61Status
-**
-** Description      This function set the JCOP download
-**                  state to pn544 driver.
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-extern int32_t NFC_SetP61Status(void *pdata, libnfc_jcop_dwnld_state_t isJcopState);
-#endif
-
 /*******************************************************************************
 **
 ** Function         NFC_GetStatusName
@@ -1509,15 +1501,6 @@ extern std::string NFC_GetStatusName(tNFC_STATUS status);
 extern void nfc_ncif_storeScreenState(uint8_t state);
 extern uint8_t nfc_hal_nfcc_reset(void);
 extern uint8_t nfc_hal_nfcc_init(uint8_t **pinit_rsp);
-/*******************************************************************************
-**
-** Function         NFC_EnableDisableHalLog
-**
-** Description      This function is used to enable/disable
-**                  HAL log level.
-**
-*******************************************************************************/
-void NFC_EnableDisableHalLog(uint8_t type);
 /*******************************************************************************
 **
 ** Function         nfc_ncif_getMaxRoutingTableSize
@@ -1560,107 +1543,6 @@ extern tNFC_STATUS NFC_Nfcee_PwrLinkCtrl(uint8_t nfcee_id, uint8_t cfg_value);
 **
 *******************************************************************************/
 int32_t NFC_ReqWiredAccess(void *pdata);
-/*******************************************************************************
-**
-** Function         NFC_RelWiredAccess
-**
-** Description      This function release access
-**                  of P61. Status would be updated to pdata
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_RelWiredAccess(void *pdata);
-/*******************************************************************************
-**
-** Function         NFC_GetWiredAccess
-**
-** Description      This function gets the current access state
-**                  of P61. Current state would be updated to pdata
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_GetP61Status(void *pdata);
-/*******************************************************************************
-**
-** Function         NFC_DisableWired
-**
-** Description      This function request to pn54x driver to
-**                  disable ese vdd gpio
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_DisableWired(void *pdata);
-
-/*******************************************************************************
-**
-** Function         NFC_ReleaseEsePwr
-**
-** Description      This function request to pn553 driver to
-**                  turn ese vdd gpio low
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_ReleaseEsePwr(void *pdata);
-
-/*******************************************************************************
-**
-** Function         NFC_AcquireEsePwr
-**
-** Description      This function request to pn553 driver to
-**                  turn ese vdd gpio high
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_AcquireEsePwr(void *pdata);
-
-/*******************************************************************************
-**
-** Function         NFC_eSEChipReset
-**
-** Description      This function request to reset ESE using ISO_RST feature.
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_eSEChipReset(void *pdata);
-/*******************************************************************************
-**
-** Function         NFC_EnableWired
-**
-** Description      This function request to pn54x driver to
-**                  enable ese vdd gpio
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_EnableWired(void *pdata);
-/*******************************************************************************
-**
-** Function         NFC_SetNfcServicePid
-**
-** Description      This function request to pn54x driver to
-**                  update NFC service process ID for signalling.
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_SetNfcServicePid();
-/*******************************************************************************
-**
-** Function         NFC_ResetNfcServicePid
-**
-** Description      This function request to pn54x driver to
-**                  reset NFC service process ID for signalling.
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_ResetNfcServicePid();
 
 /*******************************************************************************
 **
@@ -1675,43 +1557,6 @@ bool NFC_IsLowRamDevice();
 
 /*******************************************************************************
 **
-** Function         NFC_GetEseAccess
-**
-** Description      This function request to pn54x driver to get access
-**                  of P61. it returns 0 on success. This api waits maximum
-**                  defined timeout
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_GetEseAccess(void *pdata);
-
-/*******************************************************************************
-**
-** Function         NFC_RelEseAccess
-**
-** Description      This function release access of P61.
-**                  it returns 0 on success.
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_RelEseAccess(void *pdata);
-
-/*******************************************************************************
-**
-** Function         NFC_RelSvddWait
-**
-** Description      This function release wait for svdd change
-**                  of P61. Status would be updated to pdata
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_RelSvddWait(void *pdata);
-
-/*******************************************************************************
-**
 ** Function         NFC_GetChipType
 **
 ** Description      Returns currently selected chip type
@@ -1720,18 +1565,6 @@ int32_t NFC_RelSvddWait(void *pdata);
 **
 *******************************************************************************/
 tNFC_chipType NFC_GetChipType();
-
-/*******************************************************************************
-**
-** Function         NFC_RelForceDwpOnOffWait
-**
-** Description      This function release wait for DWP On/Off
-**                  of P73. Status would be updated to pdata
-**
-** Returns          0 if api call success, else -1
-**
-*******************************************************************************/
-int32_t NFC_RelForceDwpOnOffWait(void *pdata);
 
 /*******************************************************************************
 **

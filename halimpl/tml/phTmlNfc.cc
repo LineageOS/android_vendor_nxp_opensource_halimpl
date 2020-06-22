@@ -955,13 +955,6 @@ NFCSTATUS phTmlNfc_IoCtl(phTmlNfc_ControlCode_t eControlCode) {
         sem_post(&gpphTmlNfc_Context->rxSemaphore);
         break;
       }
-      case phTmlNfc_e_SetJcopDwnldEnable: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_i2c_set_Jcop_dwnld_state(
-                      gpphTmlNfc_Context->pDevHandle, JCP_DWNLD_START);
-          }
-          break;
-      }
       case phTmlNfc_e_SetJcopDwnldDisable: {
           if(nfcFL.nfcNxpEse) {
               wStatus = phTmlNfc_i2c_set_Jcop_dwnld_state(
@@ -994,44 +987,6 @@ NFCSTATUS phTmlNfc_IoCtl(phTmlNfc_ControlCode_t eControlCode) {
           if(nfcFL.nfcNxpEse) {
               wStatus = phTmlNfc_i2c_set_p61_power_state(
                               gpphTmlNfc_Context->pDevHandle, 0);
-          }
-          break;
-      }
-      case phTmlNfc_e_SetP61DisableMode: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_i2c_set_p61_power_state(
-                              gpphTmlNfc_Context->pDevHandle, 2);
-          }
-          break;
-      }
-      case phTmlNfc_e_SetP61EnableMode: {
-          {
-              wStatus = phTmlNfc_i2c_set_p61_power_state(
-                      gpphTmlNfc_Context->pDevHandle, 3);
-          }
-          break;
-      }
-      case phTmlNfc_e_RelP61Access: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_i2c_set_p61_power_state(
-                      gpphTmlNfc_Context->pDevHandle, 4);
-          }
-          break;
-      }
-      case phTmlNfc_e_RaiseEsePower: {
-          wStatus = phTmlNfc_i2c_set_p61_power_state(
-                gpphTmlNfc_Context->pDevHandle, 5);
-        break;
-      }
-      case phTmlNfc_e_ReleaseEsePower: {
-          wStatus = phTmlNfc_i2c_set_p61_power_state(
-                gpphTmlNfc_Context->pDevHandle, 6);
-         break;
-      }
-      case phTmlNfc_e_eSEChipRstMode: {
-          if(nfcFL.nfcNxpEse) {
-              wStatus = phTmlNfc_i2c_reset(
-                      gpphTmlNfc_Context->pDevHandle, 3);
           }
           break;
       }

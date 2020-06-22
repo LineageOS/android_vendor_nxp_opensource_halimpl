@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2019 NXP Semiconductors
+ * Copyright (C) 2015-2020 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,24 @@
 #ifndef _PHNXPNCIHAL_H_
 #define _PHNXPNCIHAL_H_
 
+#include "NxpMfcReader.h"
 #include <hardware/nfc.h>
 #include <phNxpNciHal_utils.h>
 #include "NxpNfcCapability.h"
-#include "hal_nxpnfc.h"
+#include <vendor/nxp/hardware/nfc/2.0/types.h>
+#include "DwpEseUpdater.h"
 #ifdef ENABLE_ESE_CLIENT
 #include "EseUpdateChecker.h"
 #endif
+
+using namespace std;
 
 /********************* Definitions and structures *****************************/
 #define MAX_RETRY_COUNT 5
 #define NCI_MAX_DATA_LEN 300
 #define NCI_POLL_DURATION 500
 #define HAL_NFC_ENABLE_I2C_FRAGMENTATION_EVT 0x07
+#define HAL_NFC_POST_MIN_INIT_CPLT_EVT  0x09
 #define NXP_STAG_TIMEOUT_BUF_LEN 0x04 /*FIXME:TODO:remove*/
 #define NXP_WIREDMODE_RESUME_TIMEOUT_LEN 0x04
 #define NFCC_DECIDES 00
@@ -75,6 +80,10 @@ typedef void(phNxpNciHal_control_granted_callback_t)();
 #define NCI_OID_MASK                 0x3F
 
 #define NXP_MAX_CONFIG_STRING_LEN 260
+#define NCI_HEADER_SIZE 3
+
+#define MAX_IOCTL_TRANSCEIVE_CMD_LEN 256
+#define MAX_IOCTL_TRANSCEIVE_RESP_LEN 256
 
 typedef struct nci_data {
   uint16_t len;
@@ -94,6 +103,13 @@ typedef enum {
   GPIO_RESTORE_DONE = 0x20,
   GPIO_CLEAR = 0xFF
 } phNxpNciHal_GpioInfoState;
+
+enum NxpNfcHalStatus {
+    /** In case of an error, HCI network needs to be re-initialized */
+    HAL_NFC_STATUS_RESTART = 0x30,
+    HAL_NFC_HCI_NV_RESET = 0x40,
+    HAL_NFC_CONFIG_ESE_LINK_COMPLETE = 0x50
+};
 
 typedef struct phNxpNciGpioInfo {
   phNxpNciHal_GpioInfoState state;
@@ -200,8 +216,30 @@ typedef enum {
   EEPROM_ESE_SESSION_ID,
   EEPROM_SWP1_INTF,
   EEPROM_SWP1A_INTF,
-  EEPROM_SWP2_INTF
+  EEPROM_SWP2_INTF,
+  EEPROM_NDEF_INTF_CFG
 } phNxpNci_EEPROM_request_type_t;
+
+typedef enum {
+  phNxpNciHalNfc_e_SetIdleMode, /* Set the current mode of operation to Idle*/
+  phNxpNciHalNfc_e_SetWiredMode,  /* Set the current mode of operation to Wired*/
+} phNxpNfcHalEseState;
+
+typedef enum {
+  phNxpNfcHciInitStatus_e_Complete = 0x00,
+  phNxpNfcHciInitStatus_e_Start = 0x01
+} phNxpNfcHciInitStatus;
+
+typedef struct phNxpNci_Extn_Cmd{
+  uint16_t cmd_len;
+  uint8_t p_cmd[MAX_IOCTL_TRANSCEIVE_CMD_LEN];
+}phNxpNci_Extn_Cmd_t;
+
+typedef struct phNxpNci_Extn_Resp{
+  uint32_t status;
+  uint16_t rsp_len;
+  uint8_t p_rsp[MAX_IOCTL_TRANSCEIVE_RESP_LEN];
+}phNxpNci_Extn_Resp_t;
 
 typedef struct phNxpNci_EEPROM_info {
   uint8_t request_mode;
@@ -243,6 +281,60 @@ typedef struct phNxpNciProfile_Control {
   uint8_t bTimeout; /* Holds the Timeout Value */
 } phNxpNciProfile_Control_t;
 
+struct phNxpNfcScrResetEmvcoCmd{
+  uint64_t len;
+  uint8_t cmd[10];
+};
+
+struct phNxpNfcHalConfig {
+  uint8_t ese_listen_tech_mask;
+  uint8_t default_nfcee_disc_timeout;
+  uint8_t default_nfcee_timeout;
+  uint8_t ese_wired_prt_mask;
+  uint8_t uicc_wired_prt_mask;
+  uint8_t wired_mode_rf_field_enable;
+  uint8_t aid_block_route;
+  uint8_t esePowerDhControl;
+  uint8_t tagOpTimeout;
+  uint8_t loaderServiceVersion;
+  uint8_t defaultNfceeDiscTimeout;
+  uint8_t dualUiccEnable;
+  uint8_t ceRouteStrictDisable;
+  uint32_t osDownloadTimeoutValue;
+  uint8_t defaultAidRoute;
+  uint8_t defaultAidPwrState;
+  uint8_t defaultRoutePwrState;
+  uint8_t defaultOffHostPwrState;
+  uint8_t jcopDlAtBootEnable;
+  uint8_t defaultNfceeTimeout;
+  uint8_t nxpNfcChip;
+  uint8_t coreScrnOffAutonomousEnable;
+  uint8_t p61LsDefaultInterface;
+  uint8_t p61JcopDefaultInterface;
+  uint8_t agcDebugEnable;
+  uint8_t felicaCltPowerState;
+  uint32_t cmdRspTimeoutValue;
+  uint8_t checkDefaultProtoSeId;
+  uint8_t nfccPassiveListenTimeout;
+  uint32_t nfccStandbyTimeout;
+  uint32_t wmMaxWtxCount;
+  uint32_t nfccRfFieldEventTimeout;
+  uint8_t allowWiredInMifareDesfireClt;
+  uint8_t dwpIntfResetEnable;
+  uint8_t nxpLogHalLoglevel;
+  uint8_t nxpLogExtnsLogLevel;
+  uint8_t nxpLogTmlLogLevel;
+  uint8_t nxpLogFwDnldLogLevel;
+  uint8_t nxpLogNcixLogLevel;
+  uint8_t nxpLogNcirLogLevel;
+  uint8_t scrCfgFormat;
+  uint8_t etsiReaderEnable;
+  uint8_t techAbfRoute;
+  uint8_t techAbfPwrState;
+  uint8_t wTagSupport;
+  uint8_t t4tNfceePwrState;
+  phNxpNfcScrResetEmvcoCmd scrResetEmvco;
+};
 /* Internal messages to handle callbacks */
 #define NCI_HAL_OPEN_CPLT_MSG 0x411
 #define NCI_HAL_CLOSE_CPLT_MSG 0x412
@@ -264,6 +356,13 @@ NFCSTATUS phNxpNciHal_send_get_cfgs();
 int phNxpNciHal_write_unlocked(uint16_t data_len, const uint8_t* p_data);
 NFCSTATUS request_EEPROM(phNxpNci_EEPROM_info_t* mEEPROM_info);
 NFCSTATUS phNxpNciHal_send_nfcee_pwr_cntl_cmd(uint8_t type);
+string phNxpNciHal_getSystemProperty(string key);
+bool phNxpNciHal_setSystemProperty(string key, string value);
+void seteSEClientState(uint8_t state);
+void eSEClientUpdate_NFC_Thread();
+bool phNxpNciHal_Abort();
+bool getJcopUpdateRequired();
+bool getLsUpdateRequired();
 
 /*******************************************************************************
 **
@@ -302,15 +401,141 @@ tNFC_chipType phNxpNciHal_getChipType();
 **
 ** Returns          none
 *******************************************************************************/
-void phNxpNciHal_getNxpConfig(nfc_nci_IoctlInOutData_t *pInpOutData);
+void phNxpNciHal_getNxpConfig(phNxpNfcHalConfig *pNxpNfcHalConfig);
 /******************************************************************************
  * Function         phNxpNciHal_getNxpTransitConfig
  *
  * Description      This function overwrite libnfc-nxpTransit.conf file
  *                  with transitConfValue.
  *
+ * Returns          status.
+ *
+ ******************************************************************************/
+bool phNxpNciHal_setNxpTransitConfig(char *transitConfValue);
+#endif /* _PHNXPNCIHAL_H_ */
+
+/******************************************************************************
+ * Function         phNxpNciHal_setEseState
+ *
+ * Description      This function is called for to update ese state
+ *
  * Returns          void.
  *
  ******************************************************************************/
-void phNxpNciHal_setNxpTransitConfig(char *transitConfValue);
-#endif /* _PHNXPNCIHAL_H_ */
+NFCSTATUS phNxpNciHal_setEseState(phNxpNfcHalEseState eSEstate);
+
+/*******************************************************************************
+ **
+ ** Function         phNxpNciHal_getchipType
+ **
+ ** Description      Gets the chipType from hal which is already configured
+ **                  during init time.
+ **
+ ** Returns          chipType
+ *******************************************************************************/
+uint8_t phNxpHal_getchipType();
+
+/*******************************************************************************
+**
+** Function         phNxpNciHal_setNfcServicePid
+**
+** Description      This function request to pn54x driver to
+**                  update NFC service process ID for signalling.
+**
+** Returns          0 if api call success, else -1
+**
+*******************************************************************************/
+uint16_t phNxpNciHal_setNfcServicePid(uint64_t pid);
+
+/******************************************************************************
+ * Function         phNxpNciHal_getEseState
+ *
+ * Description      This function is called for to get  ese state
+ *
+ * Returns          void.
+ *
+ ******************************************************************************/
+NFCSTATUS phNxpNciHal_getEseState();
+
+/******************************************************************************
+ * Function         phNxpNciHal_ReleaseSVDDWait
+ *
+ * Description      This function release wait for svdd change
+ *                  of P61.
+ *
+ * Returns          NFCSTATUS.
+ *
+ ******************************************************************************/
+NFCSTATUS phNxpNciHal_ReleaseSVDDWait(uint32_t level);
+
+/******************************************************************************
+ * Function         phNxpNciHal_ReleaseDWPOnOffWait
+ *
+ * Description      This function release wait for DWP On/Off
+ *                  of P73. output returned as Status
+ * Returns          NFCSTATUS.
+ *
+ ******************************************************************************/
+NFCSTATUS phNxpNciHal_ReleaseDWPOnOffWait(uint32_t level);
+
+/******************************************************************************
+ * Function         phNxpNciHal_getSPMStatus
+ *
+ * Description      This function gets the SPM state before FW download
+ *
+ * Returns          0 as success -1 as failed.
+ *
+ *******************************************************************************/
+int phNxpNciHal_getSPMStatus(uint32_t level);
+
+/******************************************************************************
+ * Function         phNxpNciHal_hciInitUpdateState
+ *
+ * Description      This function Sends HCI Events to nfc HAL
+ *
+ * Returns          0 as success -1 as failed.
+ *
+ *******************************************************************************/
+int32_t phNxpNciHal_hciInitUpdateState(phNxpNfcHciInitStatus HciStatus);
+
+/******************************************************************************
+ * Function         phNxpNciHal_hciInitUpdateStateComplete
+ *
+ * Description       This function posts event HAL_NFC_CONFIG_ESE_LINK_COMPLETE
+ *
+ * Returns          0 as success -1 as failed..
+ *
+ *******************************************************************************/
+int32_t phNxpNciHal_hciInitUpdateStateComplete();
+
+/******************************************************************************
+ * Function         phNxpNciHal_GetCachedNfccConfig
+ *
+ * Description      This function receives the cached configinfo.
+ *
+ * Returns          void.
+ *
+ *******************************************************************************/
+void phNxpNciHal_GetCachedNfccConfig(phNxpNci_getCfg_info_t *pGetCfg_info);
+
+/*******************************************************************************
+**
+** Function         phNxpNciHal_resetEse
+**
+** Description      It shall be used to to reset eSE by proprietary command.
+**
+** Parameters       None
+**
+** Returns          status of eSE reset response
+*******************************************************************************/
+NFCSTATUS phNxpNciHal_resetEse();
+
+/******************************************************************************
+ * Function         phNxpNciHal_nciTransceive
+ *
+ * Description      This function does tarnsceive of nci command
+ *
+ * Returns          void.
+ *
+ *******************************************************************************/
+void phNxpNciHal_nciTransceive(phNxpNci_Extn_Cmd_t *in, phNxpNci_Extn_Resp_t *out);

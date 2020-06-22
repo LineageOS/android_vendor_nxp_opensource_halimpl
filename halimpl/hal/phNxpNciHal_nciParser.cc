@@ -18,7 +18,7 @@
 
 #include <dlfcn.h>
 #include <string.h>
-
+#include "phNfcTypes.h"
 #include "phNxpLog.h"
 
 typedef void* tNCI_PARSER_INSTANCE;
