@@ -158,6 +158,8 @@ typedef enum
   TARGET_SM_BENGAL_H                   = 444, /**< SM_BENGAL_H target */
   TARGET_SMP_BENGAL_H                  = 445, /**< SMP_BENGAL_H target */
   TARGET_SM8350                        = 415, /**< SM8350 target */
+  TARGET_SM_MANNAR                     = 454, /**< SM_MANNAR target */
+  TARGET_SM_MANNAR_H                   = 472, /**< SM_MANNAR_H target */
   TARGET_DEFAULT                       = TARGET_GENERIC, /**< new targets */
   TARGET_INVALID                       = 0xFF
 } TARGETTYPE;
@@ -432,6 +434,8 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_SM8150_SDx55:
         case TARGET_SM6125:
         case TARGET_SM8350:
+        case TARGET_SM_MANNAR:
+        case TARGET_SM_MANNAR_H:
             config_id = QRD_TYPE_SN100;
             strlcpy(config_file, config_name_qrd_SN100, MAX_DATA_CONFIG_PATH_LEN);
             break;
@@ -501,6 +505,8 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_SM8150_SDx55:
         case TARGET_SM6125:
         case TARGET_SM8350:
+        case TARGET_SM_MANNAR:
+        case TARGET_SM_MANNAR_H:
             config_id = MTP_TYPE_SN100;
             strlcpy(config_file, config_name_mtp_SN100, MAX_DATA_CONFIG_PATH_LEN);
             break;
