@@ -156,6 +156,7 @@ typedef enum
   TARGET_SM6125                        = 394, /**< SM6125 target */
   TARGET_LAGOON                        = 434, /**< LAGOON target */
   TARGET_SM_LAGOON_H                   = 459, /**< SM_LAGOON_H target */
+  TARGET_SCUBA                         = 441, /**< SCUBA  target */
   TARGET_BENGAL                        = 417, /**< BENGAL target */
   TARGET_SM_BENGAL_H                   = 444, /**< SM_BENGAL_H target */
   TARGET_SMP_BENGAL_H                  = 445, /**< SMP_BENGAL_H target */
@@ -446,6 +447,7 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_BENGAL:
         case TARGET_SM_BENGAL_H:
         case TARGET_SMP_BENGAL_H:
+        case TARGET_SCUBA:
             config_id = QRD_TYPE_SN100;
             strlcpy(config_file, config_name_qrd_SN100_38_4MHZ, MAX_DATA_CONFIG_PATH_LEN);
             break;
@@ -519,6 +521,7 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_BENGAL:
         case TARGET_SM_BENGAL_H:
         case TARGET_SMP_BENGAL_H:
+        case TARGET_SCUBA:
             config_id = MTP_TYPE_SN100;
             strlcpy(config_file, config_name_mtp_SN100_38_4MHZ, MAX_DATA_CONFIG_PATH_LEN);
             break;
