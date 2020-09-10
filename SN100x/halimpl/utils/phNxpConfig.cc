@@ -165,6 +165,7 @@ typedef enum
   TARGET_SM_MANNAR_H                   = 472, /**< SM_MANNAR_H target */
   TARGET_SM_CEDROS                     = 450, /**< SM_CEDROS target */
   TARGET_SM_FRASER                     = 476, /**< SM_FRASER target */
+  TARGET_SM_KODIAK                     = 475, /**< SM_KODIAK target */
   TARGET_DEFAULT                       = TARGET_GENERIC, /**< new targets */
   TARGET_INVALID                       = 0xFF
 } TARGETTYPE;
@@ -445,6 +446,7 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_SM_MANNAR_H:
         case TARGET_SM_CEDROS:
         case TARGET_SM_FRASER:
+        case TARGET_SM_KODIAK:
             config_id = QRD_TYPE_SN100;
             strlcpy(config_file, config_name_qrd_SN100, MAX_DATA_CONFIG_PATH_LEN);
             break;
@@ -521,6 +523,7 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_SM_MANNAR_H:
         case TARGET_SM_CEDROS:
         case TARGET_SM_FRASER:
+        case TARGET_SM_KODIAK:
             config_id = MTP_TYPE_SN100;
             strlcpy(config_file, config_name_mtp_SN100, MAX_DATA_CONFIG_PATH_LEN);
             break;
