@@ -35,11 +35,7 @@
 
 #define FW_DLL_ROOT_DIR "/system/vendor/"
 #define FW_DLL_EXTENSION ".so"
-#if (defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64))
-#define FW_LIB_ROOT_DIR "/vendor/lib64/"
-#else
 #define FW_LIB_ROOT_DIR "/vendor/lib/"
-#endif
 #define FW_BIN_ROOT_DIR "/vendor/firmware/"
 #define FW_LIB_EXTENSION ".so"
 #define FW_BIN_EXTENSION ".bin"

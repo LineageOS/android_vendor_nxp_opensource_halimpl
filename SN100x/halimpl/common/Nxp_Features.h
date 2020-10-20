@@ -41,11 +41,7 @@
 #define JCOP_VER_4_0    4
 #define JCOP_VER_5_0    5
 #ifndef FW_LIB_ROOT_DIR
-#if (defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64))
-#define FW_LIB_ROOT_DIR "/vendor/lib64/"
-#else
 #define FW_LIB_ROOT_DIR "/vendor/lib/"
-#endif
 #endif
 #ifndef FW_BIN_ROOT_DIR
 #define FW_BIN_ROOT_DIR "/vendor/firmware/"

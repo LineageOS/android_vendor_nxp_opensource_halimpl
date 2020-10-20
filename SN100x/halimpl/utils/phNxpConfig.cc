@@ -95,13 +95,8 @@ const char config_timestamp_path[] =
         "/data/vendor/nfc/libnfc-nxpConfigState.bin";
 char nxp_rf_config_path[256] =
         "/system/vendor/libnfc-nxp_RF.conf";
-#if (defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64))
-char Fw_Lib_Path[256] =
-        "/vendor/lib64/libsn100u_fw.so";
-#else
 char Fw_Lib_Path[256] =
         "/vendor/lib/libsn100u_fw.so";
-#endif
 const char transit_config_path[] = "/data/vendor/nfc/libnfc-nxpTransit.conf";
 
 extern char default_nxp_config_path[];
