@@ -407,6 +407,10 @@ if(nfcFL.nfccFL._NFCC_FORCE_NCI1_0_INIT == true) {
   } else if (p_ntf[0] == 0x60 && p_ntf[1] == 0x00 && p_ntf[2] == 0x09 &&
              p_ntf[3] == 0x02 && nxpncihal_ctrl.is_wait_for_ce_ntf) {
     NXPLOG_NCIHAL_D("CORE_RESET_NTF 2 reason Command received !");
+    if (*p_len < 3) {
+      android_errorWriteLog(0x534e4554, "169258455");
+      return NFCSTATUS_FAILED;
+    }
     int len = p_ntf[2] + 2; /*include 2 byte header*/
     if(len != *p_len - 1) {
       NXPLOG_NCIHAL_E("phNxpNciHal_ext_process_nfc_init_rsp invalid NTF length");
@@ -539,21 +543,37 @@ static NFCSTATUS phNxpNciHal_ext_process_nfc_init_rsp(uint8_t* p_ntf, uint16_t* 
    NFCSTATUS status = NFCSTATUS_SUCCESS;
 
     /* Parsing CORE_RESET_RSP and CORE_RESET_NTF to update NCI version.*/
-    if(p_ntf == NULL || *p_len == 0x00) {
+    if(p_ntf == NULL || *p_len < 2) {
       return NFCSTATUS_FAILED;
     }
     if (p_ntf[0] == NCI_MT_RSP && ((p_ntf[1] & NCI_OID_MASK) == NCI_MSG_CORE_RESET)) {
+      if (*p_len < 4) {
+        android_errorWriteLog(0x534e4554, "169258455");
+        return NFCSTATUS_FAILED;
+      }
       if (p_ntf[2] == 0x01 && p_ntf[3] == 0x00) {
         NXPLOG_NCIHAL_D("CORE_RESET_RSP NCI2.0");
         if(nxpncihal_ctrl.hal_ext_enabled == TRUE) {
           nxpncihal_ctrl.nci_info.wait_for_ntf = TRUE;
         }
       } else if (p_ntf[2] == 0x03 && p_ntf[3] == 0x00) {
+        if (*p_len < 5) {
+          android_errorWriteLog(0x534e4554, "169258455");
+          return NFCSTATUS_FAILED;
+        }
         NXPLOG_NCIHAL_D("CORE_RESET_RSP NCI1.0");
         nxpncihal_ctrl.nci_info.nci_version = p_ntf[4];
       }
     } else if (p_ntf[0] == NCI_MT_NTF && ((p_ntf[1] & NCI_OID_MASK) == NCI_MSG_CORE_RESET)) {
+        if (*p_len < 4) {
+          android_errorWriteLog(0x534e4554, "169258455");
+          return NFCSTATUS_FAILED;
+        }
         if(p_ntf[3] == CORE_RESET_TRIGGER_TYPE_CORE_RESET_CMD_RECEIVED ) {
+          if (*p_len < 6) {
+            android_errorWriteLog(0x534e4554, "169258455");
+            return NFCSTATUS_FAILED;
+          }
           NXPLOG_NCIHAL_D("CORE_RESET_NTF NCI2.0 reason CORE_RESET_CMD received !");
           nxpncihal_ctrl.nci_info.nci_version  = p_ntf[5];
           phNxpNciHal_configFeatureList(p_ntf,*p_len);
