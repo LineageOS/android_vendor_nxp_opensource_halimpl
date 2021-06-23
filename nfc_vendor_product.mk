@@ -1,5 +1,5 @@
 # Enable build support for NFC open source vendor modules
-ifeq ($(call is-board-platform-in-list, sdm845 sdm710 msmnile $(MSMSTEPPE) $(TRINKET) kona lito bengal atoll lahaina holi),true)
+ifeq ($(call is-board-platform-in-list, sdm845 sdm710 msmnile $(MSMSTEPPE) $(TRINKET) kona lito bengal atoll lahaina holi monaco),true)
 TARGET_USES_NQ_NFC := true
 # Disable NFC on targets matching the TARGET_PRODUCT value in the list
 ifeq ($(filter $(TARGET_PRODUCT), bengal_32 bengal_32go),$(TARGET_PRODUCT))
