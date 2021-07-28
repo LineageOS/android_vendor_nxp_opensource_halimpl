@@ -24,7 +24,11 @@
 
 #define STRMAX_1 40
 #define STRMAX_2 100
+#if (defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64))
+#define FW_DLL_ROOT_DIR "/vendor/lib64/"
+#else
 #define FW_DLL_ROOT_DIR "/vendor/lib/"
+#endif
 #define FW_DLL_EXTENSION ".so"
 
 #define FW_MOBILE_MAJOR_NUMBER_PN553 0x01

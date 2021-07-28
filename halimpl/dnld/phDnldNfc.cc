@@ -24,7 +24,7 @@
 #include <phNxpLog.h>
 #include <dlfcn.h>
 #include <phNxpConfig.h>
-
+#include <string.h>
 static void*
     pFwLibHandle;    /* Global firmware lib handle used in this file only */
 uint16_t wMwVer = 0; /* Middleware version no */
@@ -961,17 +961,24 @@ NFCSTATUS phDnldNfc_LoadFW(const char* pathName, uint8_t** pImgInfo,
   void* pImageInfo = NULL;
   void* pImageInfoLen = NULL;
   if (pathName == NULL) {
-      if(nfcFL.chipType == pn548C2) {
-          pathName = "/vendor/lib/libpn548ad_fw.so";
-      } else if(nfcFL.chipType == pn551) {
-          pathName = "/vendor/lib/libpn551_fw.so";
-      } else if(nfcFL.chipType == pn553) {
-          pathName = "/vendor/lib/libpn553_fw.so";
-      } else if(nfcFL.chipType == pn557) {
-          pathName = "/vendor/lib/libpn557_fw.so";
-      } else {
-          pathName = "/vendor/lib/libpn547_fw.so";
-      }
+    char mPathName[50] = {'\0'};
+    #if (defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64))
+      strlcpy(mPathName, "/vendor/lib64/", sizeof(mPathName));
+    #else
+      strlcpy(mPathName, "/vendor/lib/", sizeof(mPathName));
+    #endif
+    if(nfcFL.chipType == pn548C2) {
+      strlcat(mPathName, "libpn548ad_fw.so", sizeof(mPathName));
+    } else if(nfcFL.chipType == pn551) {
+      strlcat(mPathName, "libpn551_fw.so", sizeof(mPathName));
+    } else if(nfcFL.chipType == pn553) {
+      strlcat(mPathName, "libpn553_fw.so", sizeof(mPathName));
+    } else if(nfcFL.chipType == pn557) {
+      strlcat(mPathName, "libpn557_fw.so", sizeof(mPathName));
+    } else {
+      strlcat(mPathName, "libpn547_fw.so", sizeof(mPathName));
+    }
+    pathName = mPathName;
   }
 
   /* check if the handle is not NULL then free the library */
@@ -1035,17 +1042,24 @@ NFCSTATUS phDnldNfc_LoadRecoveryFW(const char* pathName, uint8_t** pImgInfo,
 
   /* check for path name */
   if (pathName == NULL) {
-      if(nfcFL.chipType == pn548C2) {
-          pathName = "/vendor/lib/libpn548ad_fw.so";
-      } else if(nfcFL.chipType == pn551) {
-          pathName = "/vendor/lib/libpn551_fw.so";
-      } else if(nfcFL.chipType == pn553) {
-          pathName = "/vendor/lib/libpn553_fw.so";
-      }else if(nfcFL.chipType == pn557) {
-          pathName = "/vendor/lib/libpn557_fw.so";
-      } else {
-          pathName = "/vendor/lib/libpn547_fw.so";
-      }
+    char mPathName[50] = {'\0'};
+    #if (defined(__arm64__) || defined(__aarch64__) || defined(_M_ARM64))
+      strlcpy(mPathName, "/vendor/lib64/", sizeof(mPathName));
+    #else
+      strlcpy(mPathName, "/vendor/lib/", sizeof(mPathName));
+    #endif
+    if(nfcFL.chipType == pn548C2) {
+      strlcat(mPathName, "libpn548ad_fw.so", sizeof(mPathName));;
+    } else if(nfcFL.chipType == pn551) {
+      strlcat(mPathName, "libpn551_fw.so", sizeof(mPathName));
+    } else if(nfcFL.chipType == pn553) {
+      strlcat(mPathName, "libpn553_fw.so", sizeof(mPathName));
+    } else if(nfcFL.chipType == pn557) {
+      strlcat(mPathName, "libpn557_fw.so", sizeof(mPathName));
+    } else {
+      strlcat(mPathName, "libpn547_fw.so", sizeof(mPathName));
+    }
+    pathName = mPathName;
   }
   /* check if the handle is not NULL then free the library */
   if (pFwLibHandle != NULL) {
