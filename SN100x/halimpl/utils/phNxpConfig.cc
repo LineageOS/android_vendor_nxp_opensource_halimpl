@@ -1,5 +1,5 @@
 /******************************************************************************
- *  Copyright (c) 2016-18, The Linux Foundation. All rights reserved.
+ *  Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  *  Not a Contribution.
  *
  *  Copyright (C) 2011-2012 Broadcom Corporation
@@ -173,6 +173,8 @@ typedef enum
   TARGET_SM_FRASER                     = 476, /**< SM_FRASER target */
   TARGET_SM_KODIAK                     = 475, /**< SM_KODIAK target */
   TARGET_MONACO                        = 486, /**< MONACO target */
+  TARGET_QCM6490                       = 497, /**< QCM6490 target */
+  TARGET_QCS6490                       = 498, /**< QCS6490 target */
   TARGET_SMP_KODIAK                    = 499, /**< SMP_KODIAK target */
   TARGET_STRAIT                        = 507, /**< STRAIT target */
   TARGET_FAROE                         = 515, /**< FAROE target */
@@ -463,6 +465,8 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_SMP_KODIAK:
         case TARGET_STRAIT:
         case TARGET_MONACO:
+        case TARGET_QCM6490:
+        case TARGET_QCS6490:
         case TARGET_FAROE:
             config_id = QRD_TYPE_SN100;
             strlcpy(config_file, config_name_qrd_SN100, MAX_DATA_CONFIG_PATH_LEN);
@@ -551,6 +555,8 @@ int CNfcConfig::getconfiguration_id (char * config_file)
         case TARGET_SMP_KODIAK:
         case TARGET_STRAIT:
         case TARGET_MONACO:
+        case TARGET_QCM6490:
+        case TARGET_QCS6490:
         case TARGET_FAROE:
             config_id = MTP_TYPE_SN100;
             strlcpy(config_file, config_name_mtp_SN100, MAX_DATA_CONFIG_PATH_LEN);
