@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "aff0f74f_76f12913",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 23518
+      },
+      "writtenOn": "2022-01-15T18:11:27Z",
+      "side": 1,
+      "message": "All good on LG G4 LTE - Thank you.",
+      "revId": "6170c6dc6f00f016d2030a47a5ea0494b235eced",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
