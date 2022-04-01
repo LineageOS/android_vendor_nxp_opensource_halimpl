@@ -1,3 +1,6 @@
+soong_namespace {
+}
+
 cc_library_shared {
 
     name: "nxp_nci_parser",
