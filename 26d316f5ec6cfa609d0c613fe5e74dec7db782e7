@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6f358d5e_cf9f251a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 20352
+      },
+      "writtenOn": "2022-05-21T11:10:28Z",
+      "side": 1,
+      "message": "Fixes nfc on ginkgo",
+      "revId": "26d316f5ec6cfa609d0c613fe5e74dec7db782e7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
